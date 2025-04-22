@@ -26,3 +26,5 @@ pub struct Campaign {
     #[max_len(255)]
     pub campaign_image_url: String,
 }
+
+
