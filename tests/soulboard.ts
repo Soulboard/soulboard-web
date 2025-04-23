@@ -120,7 +120,7 @@ describe("soulboard", () => {
   );
 
   const tx = await program.methods
-    .addBudget(new BN(100000000000000000000), 0)
+    .addBudget(new BN(1000000000000000), 0)
     .accounts({
       advertiser: advertiserPda,
       authority: user.publicKey,
@@ -140,6 +140,32 @@ describe("soulboard", () => {
   
  })
 
+
+  it("withdraw amount", async () => {
+    const [advertiserPda, _] = PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("advertiser"),
+        user.publicKey.toBuffer()
+      ],
+      program.programId
+    );  
+
+    const [campaignPda, __] = web3.PublicKey.findProgramAddressSync(
+      [Buffer.from('campaign'), user.publicKey.toBuffer(), new BN(0).toArrayLike(Buffer, "le", 1)], 
+      program.programId
+    );
+
+    const tx = await program.methods
+      .withdrawAmount(0, new BN(1000000))
+      .accounts({
+        advertiser: advertiserPda,
+        authority: user.publicKey,
+        campaign: campaignPda,
+      })
+      .rpc();
+    console.log("Your transaction signature", tx);
+  })
+
   it("Close a campaign", async () => {
     const [advertiserPda, _] = PublicKey.findProgramAddressSync(
       [
@@ -153,7 +179,7 @@ describe("soulboard", () => {
     const campaign_idx = 0; // Use appropriate campaign index
     
     const [campaignPda, __] = web3.PublicKey.findProgramAddressSync(
-      [Buffer.from('campaign'), user.publicKey.toBuffer(), new BN(campaign_idx).toArrayLike(Buffer, "le", 1)], 
+      [Buffer.from('campaign'), user.publicKey.toBuffer(), new BN(0).toArrayLike(Buffer, "le", 1)], 
       program.programId
     );
     

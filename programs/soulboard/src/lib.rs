@@ -4,12 +4,13 @@ pub mod context;
 pub mod states;
 
 use context::*;
+use constant::CAMPAIGN_KEY;
 declare_id!("61yLHnb8vjRGzkKUPGjN4zviBfsy7wHmwwnZpNP8SfcQ");
 
 #[program]
 pub mod soulboard {
 
-    use anchor_lang::solana_program::{program::invoke, system_instruction::transfer};
+    use anchor_lang::solana_program::{program::{invoke, invoke_signed}, system_instruction::transfer, program_error::ProgramError};
 
     use super::*;
 
@@ -59,6 +60,22 @@ pub mod soulboard {
 
             invoke(&ix, &[ctx.accounts.authority.to_account_info(), ctx.accounts.campaign.to_account_info(), ctx.accounts.system_program.to_account_info()])?;
         }
+
+        Ok(())
+    }
+
+    pub fn withdraw_amount(ctx: Context<WithdrawBudget>, campaign_idx: u8 , amount: u64) -> Result<()> {
+        let campaign_info = ctx.accounts.campaign.to_account_info();
+        let authority_info = ctx.accounts.authority.to_account_info();
+
+        // Transfer lamports directly from campaign to authority
+        **authority_info.try_borrow_mut_lamports()? = authority_info.lamports()
+            .checked_add(amount)
+            .ok_or(ProgramError::ArithmeticOverflow)?;
+        
+        **campaign_info.try_borrow_mut_lamports()? = campaign_info.lamports()
+            .checked_sub(amount)
+            .ok_or(ProgramError::InsufficientFunds)?;
 
         Ok(())
     }
