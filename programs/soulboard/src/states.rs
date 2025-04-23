@@ -49,6 +49,8 @@ pub struct Campaign {
 pub struct Location {
     pub authority: Pubkey, // Ad Provider
 
+    pub location_idx: u8,
+
     #[max_len(64)]
     pub location_name: String,
 
@@ -57,6 +59,8 @@ pub struct Location {
 
     #[max_len(20)]
     pub slots: Vec<TimeSlot>,
+
+
 
   
 }

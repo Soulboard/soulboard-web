@@ -120,7 +120,7 @@ pub struct CreateProvider<'info> {
 
 #[derive(Accounts)]
 pub struct RegisterLocation<'info> {
-    #[account(mut,seeds = [PROVIDER_KEY, authority.key().as_ref()],bump,has_one = authority)]
+    #[account(mut,seeds = [PROVIDER_KEY, authority.key().as_ref() ,],bump,has_one = authority)]
     pub provider: Account<'info, Provider>,
 
     #[account(mut)]
@@ -130,7 +130,7 @@ pub struct RegisterLocation<'info> {
         init,
         payer = authority,
         space = ANCHOR_DISCRIMINATOR_SIZE + Location::INIT_SPACE,
-        seeds = [LOCATION_KEY, authority.key().as_ref()],
+        seeds = [LOCATION_KEY, authority.key().as_ref() , &provider.last_location_id.to_le_bytes()],
         bump,
     )]
     pub location: Account<'info, Location>,
@@ -140,8 +140,10 @@ pub struct RegisterLocation<'info> {
 
 
 #[derive(Accounts)]
+#[instruction(location_idx: u8)]
 pub struct AddTimeSlot<'info> {
-    #[account(mut,seeds = [LOCATION_KEY, authority.key().as_ref()],bump,has_one = authority)]
+
+    #[account(mut, has_one = authority, seeds = [LOCATION_KEY , authority.key().as_ref() , &location_idx.to_le_bytes()],bump)]
     pub location: Account<'info, Location>,
 
     #[account(mut)]
@@ -150,3 +152,20 @@ pub struct AddTimeSlot<'info> {
     pub system_program: Program<'info, System>,
 }
 
+
+#[derive(Accounts)]
+#[instruction(location_idx: u8, campaign_idx: u8)]
+
+pub struct BookLocation<'info> {
+    #[account(mut, seeds = [LOCATION_KEY , authority.key().as_ref() , &location_idx.to_le_bytes()],bump)]
+    pub location: Account<'info, Location>,
+
+    #[account(mut, seeds = [CAMPAIGN_KEY , authority.key().as_ref() , &campaign_idx.to_le_bytes()],bump)]
+    pub campaign: Account<'info, Campaign>,
+
+
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
