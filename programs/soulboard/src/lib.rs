@@ -56,9 +56,9 @@ pub mod soulboard {
 
         if budget > 0 {
             let ix = transfer(&ctx.accounts.authority.key(), &ctx.accounts.campaign.key(), budget);
- 
+
             invoke(&ix, &[ctx.accounts.authority.to_account_info(), ctx.accounts.campaign.to_account_info(), ctx.accounts.system_program.to_account_info()])?;
-         }
+        }
 
         Ok(())
     }

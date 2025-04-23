@@ -120,7 +120,7 @@ describe("soulboard", () => {
   );
 
   const tx = await program.methods
-    .addBudget(new BN(100000000000000), 0)
+    .addBudget(new BN(100000000000000000000), 0)
     .accounts({
       advertiser: advertiserPda,
       authority: user.publicKey,
