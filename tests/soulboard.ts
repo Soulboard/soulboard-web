@@ -204,8 +204,40 @@ describe("soulboard", () => {
 
 
   it("register location", async () => {
+    // Helper function to convert time string to Unix timestamp
+    const timeToTimestamp = (timeString: string, date?: Date): BN => {
+      // Use current date if not specified
+      const baseDate = date || new Date();
+      
+      // Parse time string (format: "1pm", "12pm", etc.)
+      const isPM = timeString.toLowerCase().includes('pm');
+      let hour = parseInt(timeString.replace(/[^0-9]/g, ''));
+      
+      // Convert to 24-hour format if PM
+      if (isPM && hour < 12) hour += 12;
+      if (!isPM && hour === 12) hour = 0;
+      
+      // Set the hours on the base date
+      baseDate.setHours(hour, 0, 0, 0);
+      
+      // Return Unix timestamp (seconds since epoch)
+      return new BN(Math.floor(baseDate.getTime() / 1000));
+    };
+    
+    // Example: Create slots for today at 12pm and 1pm
+    const today = new Date();
+    
     const tx = await program.methods
-      .registerLocation("location name", "location description")
+      .registerLocation("location name", "location description", [
+        {
+          slotId: timeToTimestamp("12pm", today),
+          status: { available: {} }
+        },
+        {
+          slotId: timeToTimestamp("1pm", today),
+          status: { available: {} }
+        }
+      ])
       .accounts({
         authority: user.publicKey,
       })
@@ -233,6 +265,9 @@ describe("soulboard", () => {
 
     expect(location.locationName).to.equal("location name");
     expect(location.locationDescription).to.equal("location description");
+    expect(location.slots.length).to.equal(2);
+    expect(location.slots[0].slotId.toString()).to.equal(timeToTimestamp("12pm", today).toString());
+    expect(location.slots[1].slotId.toString()).to.equal(timeToTimestamp("1pm", today).toString());
   })
 
   

@@ -56,7 +56,7 @@ pub struct Location {
     pub location_description: String,
 
     #[max_len(20)]
-    pub slots: Vec<Slot>,
+    pub slots: Vec<TimeSlot>,
 
   
 }
@@ -72,7 +72,7 @@ pub enum SlotStatus {
 
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
-pub struct Slot {
+pub struct TimeSlot {
     pub slot_id: u64, // UNIX timestamp or slot number
     pub status: SlotStatus,
 }

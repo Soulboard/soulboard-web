@@ -139,3 +139,14 @@ pub struct RegisterLocation<'info> {
 }
 
 
+#[derive(Accounts)]
+pub struct AddTimeSlot<'info> {
+    #[account(mut,seeds = [LOCATION_KEY, authority.key().as_ref()],bump,has_one = authority)]
+    pub location: Account<'info, Location>,
+
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+

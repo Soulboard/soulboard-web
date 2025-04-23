@@ -4,13 +4,16 @@ pub mod context;
 pub mod states;
 
 use context::*;
+use states::TimeSlot;
 use constant::CAMPAIGN_KEY;
 declare_id!("61yLHnb8vjRGzkKUPGjN4zviBfsy7wHmwwnZpNP8SfcQ");
 
 #[program]
 pub mod soulboard {
 
-    use anchor_lang::solana_program::{program::{invoke}, system_instruction::transfer, program_error::ProgramError};
+    use anchor_lang::solana_program::{ program::invoke, program_error::ProgramError, system_instruction::transfer};
+
+    use crate::states::TimeSlot;
 
     use super::*;
 
@@ -98,17 +101,23 @@ pub mod soulboard {
     }
 
     //register a location by a provider
-    pub fn register_location(ctx: Context<RegisterLocation> , location_name: String, location_description: String) -> Result<()> {
+    pub fn register_location(ctx: Context<RegisterLocation> , location_name: String, location_description: String , slots :Vec<TimeSlot>) -> Result<()> {
         let provider = &mut ctx.accounts.provider;
         let location = &mut ctx.accounts.location;
 
         location.authority = provider.authority;
         location.location_name = location_name;
         location.location_description = location_description;
-        location.slots = vec![];
+        location.slots = slots;
         provider.last_location_id = provider.last_location_id.checked_add(1).unwrap();
         Ok(())
     }
 
+
+    pub fn add_time_slot(ctx: Context<AddTimeSlot>, slot: TimeSlot) -> Result<()> {
+        let location = &mut ctx.accounts.location;
+        location.slots.push(slot);
+        Ok(())
+    }
 
 }
