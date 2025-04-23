@@ -406,65 +406,68 @@
       console.log("location.slots[0].status", location.slots[0].status.available);
     })
     
-    // it("add time slot", async () => {
-    //   const today = new Date();
+    it("add time slot", async () => {
+      const today = new Date();
       
-    //   // Helper function to convert time string to Unix timestamp
-    //   const timeToTimestamp = (timeString: string, date?: Date): BN => {
-    //     const baseDate = date || new Date();
-    //     const isPM = timeString.toLowerCase().includes('pm');
-    //     let hour = parseInt(timeString.replace(/[^0-9]/g, ''));
-    //     if (isPM && hour < 12) hour += 12;
-    //     if (!isPM && hour === 12) hour = 0;
-    //     baseDate.setHours(hour, 0, 0, 0);
-    //     return new BN(Math.floor(baseDate.getTime() / 1000));
-    //   };
+      // Helper function to convert time string to Unix timestamp
+      const timeToTimestamp = (timeString: string, date?: Date): BN => {
+        const baseDate = date || new Date();
+        const isPM = timeString.toLowerCase().includes('pm');
+        let hour = parseInt(timeString.replace(/[^0-9]/g, ''));
+        if (isPM && hour < 12) hour += 12;
+        if (!isPM && hour === 12) hour = 0;
+        baseDate.setHours(hour, 0, 0, 0);
+        return new BN(Math.floor(baseDate.getTime() / 1000));
+      };
 
-    //   const [providerPda] = PublicKey.findProgramAddressSync(
-    //     [Buffer.from('provider'), user.publicKey.toBuffer()],
-    //     program.programId
-    //   );
+      const [providerPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('provider'), user.publicKey.toBuffer()],
+        program.programId
+      );
 
-    //   const provider = await program.account.provider.fetch(providerPda);
-    //   console.log("provider", provider);  
-    //   console.log("provider.last_location_id" , provider.lastLocationId)
-    //   console.log("provider.location_count" , provider.locationCount)
+      const provider = await program.account.provider.fetch(providerPda);
+      console.log("provider", provider);  
+      console.log("provider.last_location_id" , provider.lastLocationId)
+      console.log("provider.location_count" , provider.locationCount)
       
-    //   // Match the location PDA calculation exactly as in the program
-    //   // The locationIdx parameter is passed as 0, so we need to use that
-    //   const locationIdx = 0;
-    //   const [locationPda] = PublicKey.findProgramAddressSync(
-    //     [
-    //       Buffer.from('location'), 
-    //       user.publicKey.toBuffer(), 
-    //       new BN(0).toArrayLike(Buffer, "le", 1)  // Use simple Buffer.from with byte array
-    //     ],
-    //     program.programId
-    //   );
+      // Match the location PDA calculation exactly as in the program
+      // The locationIdx parameter is passed as 0, so we need to use that
+      const locationIdx = 0;
+      const [locationPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from('location'), 
+          user.publicKey.toBuffer(), 
+          new BN(0).toArrayLike(Buffer, "le", 1)  // Use simple Buffer.from with byte array
+        ],
+        program.programId
+      );
 
-    //   const location = await program.account.location.fetch(locationPda);
-    //   // console.log("locationPdaieuegr" , locationPda.toBase58())
-    //   console.log("location", location);
-    //   console.log("location_idx" , location.locationIdx)
-    //   console.log("provider.last_count" ,provider.lastLocationId)
-    //   console.log("location count" , provider.locationCount)
+      const location = await program.account.location.fetch(locationPda);
+      // console.log("locationPdaieuegr" , locationPda.toBase58())
+      console.log("location", location);
+      console.log("location_idx" , location.locationIdx)
+      console.log("provider.last_count" ,provider.lastLocationId)
+      console.log("location count" , provider.locationCount)
       
-    //   const tx = await program.methods
-    //     .addTimeSlot(
-    //       {
-    //         slotId: timeToTimestamp("3pm", today),
-    //         status: { available: {} }
-    //       }, 
-    //       0  // Make sure we use the same index here as in the PDA
-    //     )
-    //     .accounts({
-    //       location: locationPda,
-    //       authority: user.publicKey,
-    //       systemProgram: SystemProgram.programId,
-    //     })
-    //     .rpc();
-    //   console.log("Your transaction signature", tx);
-    // })
+       await program.methods
+        .addTimeSlot(
+         0,
+         {
+          slotId: timeToTimestamp("3pm", today),
+          status: { available: {} }
+         }// Make sure we use the same index here as in the PDA
+        )
+        .accounts({
+          authority: user.publicKey,
+          location: locationPda,
+        })
+        .rpc();
+        
+      console.log("location", location);
+      console.log("location.slots", location.slots.length);
+      console.log("location.slots[1].status", location.slots[1].status);
+      console.log("locationPda", locationPda.toBase58())
+    })
     
 
     it("Close a campaign", async () => {

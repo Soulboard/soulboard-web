@@ -178,3 +178,17 @@ pub struct CancelBooking<'info> {
     pub system_program: Program<'info, System>,
     
 }
+
+
+#[derive(Accounts)]
+#[instruction(location_idx: u8)]
+pub struct AddTimeSlot<'info> {
+    #[account(mut, seeds = [LOCATION_KEY ,authority.key().as_ref() , &location_idx.to_le_bytes()],bump)]
+    pub location: Account<'info, Location>,
+
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+    
+}

@@ -161,5 +161,11 @@ pub mod soulboard {
 
         Ok(())
     }
+
+    pub fn add_time_slot(ctx: Context<AddTimeSlot>, location_idx: u8, slot: TimeSlot) -> Result<()> {
+        let location = &mut ctx.accounts.location;
+        location.slots.push(slot);
+        Ok(())
+    }
     
 }
