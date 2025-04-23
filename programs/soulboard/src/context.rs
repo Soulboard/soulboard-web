@@ -138,34 +138,43 @@ pub struct RegisterLocation<'info> {
     pub system_program: Program<'info, System>,
 }
 
-
-#[derive(Accounts)]
-#[instruction(location_idx: u8)]
-pub struct AddTimeSlot<'info> {
-
-    #[account(mut, has_one = authority, seeds = [LOCATION_KEY , authority.key().as_ref() , &location_idx.to_le_bytes()],bump)]
-    pub location: Account<'info, Location>,
-
-    #[account(mut)]
-    pub authority: Signer<'info>,
-
-    pub system_program: Program<'info, System>,
-}
-
-
 #[derive(Accounts)]
 #[instruction(location_idx: u8, campaign_idx: u8)]
 
 pub struct BookLocation<'info> {
-    #[account(mut, seeds = [LOCATION_KEY , authority.key().as_ref() , &location_idx.to_le_bytes()],bump)]
+    #[account(mut, seeds = [LOCATION_KEY , ad_provider.authority.key().as_ref() , &location_idx.to_le_bytes()],bump)]
     pub location: Account<'info, Location>,
 
-    #[account(mut, seeds = [CAMPAIGN_KEY , authority.key().as_ref() , &campaign_idx.to_le_bytes()],bump)]
+    #[account(mut, has_one = authority, seeds = [CAMPAIGN_KEY , authority.key().as_ref() , &campaign_idx.to_le_bytes()],bump)]
     pub campaign: Account<'info, Campaign>,
 
 
     #[account(mut)]
     pub authority: Signer<'info>,
 
+
+    #[account(mut)]
+    ad_provider: Account<'info, Provider>,
+
     pub system_program: Program<'info, System>,
+}
+
+
+#[derive(Accounts)]
+#[instruction(campaign_idx: u8, location_idx: u8, slot_id: u64)]
+pub struct CancelBooking<'info> {
+    #[account(mut, seeds = [LOCATION_KEY , ad_provider.authority.key().as_ref() , &location_idx.to_le_bytes()],bump)]
+    pub location: Account<'info, Location>,
+
+    #[account(mut, has_one = authority, seeds = [CAMPAIGN_KEY , authority.key().as_ref() , &campaign_idx.to_le_bytes()],bump)]
+    pub campaign: Account<'info, Campaign>,
+
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    #[account(mut)]
+    ad_provider: Account<'info, Provider>,
+    
+    pub system_program: Program<'info, System>,
+    
 }

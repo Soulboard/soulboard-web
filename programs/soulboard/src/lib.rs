@@ -116,24 +116,17 @@ pub mod soulboard {
         Ok(())
     }
 
-    //issue : account mismatch error 
-    //issue : add time slot not working 
-    pub fn add_time_slot(ctx: Context<AddTimeSlot>, slot: TimeSlot , location_idx: u8) -> Result<()> {
-        let location = &mut ctx.accounts.location;
-
-        if location.location_idx != location_idx {
-            return Err(ProgramError::InvalidArgument.into());
-        }
-        location.slots.push(slot);
-        Ok(())
-    }
-
     
+
+    //TODO : add payment logic 
 
     pub fn book_location(ctx: Context<BookLocation>, campaign_idx: u8,  location_idx: u8, slot_id: u64) -> Result<()> {
         let location = &mut ctx.accounts.location;
         let campaign = &mut ctx.accounts.campaign;
 
+        // Store location key before mutable borrow
+        let location_key = location.key();
+        
         // Use iter_mut() to get mutable references to elements
         for slot in location.slots.iter_mut() {
             if slot.slot_id == slot_id {
@@ -141,16 +134,32 @@ pub mod soulboard {
                     slot.status = SlotStatus::Booked { 
                         campaign_id : campaign.key(),
                     };
+                    campaign.booked_locations.push(LocationBooking {
+                        location: location_key,
+                        slot_id: slot_id,
+                    });
                 }
             }
+            
         }
-
-        campaign.booked_locations.push(LocationBooking {
-            location: location.key(),
-            slot_id: slot_id,
-        });
 
         Ok(())
     }
 
+
+    //TODO : add payment logic 
+    //TODO : add checking if the slot is actually booked 
+    pub fn cancel_booking(ctx: Context<CancelBooking>, campaign_idx: u8, location_idx: u8, slot_id: u64) -> Result<()> {
+        let location = &mut ctx.accounts.location;
+        let campaign = &mut ctx.accounts.campaign;
+
+        for slot in location.slots.iter_mut() {
+            if slot.slot_id == slot_id {
+                slot.status = SlotStatus::Available;
+            }
+        }
+
+        Ok(())
+    }
+    
 }
