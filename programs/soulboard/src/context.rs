@@ -99,5 +99,43 @@ pub struct CloseCampaign<'info> {
 
 }
 
+#[derive(Accounts)]
+pub struct CreateProvider<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+
+    #[account(
+        init,
+        payer = authority,
+        space = ANCHOR_DISCRIMINATOR_SIZE + Provider::INIT_SPACE,
+        seeds = [PROVIDER_KEY, authority.key().as_ref()],
+        bump,
+    )]
+    pub provider: Account<'info, Provider>,
+    
+}
+
+
+#[derive(Accounts)]
+pub struct RegisterLocation<'info> {
+    #[account(mut,seeds = [PROVIDER_KEY, authority.key().as_ref()],bump,has_one = authority)]
+    pub provider: Account<'info, Provider>,
+
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    #[account(
+        init,
+        payer = authority,
+        space = ANCHOR_DISCRIMINATOR_SIZE + Location::INIT_SPACE,
+        seeds = [LOCATION_KEY, authority.key().as_ref()],
+        bump,
+    )]
+    pub location: Account<'info, Location>,
+
+    pub system_program: Program<'info, System>,
+}
 
 

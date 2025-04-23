@@ -10,7 +10,7 @@ declare_id!("61yLHnb8vjRGzkKUPGjN4zviBfsy7wHmwwnZpNP8SfcQ");
 #[program]
 pub mod soulboard {
 
-    use anchor_lang::solana_program::{program::{invoke, invoke_signed}, system_instruction::transfer, program_error::ProgramError};
+    use anchor_lang::solana_program::{program::{invoke}, system_instruction::transfer, program_error::ProgramError};
 
     use super::*;
 
@@ -21,6 +21,14 @@ pub mod soulboard {
         advertiser.campaign_count = 0;
         Ok(())
     }
+
+   pub fn create_provider(ctx: Context<CreateProvider>) -> Result<()> {
+    let provider = &mut ctx.accounts.provider;
+    provider.authority = ctx.accounts.authority.key();
+    provider.last_location_id = 0;
+    provider.location_count = 0;
+    Ok(())
+   }
 
     pub fn create_campaign(
         ctx: Context<CreateCampaign>,
@@ -41,6 +49,7 @@ pub mod soulboard {
         advertiser.last_campaign_id = advertiser.last_campaign_id.checked_add(1).unwrap();
 
         advertiser.campaign_count = advertiser.campaign_count.checked_add(1).unwrap();
+        campaign.booked_locations = vec![];
 
         if budget > 0 {
            let ix = transfer(&ctx.accounts.authority.key(), &ctx.accounts.campaign.key(), budget);
@@ -80,10 +89,26 @@ pub mod soulboard {
         Ok(())
     }
 
+
     pub fn close_campaign(ctx: Context<CloseCampaign>, campaign_idx: u8) -> Result<()> {
         let advertiser = &mut ctx.accounts.advertiser;
 
         advertiser.campaign_count = advertiser.campaign_count.checked_sub(1).unwrap();
         Ok(())
     }
+
+    //register a location by a provider
+    pub fn register_location(ctx: Context<RegisterLocation> , location_name: String, location_description: String) -> Result<()> {
+        let provider = &mut ctx.accounts.provider;
+        let location = &mut ctx.accounts.location;
+
+        location.authority = provider.authority;
+        location.location_name = location_name;
+        location.location_description = location_description;
+        location.slots = vec![];
+        provider.last_location_id = provider.last_location_id.checked_add(1).unwrap();
+        Ok(())
+    }
+
+
 }

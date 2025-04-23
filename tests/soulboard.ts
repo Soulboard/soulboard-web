@@ -166,6 +166,77 @@ describe("soulboard", () => {
     console.log("Your transaction signature", tx);
   })
 
+  it("get all campaigns", async () => {
+    const [advertiserPda, _] = PublicKey.findProgramAddressSync(
+      [Buffer.from('advertiser'), user.publicKey.toBuffer()],
+      program.programId
+    );  
+
+    const campaigns = await program.account.campaign.all();
+    
+    console.log("campaigns", campaigns);
+  })
+
+  it("create provider", async () => {
+    const tx = await program.methods
+      .createProvider()
+      .accounts({
+        authority: user.publicKey,
+      })
+      .rpc();
+
+    console.log("Your transaction signature", tx);
+
+    const [providerPda, providerBump] = PublicKey.findProgramAddressSync(
+      [Buffer.from('provider'), user.publicKey.toBuffer()],
+      program.programId
+    );
+
+    const provider = await program.account.provider.fetch(providerPda);
+    console.log("provider", provider);
+    console.log( "provider.authority", provider.authority)
+    console.log( "user.publicKey", user.publicKey)
+
+    expect(provider.authority.toBase58()).to.equal(user.publicKey.toBase58()  );
+
+  })
+
+
+
+  it("register location", async () => {
+    const tx = await program.methods
+      .registerLocation("location name", "location description")
+      .accounts({
+        authority: user.publicKey,
+      })
+      .rpc();
+
+    console.log("Your transaction signature", tx);
+
+
+    const [providerPda, providerBump] = PublicKey.findProgramAddressSync(
+      [Buffer.from('provider'), user.publicKey.toBuffer()],
+      program.programId
+    );
+
+    const provider = await program.account.provider.fetch(providerPda);
+    console.log("provider", provider);
+
+    const [locationPda, locationBump] = PublicKey.findProgramAddressSync(
+      [Buffer.from('location'), user.publicKey.toBuffer()],
+      program.programId
+    );
+
+    const location = await program.account.location.fetch(locationPda);
+    console.log("location", location);
+
+
+    expect(location.locationName).to.equal("location name");
+    expect(location.locationDescription).to.equal("location description");
+  })
+
+  
+
   it("Close a campaign", async () => {
     const [advertiserPda, _] = PublicKey.findProgramAddressSync(
       [
@@ -194,5 +265,6 @@ describe("soulboard", () => {
 
     console.log("Your transaction signature", tx);
   });
+  
 });
   
