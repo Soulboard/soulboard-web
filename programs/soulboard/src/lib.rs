@@ -135,6 +135,8 @@ pub mod soulboard {
     pub fn book_location(ctx: Context<BookLocation>, campaign_idx: u8,  location_idx: u8, slot_id: u64) -> Result<()> {
         let location = &mut ctx.accounts.location;
         let campaign = &mut ctx.accounts.campaign;
+        let location_info = location.to_account_info();
+        let campaign_info = campaign.to_account_info();
 
         // Store location key before mutable borrow
         let location_key = location.key();
@@ -143,6 +145,16 @@ pub mod soulboard {
         for slot in location.slots.iter_mut() {
             if slot.slot_id == slot_id {
                 if slot.status == SlotStatus::Available {
+
+                    //move lamports from campaign PDA to loaction PDA
+                    **location_info.try_borrow_mut_lamports()? = location_info.lamports()
+                    .checked_add(slot.price)
+                    .ok_or(ProgramError::ArithmeticOverflow)?;
+                
+                **campaign_info.try_borrow_mut_lamports()? = campaign_info.lamports()
+                    .checked_sub(slot.price)
+                    .ok_or(ProgramError::InsufficientFunds)?;
+
                     slot.status = SlotStatus::Booked { 
                         campaign_id : campaign.key(),
                     };
@@ -169,16 +181,17 @@ pub mod soulboard {
     pub fn cancel_booking(ctx: Context<CancelBooking>, campaign_idx: u8, location_idx: u8, slot_id: u64) -> Result<()> {
         let location = &mut ctx.accounts.location;
         let campaign = &mut ctx.accounts.campaign;
-
+        // let location_info = location.to_account_info();
+        // let campaign_info = campaign.to_account_info();
+        
         for slot in location.slots.iter_mut() {
             if slot.slot_id == slot_id {
                 // Check if the slot is booked BY THIS campaign
                 if let SlotStatus::Booked { campaign_id } = slot.status {
                     if campaign_id == campaign.key() {
                          slot.status = SlotStatus::Available;
-                         // TODO: Also remove from campaign.booked_locations
+                        
                     } else {
-                        // Trying to cancel someone else's booking
                         return Err(SoulboardError::Unauthorized.into());
                     }
 

@@ -40,8 +40,7 @@ pub struct Campaign {
 
     #[max_len(10)]
     pub booked_locations: Vec<LocationBooking>
-    
-   
+     
 }
 
 #[account]
@@ -75,6 +74,7 @@ pub enum SlotStatus {
 pub struct TimeSlot {
     pub slot_id: u64, // UNIX timestamp or slot number
     pub status: SlotStatus,
+    pub price: u64, // price of the slot or a security deposit
 }
 
 
