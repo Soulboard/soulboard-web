@@ -57,12 +57,8 @@ pub struct Location {
     #[max_len(100)]
     pub location_description: String,
 
-    #[max_len(20)]
-    pub slots: Vec<TimeSlot>,
-
-
-
-  
+    #[max_len(10)]
+    pub slots: Vec<TimeSlot>,  
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace, PartialEq, Debug)]

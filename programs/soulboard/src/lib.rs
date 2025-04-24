@@ -2,10 +2,12 @@ use anchor_lang::prelude::*;
 pub mod constant;
 pub mod context;
 pub mod states;
+pub mod errors;
 
 use context::*;
 use states::TimeSlot;
 use constant::CAMPAIGN_KEY;
+use errors::SoulboardError;
 declare_id!("61yLHnb8vjRGzkKUPGjN4zviBfsy7wHmwwnZpNP8SfcQ");
 
 #[program]
@@ -84,6 +86,9 @@ pub mod soulboard {
         let campaign_info = ctx.accounts.campaign.to_account_info();
         let authority_info = ctx.accounts.authority.to_account_info();
 
+        if amount > campaign_info.lamports() {
+            return Err(SoulboardError::InsufficientBudget.into());
+        }
         // Transfer lamports directly from campaign to authority
         **authority_info.try_borrow_mut_lamports()? = authority_info.lamports()
             .checked_add(amount)
@@ -99,7 +104,6 @@ pub mod soulboard {
 
     pub fn close_campaign(ctx: Context<CloseCampaign>, campaign_idx: u8) -> Result<()> {
         let advertiser = &mut ctx.accounts.advertiser;
-
         advertiser.campaign_count = advertiser.campaign_count.checked_sub(1).unwrap();
         Ok(())
     }
@@ -116,6 +120,11 @@ pub mod soulboard {
         location.location_idx = provider.last_location_id;
         provider.last_location_id = provider.last_location_id.checked_add(1).unwrap();
         provider.location_count = provider.location_count.checked_add(1).unwrap();
+
+        if location.slots.len() > 10 {
+            return Err(SoulboardError::MaxSlotsReached.into());
+        }
+
         Ok(())
     }
 
@@ -142,8 +151,13 @@ pub mod soulboard {
                         slot_id: slot_id,
                     });
                 }
+                else {
+                    return Err(SoulboardError::SlotAlreadyBooked.into());
+                }
             }
-            
+            else {
+                return Err(SoulboardError::SlotNotFound.into());
+            }
         }
 
         Ok(())
@@ -158,7 +172,23 @@ pub mod soulboard {
 
         for slot in location.slots.iter_mut() {
             if slot.slot_id == slot_id {
-                slot.status = SlotStatus::Available;
+                // Check if the slot is booked BY THIS campaign
+                if let SlotStatus::Booked { campaign_id } = slot.status {
+                    if campaign_id == campaign.key() {
+                         slot.status = SlotStatus::Available;
+                         // TODO: Also remove from campaign.booked_locations
+                    } else {
+                        // Trying to cancel someone else's booking
+                        return Err(SoulboardError::Unauthorized.into());
+                    }
+
+                } else {
+                    // Slot wasn't booked in the first place
+                    return Err(SoulboardError::SlotNotBooked.into());
+                }
+            }
+            else {
+                return Err(SoulboardError::SlotNotFound.into());
             }
         }
 
