@@ -12,9 +12,7 @@ declare_id!("61yLHnb8vjRGzkKUPGjN4zviBfsy7wHmwwnZpNP8SfcQ");
 
 #[program]
 pub mod soulboard {
-    //TODO : add payment logic 
-    //TODO : code refactoring 
-    //TODO : add device logic 
+    
 
     use anchor_lang::solana_program::{ program::invoke, program_error::ProgramError, system_instruction::transfer};
 
@@ -125,8 +123,6 @@ pub mod soulboard {
         Ok(())
     }
 
-    
-
     //TODO : add payment logic 
 
     pub fn book_location(ctx: Context<BookLocation>, _campaign_idx: u8,  location_idx: u8, slot_id: u64) -> Result<()> {
@@ -164,8 +160,7 @@ pub mod soulboard {
     }
 
 
-    //TODO : add payment logic 
-    //TODO : add checking if the slot is actually booked 
+  
     pub fn cancel_booking(ctx: Context<CancelBooking>, _campaign_idx: u8, location_idx: u8, slot_id: u64) -> Result<()> {
         let location = &mut ctx.accounts.location;
         let campaign = &mut ctx.accounts.campaign;
@@ -199,5 +194,25 @@ pub mod soulboard {
         location.slots.push(slot);
         Ok(())
     }
+
+    pub fn withdraw_earnings(ctx: Context<WithdrawEarnings>, _location_idx: u8, amount: u64) -> Result<()> {
+        let location = &mut ctx.accounts.location;
+        let location_info = location.to_account_info();
+        let authority_info = ctx.accounts.authority.to_account_info();
+
+        require!(location_info.lamports() >= amount, SoulboardError::InsufficientEarnings); 
+
+        **location_info.try_borrow_mut_lamports()? = location_info.lamports()
+            .checked_sub(amount)
+            .ok_or(SoulboardError::ArithmeticUnderflow)?;
+
+        **authority_info.try_borrow_mut_lamports()? = authority_info.lamports()
+            .checked_add(amount)
+            .ok_or(SoulboardError::ArithmeticOverflow)?;
+
+        Ok(())
+    }
+
+    
     
 }

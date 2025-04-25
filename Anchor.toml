@@ -6,6 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
+SoulBoardOracle = "9hpXQKdSM4gJLa37Lb259dNJ5J2d6wA2sy2sAzni5nNF"
 soulboard = "61yLHnb8vjRGzkKUPGjN4zviBfsy7wHmwwnZpNP8SfcQ"
 
 [registry]

@@ -61,4 +61,7 @@ pub enum SoulboardError {
 
     #[msg("Slot not booked")]
     SlotNotBooked,
+
+    #[msg("Insufficient earnings")]
+    InsufficientEarnings,
 }
