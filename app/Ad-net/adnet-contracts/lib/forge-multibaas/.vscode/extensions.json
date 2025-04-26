@@ -1,9 +1,0 @@
-{
-  "recommendations": [
-    // Solidity
-    "nomicfoundation.hardhat-solidity",
-    // Python
-    "ms-python.python",
-    "ms-python.black-formatter"
-  ]
-}
