@@ -1,0 +1,556 @@
+---
+description: referring to cronjob api docs
+globs: 
+alwaysApply: false
+---
+# Cron-job.org REST API Documentation
+
+## Introduction
+
+cron-job.org provides a REST-like API that enables users to programmatically create, update, delete, and view cron jobs. The API uses API-key based authorization and JSON for request and response payloads, making it usable from virtually any programming language.
+
+## Limitations
+
+- **Default users**: 100 requests per day (can be increased upon request)
+- **Sustaining members**: 5,000 requests per day
+- Additional individual rate limits may apply to specific API calls
+
+## API Basics
+
+### Endpoint
+
+All API requests should be sent to:
+```
+https://api.cron-job.org/
+```
+
+### Authentication
+
+All requests must include an API key in the Authorization header:
+
+```
+Authorization: Bearer zaX78aqKJuIH4l4RX6njoqADn77MQNJJ
+```
+
+API keys can be generated in the cron-job.org Console under "Settings". Access can be restricted to specific IP addresses.
+
+> **Warning**: API keys are secrets, like passwords. They should be treated confidentially and stored securely. IP address restriction is recommended when possible.
+
+### Content Type
+
+For requests with payloads:
+- Content must be JSON-encoded
+- `Content-Type: application/json` header is required
+- If the header is missing or incorrect, the payload will be ignored
+
+### HTTP Status Codes
+
+| Status code | Description |
+|-------------|-------------|
+| 200 | OK: Request succeeded |
+| 400 | Bad request: Invalid request / invalid input data |
+| 401 | Unauthorized: Invalid API key |
+| 403 | Forbidden: API key cannot be used from this origin |
+| 404 | Not found: The requested resource could not be found |
+| 409 | Conflict, e.g. because a resource already exists |
+| 429 | API key quota, resource quota or rate limit exceeded |
+| 500 | Internal server error |
+
+## API Methods
+
+### Listing Cron Jobs
+
+Retrieves all jobs in the account.
+
+**Request:**
+```
+GET /jobs
+```
+
+**Rate Limit:** Max. 5 requests per second.
+
+**Output Object:**
+
+| Key | Type | Description |
+|-----|------|-------------|
+| jobs | array of Job | List of jobs in the account |
+| someFailed | boolean | `true` if some jobs could not be retrieved due to internal errors |
+
+**Example Response:**
+```json
+{
+    "jobs": [
+        {
+            "jobId": 12345,
+            "enabled": true,
+            "title": "Example Job",
+            "saveResponses": false,
+            "url": "https://example.com/",
+            "lastStatus": 0,
+            "lastDuration": 0,
+            "lastExecution": 0,
+            "nextExecution": 1640187240,
+            "type": 0,
+            "requestTimeout": 300,
+            "redirectSuccess": false,
+            "folderId": 0,
+            "schedule": {
+                "timezone": "Europe/Berlin",
+                "expiresAt": 0,
+                "hours": [-1],
+                "mdays": [-1],
+                "minutes": [0, 15, 30, 45],
+                "months": [-1],
+                "wdays": [-1]
+            },
+            "requestMethod": 0
+        }
+    ],
+    "someFailed": false
+}
+```
+
+### Retrieving Cron Job Details
+
+Get detailed information for a specific cron job.
+
+**Request:**
+```
+GET /jobs/<jobId>
+```
+
+**Rate Limit:** Max. 5 requests per second.
+
+**Output Object:**
+
+| Key | Type | Description |
+|-----|------|-------------|
+| jobDetails | DetailedJob | Detailed job information |
+
+**Example Response:**
+```json
+{
+    "jobDetails": {
+        "jobId": 12345,
+        "enabled": true,
+        "title": "Example Job",
+        "saveResponses": false,
+        "url": "https://example.com/",
+        "lastStatus": 0,
+        "lastDuration": 0,
+        "lastExecution": 0,
+        "nextExecution": 1640189160,
+        "auth": {
+            "enable": false,
+            "user": "",
+            "password": ""
+        },
+        "notification": {
+            "onFailure": false,
+            "onSuccess": false,
+            "onDisable": false
+        },
+        "extendedData": {
+            "headers": {
+                "X-Foo": "Bar"
+            },
+            "body": "Hello World!"
+        },
+        "type": 0,
+        "requestTimeout": 300,
+        "redirectSuccess": false,
+        "folderId": 0,
+        "schedule": {
+            "timezone": "Europe/Berlin",
+            "expiresAt": 0,
+            "hours": [-1],
+            "mdays": [-1],
+            "minutes": [0, 15, 30, 45],
+            "months": [-1],
+            "wdays": [-1]
+        },
+        "requestMethod": 0
+    }
+}
+```
+
+### Creating a Cron Job
+
+Create a new cron job.
+
+**Request:**
+```
+PUT /jobs
+```
+
+**Rate Limit:** Max. 1 request per second and 5 requests per minute.
+
+**Input Object:**
+
+| Key | Type | Description |
+|-----|------|-------------|
+| job | DetailedJob | Job object (only the `url` field is mandatory) |
+
+**Output Object:**
+
+| Key | Type | Description |
+|-----|------|-------------|
+| jobId | int | Identifier of the created job |
+
+**Example Request:**
+```json
+{
+  "job": {
+    "url": "https://example.com",
+    "enabled": true,
+    "saveResponses": true,
+    "schedule": {
+      "timezone": "Europe/Berlin",
+      "expiresAt": 0,
+      "hours": [-1],
+      "mdays": [-1],
+      "minutes": [-1],
+      "months": [-1],
+      "wdays": [-1]
+    }
+  }
+}
+```
+
+**Example Response:**
+```json
+{
+    "jobId": 12345
+}
+```
+
+### Updating a Cron Job
+
+Update an existing cron job.
+
+**Request:**
+```
+PATCH /jobs/<jobId>
+```
+
+**Rate Limit:** Max. 5 requests per second.
+
+**Input Object:**
+
+| Key | Type | Description |
+|-----|------|-------------|
+| job | DetailedJob | Job delta (only include changed fields) |
+
+**Output Object:** Empty object `{}`
+
+**Example Request:**
+```json
+{
+  "job": {
+    "enabled": true
+  }
+}
+```
+
+### Deleting a Cron Job
+
+Delete a cron job.
+
+**Request:**
+```
+DELETE /jobs/<jobId>
+```
+
+**Rate Limit:** Max. 5 requests per second.
+
+**Output Object:** Empty object `{}`
+
+### Retrieving the Job Execution History
+
+Get the execution history for a specific cron job.
+
+**Request:**
+```
+GET /jobs/<jobId>/history
+```
+
+**Rate Limit:** Max. 5 requests per second.
+
+**Output Object:**
+
+| Key | Type | Description |
+|-----|------|-------------|
+| history | array of HistoryItem | The last execution history items (headers and body fields not populated) |
+| predictions | array of int | Unix timestamps of predicted next executions (up to 3) |
+
+**Example Response:**
+```json
+{
+    "history": [
+        {
+            "jobLogId": 4946,
+            "jobId": 12345,
+            "identifier": "12345-22-11-4946",
+            "date": 1640189711,
+            "datePlanned": 1640189700,
+            "jitter": 11257,
+            "url": "http://example.com/",
+            "duration": 239,
+            "status": 1,
+            "statusText": "OK",
+            "httpStatus": 200,
+            "headers": null,
+            "body": null,
+            "stats": {
+                "nameLookup": 1003,
+                "connect": 85516,
+                "appConnect": 0,
+                "preTransfer": 85548,
+                "startTransfer": 238112,
+                "total": 238129
+            }
+        }
+    ],
+    "predictions": [
+        1640190600,
+        1640191500,
+        1640192400
+    ]
+}
+```
+
+### Retrieving Job Execution History Item Details
+
+Get details for a specific execution history item.
+
+**Request:**
+```
+GET /jobs/<jobId>/history/<identifier>
+```
+
+**Rate Limit:** Max. 5 requests per second.
+
+**Output Object:**
+
+| Key | Type | Description |
+|-----|------|-------------|
+| jobHistoryDetails | HistoryItem | Complete history item details including headers and body |
+
+**Example Response:**
+```json
+{
+    "jobHistoryDetails": {
+        "jobLogId": 4946,
+        "jobId": 12345,
+        "identifier": "12345-22-11-4946",
+        "date": 1640189711,
+        "datePlanned": 1640189700,
+        "jitter": 11257,
+        "url": "http://example.com/",
+        "duration": 239,
+        "status": 1,
+        "statusText": "OK",
+        "httpStatus": 200,
+        "headers": "Accept-Ranges: bytes\r\nCache-Control: max-age=604800\r\nContent-Type: text/html; charset=UTF-8...\r\n\r\n",
+        "body": "<!doctype html>\n<html>\n<head>\n    <title>Example Domain</title>...\n",
+        "stats": {
+            "nameLookup": 1003,
+            "connect": 85516,
+            "appConnect": 0,
+            "preTransfer": 85548,
+            "startTransfer": 238112,
+            "total": 238129
+        }
+    }
+}
+```
+
+## Example Requests
+
+### cURL Example
+
+```bash
+curl -X PATCH \
+     -H 'Content-Type: application/json' \
+     -H 'Authorization: Bearer zaX78aqKJuIH4l4RX6njoqADn77MQNJJ' \
+     -d '{"job":{"enabled":true}}' \
+     https://api.cron-job.org/jobs/12345
+```
+
+### Python Example
+
+```python
+import json
+import requests
+
+ENDPOINT = 'https://api.cron-job.org'
+
+headers = {
+    'Authorization': 'Bearer zaX78aqKJuIH4l4RX6njoqADn77MQNJJ',
+    'Content-Type': 'application/json'
+}
+payload = {
+    'job': {
+        'enabled': True
+    }
+}
+
+result = requests.patch(ENDPOINT + '/jobs/12345', headers=headers, data=json.dumps(payload))
+print(result.json())
+```
+
+## Data Types
+
+### Job
+
+The Job object represents a cron job.
+
+| Key | Type | Description | Default* |
+|-----|------|-------------|----------|
+| jobId | int | Job identifier (read only; ignored during job creation or update) | (auto-assigned) |
+| enabled | boolean | Whether the job is enabled (being executed) or not | false |
+| title | string | Job title | (empty) |
+| saveResponses | boolean | Whether to save job response header/body or not | false |
+| url | string | Job URL | (mandatory) |
+| lastStatus | JobStatus | Last execution status (read only) | 0 (Unknown / not executed yet) |
+| lastDuration | int | Last execution duration in milliseconds (read only) | - |
+| lastExecution | int | Unix timestamp of last execution in seconds (read only) | - |
+| nextExecution | int | Unix timestamp of predicted next execution in seconds (read only) | - |
+| type | JobType | Job type (read only) | 0 (Default job) |
+| requestTimeout | int | Job timeout in seconds | -1 (use default timeout) |
+| redirectSuccess | boolean | Whether to treat 3xx HTTP redirect status codes as success | false |
+| folderId | int | The identifier of the folder this job resides in | 0 (root folder) |
+| schedule | JobSchedule | Job schedule | {} |
+| requestMethod | RequestMethod | HTTP request method | 0 (GET) |
+
+*Default value when field is omitted while creating a job.
+
+### DetailedJob
+
+The DetailedJob object extends the Job object with these additional fields:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| auth | JobAuth | HTTP authentication settings |
+| notification | JobNotificationSettings | Notification settings |
+| extendedData | JobExtendedData | Extended request data |
+
+### JobAuth
+
+HTTP basic authentication settings.
+
+| Key | Type | Description | Default* |
+|-----|------|-------------|----------|
+| enable | boolean | Whether to enable HTTP basic authentication | false |
+| user | string | HTTP basic auth username | (empty) |
+| password | string | HTTP basic auth password | (empty) |
+
+*Default value when field is omitted while creating a job.
+
+### JobNotificationSettings
+
+Notification settings for a job.
+
+| Key | Type | Description | Default* |
+|-----|------|-------------|----------|
+| onFailure | boolean | Whether to send notification on job failure | false |
+| onSuccess | boolean | Whether to send notification when job succeeds after a prior failure | false |
+| onDisable | boolean | Whether to send notification when job has been disabled automatically | false |
+
+*Default value when field is omitted while creating a job.
+
+### JobExtendedData
+
+Extended request data for a job.
+
+| Key | Type | Description | Default* |
+|-----|------|-------------|----------|
+| headers | dictionary | Request headers (key-value dictionary) | {} |
+| body | string | Request body data | (empty) |
+
+*Default value when field is omitted while creating a job.
+
+### JobStatus
+
+| Value | Description |
+|-------|-------------|
+| 0 | Unknown / not executed yet |
+| 1 | OK |
+| 2 | Failed (DNS error) |
+| 3 | Failed (could not connect to host) |
+| 4 | Failed (HTTP error) |
+| 5 | Failed (timeout) |
+| 6 | Failed (too much response data) |
+| 7 | Failed (invalid URL) |
+| 8 | Failed (internal errors) |
+| 9 | Failed (unknown reason) |
+
+### JobType
+
+| Value | Description |
+|-------|-------------|
+| 0 | Default job |
+| 1 | Monitoring job (used in a status monitor) |
+
+### JobSchedule
+
+The execution schedule of a job.
+
+| Key | Type | Description | Default* |
+|-----|------|-------------|----------|
+| timezone | string | Schedule time zone | UTC |
+| expiresAt | int | Date/time after which job expires (format: YYYYMMDDhhmmss, 0 = never expires) | 0 |
+| hours | array of int | Hours to execute the job (0-23; [-1] = every hour) | [] |
+| mdays | array of int | Days of month to execute the job (1-31; [-1] = every day of month) | [] |
+| minutes | array of int | Minutes to execute the job (0-59; [-1] = every minute) | [] |
+| months | array of int | Months to execute the job (1-12; [-1] = every month) | [] |
+| wdays | array of int | Days of week to execute (0=Sunday - 6=Saturday; [-1] = every day of week) | [] |
+
+*Default value when field is omitted while creating a job.
+
+### RequestMethod
+
+| Value | Description |
+|-------|-------------|
+| 0 | GET |
+| 1 | POST |
+| 2 | OPTIONS |
+| 3 | HEAD |
+| 4 | PUT |
+| 5 | DELETE |
+| 6 | TRACE |
+| 7 | CONNECT |
+| 8 | PATCH |
+
+### HistoryItem
+
+A job history log entry for one execution.
+
+| Key | Type | Description |
+|-----|------|-------------|
+| jobId | int | Identifier of the associated cron job |
+| identifier | string | Identifier of the history item |
+| date | int | Unix timestamp (seconds) of the actual execution |
+| datePlanned | int | Unix timestamp (seconds) of the planned/ideal execution |
+| jitter | int | Scheduling jitter in milliseconds |
+| url | string | Job URL at time of execution |
+| duration | int | Actual job duration in milliseconds |
+| status | JobStatus | Status of execution |
+| statusText | string | Detailed job status Description |
+| httpStatus | int | HTTP status code returned by the host, if any |
+| headers | string or null | Raw response headers returned by the host (null if unavailable) |
+| body | string or null | Raw response body returned by the host (null if unavailable) |
+| stats | HistoryItemStats | Additional timing information for this request |
+
+### HistoryItemStats
+
+Additional timing information for a job execution.
+
+| Key | Type | Description |
+|-----|------|-------------|
+| nameLookup | int | Time from transfer start until name lookups completed (microseconds) |
+| connect | int | Time from transfer start until socket connect completed (microseconds) |
+| appConnect | int | Time from transfer start until SSL handshake completed (microseconds, 0 if not using SSL) |
+| preTransfer | int | Time from transfer start until beginning of data transfer (microseconds) |
+| startTransfer | int | Time from transfer start until first response byte is received (microseconds) |
+| total | int | Total transfer time (microseconds) |
