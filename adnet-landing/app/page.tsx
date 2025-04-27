@@ -1,45 +1,15 @@
-import Link from "next/link"
-import Image from "next/image"
 import { MapPin, Wallet, ArrowRight, Twitter, DiscIcon as Discord, Github, Menu } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { NavBar } from "@/components/Navbar"
+import { WorldMap } from "@/components/world-map"
+import LocationMap from "@/components/location-map"
+import { StepCard } from "@/components/step-card"
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-[#fffce8] dark:bg-[#121218] font-sans transition-colors duration-300">
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-[#fffce8] dark:bg-[#121218] border-b-[6px] border-black transition-colors duration-300">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            {/* Logo centered on mobile, left on desktop */}
-            <div className="flex items-center justify-center md:justify-start w-full md:w-auto mb-4 md:mb-0">
-              <h1 className="text-3xl font-black tracking-wider dark:text-white">SOULBOARD</h1>
-            </div>
-
-            {/* Navigation items centered */}
-            <div className="hidden md:flex items-center justify-center space-x-6">
-              {["Home", "Dashboard", "Providers", "Swap", "Analytics"].map((item) => (
-                <NavItem key={item} active={item === "Home"}>
-                  {item}
-                </NavItem>
-              ))}
-            </div>
-
-            {/* Mobile menu button - only visible on mobile */}
-            <button className="md:hidden absolute right-4 top-4 p-2">
-              <Menu className="w-6 h-6" />
-            </button>
-
-            {/* Actions - centered on mobile, right on desktop */}
-            <div className="flex items-center justify-center md:justify-end space-x-4 w-full md:w-auto">
-              <ThemeToggle />
-              <button className="bg-[#FFCC00] dark:bg-[#FF6B97] text-black dark:text-white font-bold py-2 px-5 border-[6px] border-black rounded-xl hover:-translate-y-1 transition-transform flex items-center space-x-2 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:dark-glow">
-                <Wallet className="w-5 h-5" />
-                <span>Connect Wallet</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <NavBar />
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-10 md:py-16 max-w-7xl">
@@ -74,32 +44,7 @@ export default function Home() {
       </section>
 
       {/* Location Map */}
-      <section className="container mx-auto px-4 py-12 bg-[#fff9d6] dark:bg-[#1a1a22] border-y-[6px] border-black max-w-full transition-colors duration-300">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-4xl md:text-5xl font-black mb-8 text-center dark:text-white">
-            <span className="text-[#0055FF]">1,234</span> ACTIVE DISPLAYS WORLDWIDE
-          </h2>
-          <div className="relative w-full aspect-[16/9] border-[6px] border-black rounded-xl bg-white dark:bg-[#1e1e28] shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden dark:dark-glow transition-colors duration-300">
-            <div className="absolute inset-0">
-              <WorldMap />
-            </div>
-            <div className="absolute bottom-6 left-6 bg-white dark:bg-[#1e1e28] p-4 border-[4px] border-black rounded-lg transform rotate-1 dark:text-white transition-colors duration-300">
-              <div className="flex items-center space-x-3 mb-2">
-                <div className="w-5 h-5 rounded-full bg-[#FFCC00]"></div>
-                <span className="font-bold">High Density</span>
-              </div>
-              <div className="flex items-center space-x-3 mb-2">
-                <div className="w-5 h-5 rounded-full bg-[#0055FF]"></div>
-                <span className="font-bold">Medium Density</span>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-5 h-5 rounded-full bg-[#FF3366]"></div>
-                <span className="font-bold">Low Density</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <LocationMap/>
 
       {/* How It Works */}
       <section className="container mx-auto px-4 py-12 max-w-7xl">
@@ -192,59 +137,10 @@ export default function Home() {
   )
 }
 
-function NavItem({ children, active = false }) {
-  return (
-    <Link
-      href="#"
-      className={`relative px-3 py-2 text-lg font-bold rounded-lg hover:-translate-y-1 transition-transform ${
-        active ? "text-[#0055FF] dark:text-[#FF6B97]" : "text-black dark:text-white"
-      }`}
-    >
-      {children}
-      {active && (
-        <div className="absolute bottom-0 left-0 w-full h-[3px] bg-[#0055FF] dark:bg-[#FF6B97] transform rotate-1"></div>
-      )}
-    </Link>
-  )
-}
 
-function WorldMap() {
-  return (
-    <div className="relative w-full h-full bg-[#f0f0f0] dark:bg-[#252530]">
-      <Image
-        src="/simplified-blue-world-map.png"
-        alt="World Map"
-        fill
-        className="object-cover dark:opacity-70 dark:contrast-125 dark:brightness-75"
-      />
-      {/* Map Pins */}
-      {mapPins.map((pin, index) => (
-        <MapPin
-          key={index}
-          className={`absolute w-8 h-8 text-[#FFCC00] dark:text-[#FF6B97] animate-pulse cursor-pointer hover:scale-125 transition-transform`}
-          style={{
-            top: `${pin.y}%`,
-            left: `${pin.x}%`,
-            animationDelay: `${index * 0.2}s`,
-          }}
-        />
-      ))}
-    </div>
-  )
-}
 
-function StepCard({ number, title, description, rotate }) {
-  return (
-    <div
-      className={`bg-white dark:bg-[#1e1e28] border-[6px] border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 transition-transform dark:text-white dark:dark-glow transition-colors duration-300`}
-      style={{ transform: `rotate(${rotate}deg)` }}
-    >
-      <div className="text-6xl font-black text-[#0055FF] dark:text-[#FF6B97] mb-3">{number}</div>
-      <h3 className="text-2xl font-bold mb-3">{title}</h3>
-      <p className="text-lg leading-relaxed dark:text-gray-300">{description}</p>
-    </div>
-  )
-}
+
+
 
 function FeatureBox({ title, description, color, icon }) {
   const darkModeColor = color === "#0055FF" ? "#0055FF" : color === "#FFCC00" ? "#FFCC00" : "#FF3366"
@@ -287,18 +183,7 @@ function SocialButton({ icon }) {
 }
 
 // Sample data
-const mapPins = [
-  { x: 20, y: 30 },
-  { x: 30, y: 40 },
-  { x: 50, y: 35 },
-  { x: 70, y: 25 },
-  { x: 80, y: 45 },
-  { x: 40, y: 60 },
-  { x: 60, y: 70 },
-  { x: 25, y: 50 },
-  { x: 75, y: 60 },
-  { x: 55, y: 20 },
-]
+
 
 const steps = [
   {
