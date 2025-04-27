@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-rgb: 255, 252, 232;
+
+  --primary: 0, 85, 255;
+  --accent: 255, 51, 102;
+  --secondary: 255, 204, 0;
+
+  --card-bg: 255, 255, 255;
+  --card-border: 0, 0, 0;
+}
+
+.dark {
+  --foreground-rgb: 255, 255, 255;
+  --background-rgb: 18, 18, 24;
+
+  --primary: 0, 85, 255;
+  --accent: 255, 107, 151;
+  --secondary: 255, 204, 0;
+
+  --card-bg: 30, 30, 40;
+  --card-border: 0, 0, 0;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: rgb(var(--background-rgb));
+  font-family: var(--font-space-grotesk), sans-serif;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1);
+  }
+}
+
+.animate-pulse {
+  animation: pulse 3s infinite;
+}
+
+.dark .dark-glow {
+  box-shadow: 0 0 15px 2px rgba(255, 107, 151, 0.3);
+}
+
+.dark .dark-glow-blue {
+  box-shadow: 0 0 15px 2px rgba(0, 85, 255, 0.3);
+}
+
+.dark .dark-glow-yellow {
+  box-shadow: 0 0 15px 2px rgba(255, 204, 0, 0.3);
+}
