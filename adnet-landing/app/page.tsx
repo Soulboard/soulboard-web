@@ -1,102 +1,114 @@
-import { MapPin, Wallet, ArrowRight, Twitter, DiscIcon as Discord, Github, Menu } from "lucide-react"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { NavBar } from "@/components/Navbar"
-import { WorldMap } from "@/components/world-map"
-import LocationMap from "@/components/location-map"
-import { StepCard } from "@/components/step-card"
+"use client"
+
+import { LandingNavbar } from "@/components/landing-navbar"
+import Image from "next/image"
+import { MapPin, ArrowRight, Twitter, DiscIcon as Discord, Github } from "lucide-react"
+import { useEffect, useState, useRef } from "react"
+import { BillboardFeatures } from "@/components/billboard-features"
+import { HeroBillboard } from "@/components/hero-billboard"
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#fffce8] dark:bg-[#121218] font-sans transition-colors duration-300">
+    <div className="min-h-screen bg-[#121218] font-sans transition-colors duration-300">
       {/* Navigation */}
-      <NavBar />
+      <LandingNavbar />
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-10 md:py-16 max-w-7xl">
-        <div className="max-w-5xl mx-auto relative">
-          {/* Background elements */}
-          <div className="absolute -top-8 -left-8 w-24 h-24 bg-[#FF3366] dark:bg-[#FF6B97] rounded-full opacity-20 dark:opacity-30"></div>
-          <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-[#0055FF] rounded-full opacity-20 dark:opacity-30"></div>
+      <HeroBillboard />
 
-          {/* Content with proper alignment */}
-          <div className="relative z-10 flex flex-col items-start">
-            <h1 className="text-5xl md:text-7xl font-black tracking-wider leading-tight mb-8 dark:text-white">
-              <span className="block text-[#0055FF] dark:text-[#0055FF]">SOULBOARD:</span>
-              <span className="block">DECENTRALIZED</span>
-              <span className="block">ADVERTISING</span>
-              <span className="block text-[#FF3366] dark:text-[#FF6B97]">PROTOCOL</span>
-            </h1>
-
-            <p className="text-xl md:text-2xl font-bold mb-10 max-w-3xl leading-relaxed dark:text-gray-200">
-              Connect real-world displays with digital advertisers through blockchain technology
+      {/* Location Map */}
+      <section className="container mx-auto px-4 py-16 bg-[#fff9d6] dark:bg-[#1a1a22] border-y-[6px] border-black max-w-full transition-colors duration-300 dot-pattern">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col items-center mb-12">
+            <div className="inline-block bg-[#0055FF] dark:bg-[#0055FF] px-4 py-1 rounded-full text-white text-sm font-bold mb-4">
+              Global Network
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black mb-4 text-center dark:text-white">
+              <span className="text-[#0055FF]">1,234</span> ACTIVE DISPLAYS WORLDWIDE
+            </h2>
+            <p className="text-lg text-center max-w-2xl dark:text-gray-300">
+              Join our growing network of display providers and advertisers across the globe
             </p>
+          </div>
 
-            <div className="flex flex-col sm:flex-row gap-5 w-full sm:w-auto">
-              <button className="bg-[#0055FF] text-white font-bold py-4 px-8 border-[6px] border-black rounded-xl hover:-translate-y-1 transition-transform shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:dark-glow-blue">
-                Get Started
-              </button>
-              <button className="bg-white dark:bg-[#1e1e28] text-black dark:text-white font-bold py-4 px-8 border-[6px] border-black rounded-xl hover:-translate-y-1 transition-transform shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] sm:translate-y-4">
-                Learn More
-              </button>
+          <div className="relative w-full aspect-[16/9] border-[6px] border-black rounded-xl bg-white dark:bg-[#1e1e28] shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] overflow-hidden dark:dark-glow transition-colors duration-300">
+            <div className="absolute inset-0">
+              <WorldMap />
+            </div>
+            <div className="absolute bottom-6 left-6 bg-white dark:bg-[#1e1e28] p-4 border-[4px] border-black rounded-lg transform rotate-1 dark:text-white transition-colors duration-300">
+              <div className="flex items-center space-x-3 mb-2">
+                <div className="w-5 h-5 rounded-full bg-[#FFCC00]"></div>
+                <span className="font-bold">High Density</span>
+              </div>
+              <div className="flex items-center space-x-3 mb-2">
+                <div className="w-5 h-5 rounded-full bg-[#0055FF]"></div>
+                <span className="font-bold">Medium Density</span>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-5 h-5 rounded-full bg-[#FF3366]"></div>
+                <span className="font-bold">Low Density</span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Location Map */}
-      <LocationMap/>
-
       {/* How It Works */}
-      <section className="container mx-auto px-4 py-12 max-w-7xl">
-        <h2 className="text-5xl font-black mb-12 text-center relative dark:text-white">
-          <span className="relative z-10">HOW IT WORKS</span>
-          <div className="absolute w-32 h-4 bg-[#FFCC00] bottom-1 left-1/2 -translate-x-1/2 -z-0"></div>
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {steps.map((step, index) => (
-            <StepCard
-              key={index}
-              number={index + 1}
-              title={step.title}
-              description={step.description}
-              rotate={index % 2 === 0 ? 1 : -1}
-            />
-          ))}
+      <section className="w-full py-16 grid-background">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="flex flex-col items-center mb-12">
+            <div className="inline-block bg-[#FFCC00] dark:bg-[#FFCC00] px-4 py-1 rounded-full text-black text-sm font-bold mb-4">
+              Process
+            </div>
+            <h2 className="text-5xl font-black mb-4 text-center relative dark:text-white">
+              <span className="relative z-10">HOW IT WORKS</span>
+              <div className="absolute w-32 h-4 bg-[#FFCC00] bottom-1 left-1/2 -translate-x-1/2 -z-0"></div>
+            </h2>
+            <p className="text-lg text-center max-w-2xl dark:text-gray-300 mb-8">
+              Our decentralized protocol connects advertisers with display providers through a transparent blockchain
+              system
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <AnimatedStepCards />
+          </div>
         </div>
       </section>
 
-      {/* Key Features */}
-      <section className="container mx-auto px-4 py-12 bg-[#fff9d6] dark:bg-[#1a1a22] border-y-[6px] border-black max-w-full transition-colors duration-300">
-        <div className="max-w-7xl mx-auto">
-          <h2 className="text-5xl font-black mb-12 text-center relative dark:text-white">
-            <span className="relative z-10">KEY FEATURES</span>
-            <div className="absolute w-32 h-4 bg-[#FF3366] bottom-1 left-1/2 -translate-x-1/2 -z-0"></div>
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FeatureBox
-              title="Real-World Advertising"
-              description="Connect digital campaigns to physical displays in high-traffic locations worldwide."
-              color="#0055FF"
-              icon="display"
-            />
-            <FeatureBox
-              title="Performance-Based Allocation"
-              description="Smart contracts automatically optimize budget allocation based on real-time performance."
-              color="#FFCC00"
-              icon="chart"
-            />
-            <FeatureBox
-              title="Verified Engagement"
-              description="NFC and IoT technology verifies real-world impressions with blockchain validation."
-              color="#FF3366"
-              icon="verify"
-            />
+      {/* Key Features - Billboard Style */}
+      <section className="w-full py-12 md:py-16 bg-[#fff9d6] dark:bg-[#1a1a22] border-y-[6px] border-black transition-colors duration-300 diagonal-lines">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="flex flex-col items-center mb-8 md:mb-12">
+            <div className="inline-block bg-[#FF3366] dark:bg-[#FF6B97] px-4 py-1 rounded-full text-white text-sm font-bold mb-4">
+              Features
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black mb-4 text-center relative dark:text-white">
+              <span className="relative z-10">KEY FEATURES</span>
+              <div className="absolute w-24 md:w-32 h-3 md:h-4 bg-[#FF3366] bottom-1 left-1/2 -translate-x-1/2 -z-0"></div>
+            </h2>
+            <p className="text-base md:text-lg text-center max-w-2xl dark:text-gray-300 mb-6 md:mb-8">
+              Our platform offers unique capabilities that set us apart from traditional advertising networks
+            </p>
+          </div>
+
+          <BillboardFeatures />
+        </div>
+      </section>
+
+      {/* Stats Section */}
+      <section className="w-full py-16 grid-background">
+        <div className="container mx-auto px-4 max-w-7xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <StatCard number="1,234" label="Active Displays" color="#0055FF" />
+            <StatCard number="$2.5M" label="Ad Revenue Generated" color="#FFCC00" />
+            <StatCard number="56+" label="Countries Covered" color="#FF3366" />
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-black text-white py-12">
+      <footer className="bg-black text-white py-16">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             <div>
@@ -137,39 +149,111 @@ export default function Home() {
   )
 }
 
+function WorldMap() {
+  return (
+    <div className="relative w-full h-full bg-[#f0f0f0] dark:bg-[#252530]">
+      <Image
+        src="/simplified-blue-world-map.png"
+        alt="World Map"
+        fill
+        className="object-cover dark:opacity-70 dark:contrast-125 dark:brightness-75"
+      />
+      {/* Map Pins */}
+      {mapPins.map((pin, index) => (
+        <MapPin
+          key={index}
+          className={`absolute w-8 h-8 text-[#FFCC00] dark:text-[#FF6B97] animate-pulse cursor-pointer hover:scale-125 transition-transform`}
+          style={{
+            top: `${pin.y}%`,
+            left: `${pin.x}%`,
+            animationDelay: `${index * 0.2}s`,
+          }}
+        />
+      ))}
+    </div>
+  )
+}
 
+function AnimatedStepCards() {
+  const [isVisible, setIsVisible] = useState(false)
+  const ref = useRef(null)
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.1 },
+    )
 
+    if (ref.current) {
+      observer.observe(ref.current)
+    }
 
-
-function FeatureBox({ title, description, color, icon }) {
-  const darkModeColor = color === "#0055FF" ? "#0055FF" : color === "#FFCC00" ? "#FFCC00" : "#FF3366"
-  const glowClass =
-    color === "#0055FF" ? "dark:dark-glow-blue" : color === "#FFCC00" ? "dark:dark-glow-yellow" : "dark:dark-glow"
+    return () => {
+      if (ref.current) {
+        observer.disconnect()
+      }
+    }
+  }, [])
 
   return (
-    <div
-      className={`bg-white dark:bg-[#1e1e28] border-[6px] border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-2 hover:-translate-y-2 transition-transform dark:text-white ${glowClass} transition-colors duration-300`}
-    >
-      <div
-        className="w-16 h-16 rounded-xl mb-6 flex items-center justify-center"
-        style={{ backgroundColor: darkModeColor }}
-      >
-        {icon === "display" && <div className="w-10 h-8 border-4 border-black rounded-md"></div>}
-        {icon === "chart" && (
-          <div className="w-10 h-8 flex items-end space-x-1">
-            <div className="w-2 h-3 bg-black"></div>
-            <div className="w-2 h-5 bg-black"></div>
-            <div className="w-2 h-7 bg-black"></div>
-            <div className="w-2 h-4 bg-black"></div>
+    <>
+      {steps.map((step, index) => (
+        <div
+          key={index}
+          ref={index === 0 ? ref : null}
+          className={`step-card bg-white dark:bg-[#1e1e28] border-[6px] border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:text-white dark:dark-glow transition-colors duration-300 ${
+            isVisible
+              ? index % 3 === 0
+                ? "animate-fade-in-up"
+                : index % 3 === 1
+                  ? "animate-rotate-in"
+                  : "animate-scale-in"
+              : "opacity-0"
+          }`}
+          style={{
+            transform: `rotate(${index % 2 === 0 ? 1 : -1}deg)`,
+            animationDelay: `${0.2 * index}s`,
+          }}
+        >
+          <div className="text-6xl font-black text-[#0055FF] dark:text-[#FF6B97] mb-3 overflow-hidden">
+            <div
+              className={isVisible ? "animate-number-count" : "opacity-0"}
+              style={{ animationDelay: `${0.3 * index}s` }}
+            >
+              {index + 1}
+            </div>
           </div>
-        )}
-        {icon === "verify" && (
-          <div className="w-8 h-8 border-4 border-black rounded-full flex items-center justify-center">✓</div>
-        )}
+          <h3 className="text-2xl font-bold mb-3">{step.title}</h3>
+          <p className="text-lg leading-relaxed dark:text-gray-300">{step.description}</p>
+
+          {/* Progress indicator */}
+          <div className="mt-4 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-[#0055FF] dark:bg-[#FF6B97] transition-all duration-1000 ease-out"
+              style={{
+                width: isVisible ? "100%" : "0%",
+                transitionDelay: `${0.5 * index}s`,
+              }}
+            ></div>
+          </div>
+        </div>
+      ))}
+    </>
+  )
+}
+
+function StatCard({ number, label, color }) {
+  return (
+    <div className="bg-white dark:bg-[#1e1e28] border-[6px] border-black rounded-xl p-8 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 transition-transform dark:text-white dark:dark-glow">
+      <div className="text-5xl font-black mb-2" style={{ color }}>
+        {number}
       </div>
-      <h3 className="text-2xl font-bold mb-3">{title}</h3>
-      <p className="text-lg leading-relaxed dark:text-gray-300">{description}</p>
+      <div className="text-xl font-bold">{label}</div>
     </div>
   )
 }
@@ -183,7 +267,18 @@ function SocialButton({ icon }) {
 }
 
 // Sample data
-
+const mapPins = [
+  { x: 20, y: 30 },
+  { x: 30, y: 40 },
+  { x: 50, y: 35 },
+  { x: 70, y: 25 },
+  { x: 80, y: 45 },
+  { x: 40, y: 60 },
+  { x: 60, y: 70 },
+  { x: 25, y: 50 },
+  { x: 75, y: 60 },
+  { x: 55, y: 20 },
+]
 
 const steps = [
   {

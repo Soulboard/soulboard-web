@@ -90,7 +90,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
       <div className="flex flex-col md:flex-row min-h-screen">
         {/* Sidebar - Desktop */}
-        <aside className="hidden md:flex flex-col w-72 border-r-[6px] border-black bg-white dark:bg-[#1e1e28] transition-colors duration-300">
+        <aside className="hidden md:flex flex-col w-80 border-r-[6px] border-black bg-white dark:bg-[#1e1e28] transition-colors duration-300">
           <div className="p-4 border-b-[6px] border-black flex items-center justify-between">
             <Link href="/">
               <h1 className="text-2xl font-black dark:text-white">SOULBOARD</h1>

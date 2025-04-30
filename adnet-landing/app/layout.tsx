@@ -16,7 +16,7 @@ const spaceGrotesk = Space_Grotesk({
 const metadata = {
   title: "SoulBoard - Decentralized Advertising Protocol",
   description: "Connect real-world displays with digital advertisers through blockchain technology",
-    generator: 'v0.dev'
+    
 }
 
 export default function RootLayout({
