@@ -12,7 +12,6 @@ declare_id!("61yLHnb8vjRGzkKUPGjN4zviBfsy7wHmwwnZpNP8SfcQ");
 
 #[program]
 pub mod soulboard {
-    
 
     use anchor_lang::solana_program::{ program::invoke, program_error::ProgramError, system_instruction::transfer};
 

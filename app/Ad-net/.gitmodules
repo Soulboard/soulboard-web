@@ -1,9 +1,0 @@
-[submodule "adnet-contracts/lib/forge-std"]
-	path = adnet-contracts/lib/forge-std
-	url = https://github.com/foundry-rs/forge-std
-[submodule "adnet-contracts/lib/openzeppelin-contracts"]
-	path = adnet-contracts/lib/openzeppelin-contracts
-	url = https://github.com/OpenZeppelin/openzeppelin-contracts
-[submodule "adnet-contracts/lib/forge-multibaas"]
-	path = adnet-contracts/lib/forge-multibaas
-	url = https://github.com/curvegrid/forge-multibaas

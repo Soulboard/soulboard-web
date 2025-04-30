@@ -43,7 +43,8 @@
         program.programId
       )
 
-      const advertiser = await program.account.advertiser.fetch(advertiserPda) ; 
+      const advertiser = await program.account.advertiser.fetch(advertiserPda) ;
+     
 
       console.log(advertiser.authority)
       console.log(advertiser.campaignCount)
@@ -250,11 +251,13 @@
         .registerLocation("location name", "location description", [
           {
             slotId: timeToTimestamp("12pm", today),
-            status: { available: {} }
+            status: { available: {} },
+            price: new BN(1000000)
           },
           {
             slotId: timeToTimestamp("1pm", today),
-            status: { available: {} }
+            status: { available: {} },
+            price: new BN(1000000)
           }
         ])
         .accounts({
@@ -454,7 +457,8 @@
          0,
          {
           slotId: timeToTimestamp("3pm", today),
-          status: { available: {} }
+          status: { available: {} },
+          price: new BN(1000000)
          }// Make sure we use the same index here as in the PDA
         )
         .accounts({

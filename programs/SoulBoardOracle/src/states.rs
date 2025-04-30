@@ -11,7 +11,6 @@ pub struct Device {
     pub device_metrics: DeviceMetrics,
 }
 
-
 #[account]
 #[derive(InitSpace)]
 pub struct DeviceMetrics {
