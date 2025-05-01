@@ -1,180 +1,128 @@
-"use client"
+"use client";
 
-import { useMemo } from "react"
-import { useRole } from "@/hooks/use-role"
-import { useDashboardStore } from "@/store/dashboard-store"
-import { useCampaigns, useLocations, useAnalytics } from "@/hooks/use-dashboard-data"
+import { useMemo } from "react";
+import { useRole } from "@/hooks/use-role";
+import { useCampaigns, useLocations } from "@/hooks/use-dashboard-data"; // ← new hooks
 
-// Types for flourish data
+/* ───────────────── types kept for UI compatibility ─────────────── */
 export interface FlourishData {
-  // Key metrics
   keyMetrics: {
-    primary: {
-      value: string
-      label: string
-      change: string
-      isPositive: boolean
-    }
-    secondary: Array<{
-      value: string
-      label: string
-      change: string
-      isPositive: boolean
-    }>
-  }
-
-  // Performance trends
-  trends: {
-    daily: number[]
-    weekly: number[]
-    monthly: number[]
-    labels: string[]
-  }
-
-  // Top performing items
-  topPerforming: Array<{
-    id: string
-    name: string
-    value: string
-    change: string
-    isPositive: boolean
-  }>
-
-  // Distribution data
-  distribution: {
-    labels: string[]
-    values: number[]
-    colors: string[]
-  }
-
-  // Recent activity
-  recentActivity: Array<{
-    id: string
-    title: string
-    time: string
-    description: string
-  }>
+    primary: { value: string; label: string; change: string; isPositive: boolean };
+    secondary: Array<{ value: string; label: string; change: string; isPositive: boolean }>;
+  };
+  trends: { daily: number[]; weekly: number[]; monthly: number[]; labels: string[] };
+  topPerforming: Array<{ id: string; name: string; value: string; change: string; isPositive: boolean }>;
+  distribution: { labels: string[]; values: number[]; colors: string[] };
+  recentActivity: Array<{ id: string; title: string; time: string; description: string }>;
 }
+/* ──────────────────────────────────────────────────────────────── */
 
 export function useFlourishData() {
-  const { role } = useRole()
-  const { campaigns } = useCampaigns()
-  const { locations } = useLocations()
-  const { data: analyticsData, isLoading } = useAnalytics()
-  const { dashboardStats } = useDashboardStore()
+  const { role } = useRole();
 
-  // Generate flourish data based on role
+  /* on-chain slices */
+  const {
+    campaigns,
+    isLoading: campaignsLoading,
+    getActiveCampaigns,
+    getEndedCampaigns,
+    getPausedCampaigns,
+    getTotalBudgetSOL,
+  } = useCampaigns();
+
+  const {
+    locations,
+    isLoading: locationsLoading,
+    getActiveLocations,
+    getMaintenanceLocations,
+    getInactiveLocations,
+    getTotalSlots,
+  } = useLocations();
+
+  /* ─────────────── compute flourish data ─────────────── */
   const flourishData = useMemo<FlourishData>(() => {
     if (role === "advertiser") {
-      // Advertiser flourish data
+      /* ----- counts & helpers ----- */
+      const active  = getActiveCampaigns().length;
+      const ended   = getEndedCampaigns().length;
+      const paused  = getPausedCampaigns().length;
+      const budget  = getTotalBudgetSOL().toFixed(2);
+
       return {
         keyMetrics: {
-          primary: {
-            value: dashboardStats.advertiser.totalImpressions,
-            label: "Total Impressions",
-            change: dashboardStats.advertiser.roi,
-            isPositive: dashboardStats.advertiser.roi.startsWith("+"),
-          },
+          primary: { value: `${budget} SOL`, label: "Total Budget", change: "", isPositive: true },
           secondary: [
-            {
-              value: `${campaigns.filter((c) => c.status === "Active").length}`,
-              label: "Active Campaigns",
-              change: "+2",
-              isPositive: true,
-            },
-            {
-              value: dashboardStats.advertiser.budgetSpent,
-              label: "Budget Spent",
-              change: "+12.5%",
-              isPositive: true,
-            },
-            {
-              value: analyticsData?.clickThroughRates
-                ? `${analyticsData.clickThroughRates[analyticsData.clickThroughRates.length - 1]}%`
-                : "3.8%",
-              label: "Click-through Rate",
-              change: "+0.7%",
-              isPositive: true,
-            },
+            { value: `${active}`,  label: "Active Campaigns",  change: "", isPositive: true },
+            { value: `${ended}`,   label: "Ended Campaigns",   change: "", isPositive: false },
+            { value: `${paused}`,  label: "Paused Campaigns",  change: "", isPositive: false },
           ],
         },
-        trends: {
-          daily: analyticsData?.impressionsOverTime || [0, 0, 0, 0, 0, 0, 0],
-          weekly: [850000, 920000, 1050000, 1120000],
-          monthly: [3200000, 4500000],
-          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-        },
-        topPerforming: (analyticsData?.campaignPerformance || []).map((item) => ({
-          id: item.id,
-          name: item.name,
-          value: item.impressions,
-          change: item.change,
-          isPositive: item.change.startsWith("+"),
+
+        /* no on-chain time-series yet → placeholder zeros */
+        trends:   { daily: [], weekly: [], monthly: [], labels: [] },
+
+        topPerforming: campaigns.map((c) => ({
+          id: c.id,
+          name: c.name,
+          value: `${c.budgetSOL.toFixed(2)} SOL`,
+          change: "",
+          isPositive: true,
         })),
+
         distribution: {
-          labels: Object.keys(analyticsData?.audienceDemographics?.age || {}),
-          values: Object.values(analyticsData?.audienceDemographics?.age || {}),
-          colors: ["#0055FF", "#FFCC00", "#FF3366", "#00C853", "#9C27B0"],
+          labels: ["Active", "Ended", "Paused"],
+          values: [active, ended, paused],
+          colors: ["#00C853", "#9E9E9E", "#FF3366"],
         },
-        recentActivity: dashboardStats.advertiser.recentActivity,
-      }
-    } else {
-      // Provider flourish data
-      return {
-        keyMetrics: {
-          primary: {
-            value: dashboardStats.provider.monthlyEarnings,
-            label: "Monthly Earnings",
-            change: dashboardStats.provider.growth,
-            isPositive: dashboardStats.provider.growth.startsWith("+"),
-          },
-          secondary: [
-            {
-              value: `${locations.filter((l) => l.status === "Active").length}`,
-              label: "Active Displays",
-              change: "+1",
-              isPositive: true,
-            },
-            {
-              value: dashboardStats.provider.totalImpressions,
-              label: "Total Impressions",
-              change: "+8.3%",
-              isPositive: true,
-            },
-            {
-              value: "99.2%",
-              label: "Average Uptime",
-              change: "+0.5%",
-              isPositive: true,
-            },
-          ],
-        },
-        trends: {
-          daily: analyticsData?.impressionsOverTime || [0, 0, 0, 0, 0, 0, 0],
-          weekly: analyticsData?.earningsOverTime || [0, 0, 0, 0],
-          monthly: [32000, 36000, 39000, 42000],
-          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-        },
-        topPerforming: (analyticsData?.displayPerformance || []).map((item) => ({
-          id: item.id,
-          name: item.name,
-          value: item.earnings,
-          change: item.change,
-          isPositive: item.change.startsWith("+"),
-        })),
-        distribution: {
-          labels: Object.keys(analyticsData?.campaignDistribution?.type || {}),
-          values: Object.values(analyticsData?.campaignDistribution?.type || {}),
-          colors: ["#0055FF", "#FFCC00", "#FF3366", "#00C853"],
-        },
-        recentActivity: dashboardStats.provider.recentActivity,
-      }
+
+        recentActivity: [],   // activity feed not implemented yet
+      };
     }
-  }, [role, campaigns, locations, analyticsData, dashboardStats])
+
+    /* ---------------- PROVIDER view ---------------- */
+    const activeLoc   = getActiveLocations().length;
+    const maintLoc    = getMaintenanceLocations().length;
+    const inactiveLoc = getInactiveLocations().length;
+
+    return {
+      keyMetrics: {
+        primary: { value: `${activeLoc}`, label: "Active Locations", change: "", isPositive: true },
+        secondary: [
+          { value: `${locations.length}`, label: "Total Locations",    change: "", isPositive: true },
+          { value: `${maintLoc}`,        label: "Maintenance",        change: "", isPositive: false },
+          { value: `${getTotalSlots()}`, label: "Total Slots",        change: "", isPositive: true },
+        ],
+      },
+
+      trends: { daily: [], weekly: [], monthly: [], labels: [] },
+
+      topPerforming: locations.map((l) => ({
+        id: l.id,
+        name: l.name,
+        value: `${l.slotCount} slots`,
+        change: "",
+        isPositive: true,
+      })),
+
+      distribution: {
+        labels: ["Active", "Maintenance", "Inactive"],
+        values: [activeLoc, maintLoc, inactiveLoc],
+        colors: ["#00C853", "#FFCC00", "#9E9E9E"],
+      },
+
+      recentActivity: [],
+    };
+  }, [
+    role,
+    campaigns, locations,
+    getActiveCampaigns, getEndedCampaigns, getPausedCampaigns,
+    getActiveLocations, getMaintenanceLocations, getInactiveLocations,
+    getTotalBudgetSOL, getTotalSlots,
+  ]);
 
   return {
     flourishData,
-    isLoading,
+    isLoading: campaignsLoading || locationsLoading,
     role,
-  }
+  };
 }
