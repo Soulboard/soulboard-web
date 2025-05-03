@@ -9,11 +9,15 @@ import { Menu, X, Wallet } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { RoleSwitcher } from "@/components/role-switcher"
 import { useRole } from "@/hooks/use-role"
+import { ConnectWallet } from "./connect-wallet"
+
 
 export function LandingNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const { role } = useRole()
+  
+
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -65,13 +69,7 @@ export function LandingNavbar() {
               <RoleSwitcher className="h-10" />
             </div>
             <ThemeToggle />
-            <button
-              onClick={() => console.log("Connect wallet clicked")}
-              className="bg-[#FFCC00] dark:bg-[#FF6B97] text-black dark:text-white font-bold py-2 px-5 border-[6px] border-black rounded-xl hover:-translate-y-1 transition-transform flex items-center space-x-2 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:dark-glow"
-            >
-              <Wallet className="w-5 h-5" />
-              <span>Connect Wallet</span>
-            </button>
+            <ConnectWallet />
           </div>
         </div>
 

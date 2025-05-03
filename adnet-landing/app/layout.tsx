@@ -1,8 +1,7 @@
-"use client"
-
 import type React from "react"
 import { Space_Grotesk } from "next/font/google"
 import { useEffect } from "react"
+import WalletProvider from "../providers/WalletProvider"
 import "./globals.css"
 
 // Initialize the Space Grotesk font
@@ -23,15 +22,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  useEffect(() => {
-    // Check if user has a preference stored
-    const savedTheme = localStorage.getItem("theme")
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-
-    if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
-      document.documentElement.classList.add("dark")
-    }
-  }, [])
 
   return (
     <html lang="en" className={spaceGrotesk.variable}>
@@ -39,7 +29,11 @@ export default function RootLayout({
         <title>{metadata.title}</title>
         <meta name="description" content={metadata.description} />
       </head>
-      <body>{children}</body>
+      <body>
+        <WalletProvider>
+          {children}
+        </WalletProvider>
+      </body>
     </html>
   )
 }

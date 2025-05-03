@@ -8,8 +8,8 @@ import {
   web3 as anchorWeb3,
   Wallet,
 } from '@coral-xyz/anchor';
-import type { Commitment, Connection, PublicKeyInitData } from '@solana/web3.js';
-import { PublicKey, SystemProgram } from '@solana/web3.js';
+import type { Commitment, PublicKeyInitData } from '@solana/web3.js';
+import { PublicKey, SystemProgram, Connection } from '@solana/web3.js';
 import BN from 'bn.js';
 
 /* ──────────────────────────────────────────────────────────── */
