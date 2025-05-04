@@ -6,11 +6,17 @@ import { useState, useEffect } from "react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { PageTransition } from "@/components/page-transition"
 import { BarChart3, TrendingUp, DollarSign, Users, Clock, MapPin } from "lucide-react"
+import { useLocations } from "@/hooks/use-dashboard-data"
+import { useFlourishData } from "@/hooks/use-location-flourish"
+
 
 type Role = "advertiser" | "provider"
 
 export default function Dashboard() {
   const [role, setRole] = useState<Role>("advertiser")
+  const { locations, isLoading } = useLocations()
+  const { flourishData } = useFlourishData()
+
 
   useEffect(() => {
     // Check for saved role preference
@@ -56,7 +62,7 @@ export default function Dashboard() {
             </>
           ) : (
             <>
-              <StatCard title="Active Displays" value="8" icon={<MapPin className="w-6 h-6" />} color="#FF6B97" />
+              <StatCard title="Active Displays" value={flourishData.keyMetrics.primary.value} icon={<MapPin className="w-6 h-6" />} color="#FF6B97" />
               <StatCard title="Total Impressions" value="850K" icon={<Users className="w-6 h-6" />} color="#FFCC00" />
               <StatCard
                 title="Monthly Earnings"
