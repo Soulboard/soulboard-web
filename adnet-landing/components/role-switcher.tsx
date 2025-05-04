@@ -9,9 +9,15 @@ interface RoleSwitcherProps {
   initialRole?: Role
   onRoleChange?: (role: Role) => void
   className?: string
+  showTransition?: boolean
 }
 
-export function RoleSwitcher({ initialRole = "advertiser", onRoleChange, className = "" }: RoleSwitcherProps) {
+export function RoleSwitcher({
+  initialRole = "advertiser",
+  onRoleChange,
+  className = "",
+  showTransition = true,
+}: RoleSwitcherProps) {
   const { role, changeRole, isLoaded } = useRole(initialRole)
 
   useEffect(() => {
@@ -20,12 +26,35 @@ export function RoleSwitcher({ initialRole = "advertiser", onRoleChange, classNa
     }
   }, [role, onRoleChange, isLoaded])
 
+  const handleRoleChange = (newRole: Role) => {
+    if (role !== newRole) {
+      // Store the current role before changing
+      const currentRole = role
+
+      // Change the role in the store
+      changeRole(newRole)
+
+      // Dispatch a custom event with detailed role information
+      const event = new CustomEvent("roleChange", {
+        detail: {
+          prevRole: currentRole,
+          newRole: newRole,
+        },
+      })
+
+      // Dispatch the event after a small delay to ensure the DOM has updated
+      setTimeout(() => {
+        window.dispatchEvent(event)
+      }, 10)
+    }
+  }
+
   return (
     <div
       className={`flex items-center justify-center p-2 bg-white dark:bg-[#1e1e28] rounded-xl border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${className}`}
     >
       <button
-        onClick={() => changeRole("advertiser")}
+        onClick={() => handleRoleChange("advertiser")}
         className={`relative flex items-center space-x-2 px-4 py-2 rounded-lg font-bold ${
           role === "advertiser"
             ? "bg-[#0055FF] text-white"
@@ -45,7 +74,7 @@ export function RoleSwitcher({ initialRole = "advertiser", onRoleChange, classNa
       </button>
 
       <button
-        onClick={() => changeRole("provider")}
+        onClick={() => handleRoleChange("provider")}
         className={`relative flex items-center space-x-2 px-4 py-2 rounded-lg font-bold ${
           role === "provider"
             ? "bg-[#FF6B97] text-white"

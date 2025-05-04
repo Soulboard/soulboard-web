@@ -9,15 +9,11 @@ import { Menu, X, Wallet } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { RoleSwitcher } from "@/components/role-switcher"
 import { useRole } from "@/hooks/use-role"
-import { ConnectWallet } from "./connect-wallet"
-
 
 export function LandingNavbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const { role } = useRole()
-  
-
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen)
@@ -34,6 +30,13 @@ export function LandingNavbar() {
     { name: "Settings", href: "/dashboard/settings" },
   ]
 
+  // Role-based colors
+  const activeTextColor = role === "advertiser" ? "text-[#0055FF]" : "text-[#FF6B97]"
+
+  const activeUnderlineColor = role === "advertiser" ? "bg-[#0055FF]" : "bg-[#FF6B97]"
+
+  const buttonBgColor = role === "advertiser" ? "bg-[#FFCC00] dark:bg-[#0055FF]" : "bg-[#FFCC00] dark:bg-[#FF6B97]"
+
   return (
     <nav className="sticky top-0 z-50 bg-[#fffce8] dark:bg-[#121218] border-b-[6px] border-black transition-colors duration-300">
       <div className="container mx-auto px-4 py-3">
@@ -48,7 +51,13 @@ export function LandingNavbar() {
           {/* Navigation items centered */}
           <div className="hidden md:flex items-center justify-center space-x-6">
             {navItems.map((item) => (
-              <NavItem key={item.name} href={item.href} active={pathname === item.href}>
+              <NavItem
+                key={item.name}
+                href={item.href}
+                active={pathname === item.href}
+                activeTextColor={activeTextColor}
+                activeUnderlineColor={activeUnderlineColor}
+              >
                 {item.name}
               </NavItem>
             ))}
@@ -69,7 +78,13 @@ export function LandingNavbar() {
               <RoleSwitcher className="h-10" />
             </div>
             <ThemeToggle />
-            <ConnectWallet />
+            <button
+              onClick={() => console.log("Connect wallet clicked")}
+              className={`${buttonBgColor} text-black dark:text-white font-bold py-2 px-5 border-[6px] border-black rounded-xl hover:-translate-y-1 transition-transform flex items-center space-x-2 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] dark:dark-glow`}
+            >
+              <Wallet className="w-5 h-5" />
+              <span>Connect Wallet</span>
+            </button>
           </div>
         </div>
 
@@ -86,7 +101,7 @@ export function LandingNavbar() {
                     href={item.href}
                     className={`block py-2 px-4 text-center font-bold rounded-lg ${
                       pathname === item.href
-                        ? "bg-[#0055FF] text-white"
+                        ? `bg-${role === "advertiser" ? "[#0055FF]" : "[#FF6B97]"} text-white`
                         : "text-black dark:text-white hover:bg-gray-100 dark:hover:bg-[#252530]"
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
@@ -107,19 +122,21 @@ interface NavItemProps {
   children: React.ReactNode
   href: string
   active?: boolean
+  activeTextColor: string
+  activeUnderlineColor: string
 }
 
-function NavItem({ children, href, active = false }: NavItemProps) {
+function NavItem({ children, href, active = false, activeTextColor, activeUnderlineColor }: NavItemProps) {
   return (
     <Link
       href={href}
       className={`relative px-3 py-2 text-lg font-bold rounded-lg hover:-translate-y-1 transition-transform ${
-        active ? "text-[#0055FF] dark:text-[#FF6B97]" : "text-black dark:text-white"
+        active ? activeTextColor : "text-black dark:text-white"
       }`}
     >
       {children}
       {active && (
-        <div className="absolute bottom-0 left-0 w-full h-[3px] bg-[#0055FF] dark:bg-[#FF6B97] transform rotate-1"></div>
+        <div className={`absolute bottom-0 left-0 w-full h-[3px] ${activeUnderlineColor} transform rotate-1`}></div>
       )}
     </Link>
   )

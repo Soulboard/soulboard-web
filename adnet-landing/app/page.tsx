@@ -6,10 +6,17 @@ import { MapPin, ArrowRight, Twitter, DiscIcon as Discord, Github } from "lucide
 import { useEffect, useState, useRef } from "react"
 import { BillboardFeatures } from "@/components/billboard-features"
 import { HeroBillboard } from "@/components/hero-billboard"
+import { useRole } from "@/hooks/use-role"
+import { RoleTransition } from "@/components/role-transition"
 
 export default function Home() {
+  const { role, isTransitioning, completeTransition } = useRole()
+
   return (
     <div className="min-h-screen bg-[#121218] font-sans transition-colors duration-300">
+      {/* Role Transition Screen */}
+      <RoleTransition isVisible={isTransitioning} role={role} onAnimationComplete={completeTransition} />
+
       {/* Navigation */}
       <LandingNavbar />
 

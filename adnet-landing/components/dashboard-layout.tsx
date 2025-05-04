@@ -221,7 +221,9 @@ function RoleDropdown({ role, onRoleChange }: RoleDropdownProps) {
 
   const toggleDropdown = () => setIsOpen(!isOpen)
   const selectRole = (newRole: Role) => {
-    onRoleChange(newRole)
+    if (role !== newRole) {
+      onRoleChange(newRole)
+    }
     setIsOpen(false)
   }
 
@@ -237,7 +239,7 @@ function RoleDropdown({ role, onRoleChange }: RoleDropdownProps) {
           <MapPin className="w-4 h-4 text-[#FF6B97]" />
         )}
         <span className="text-sm font-bold capitalize">{role}</span>
-        <ChevronDown className="w-3 h-3" />
+        <ChevronDown className={`w-3 h-3 transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {isOpen && (

@@ -284,6 +284,69 @@ body {
   }
 }
 
+/* Role transition animations */
+@keyframes role-transition-fade {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes role-transition-scale {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  20% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes role-transition-slide {
+  0% {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  20% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+}
+
+@keyframes progress-fill {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
 .animate-fade-in-up {
   opacity: 0;
   animation: fade-in-up 0.8s ease-out forwards;
@@ -328,6 +391,22 @@ body {
 
 .animate-curtain-hide {
   animation: curtain-hide 0.5s ease-out forwards;
+}
+
+.animate-role-transition-fade {
+  animation: role-transition-fade 2.5s ease-out forwards;
+}
+
+.animate-role-transition-scale {
+  animation: role-transition-scale 2.5s ease-out forwards;
+}
+
+.animate-role-transition-slide {
+  animation: role-transition-slide 2.5s ease-out forwards;
+}
+
+.animate-progress-fill {
+  animation: progress-fill 2s ease-out forwards;
 }
 
 .animate-delay-100 {
@@ -567,16 +646,6 @@ body {
   opacity: 0.3;
 }
 
-/* New Hero Billboard Styles */ \
-/* .255,255,0.6) 0%,
-rgba(255,255,255,0) 20%
-)
-;
-opacity: 
-0.3
-;
-} */
-
 /* New Hero Billboard Styles */
 .hero-grid {
   background-image: linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
@@ -656,4 +725,203 @@ opacity:
 
 .bg-yellow {
   background-color: #ffcc00;
+}
+
+/* Add these new styles for the role transition */
+.role-transition-overlay {
+  backdrop-filter: blur(3px);
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.feature-item {
+  transition: all 0.3s ease;
+}
+
+.feature-item:hover {
+  transform: translateX(5px);
+}
+
+/* Add a nice glow effect for the role icons */
+.role-icon {
+  position: relative;
+}
+
+.role-icon::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: -5px;
+  right: -5px;
+  bottom: -5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+  z-index: -1;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+}
+
+/* Improve the progress bar animation */
+.role-progress-bar {
+  height: 4px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}
+
+/* Add these new transition animations to the end of your globals.css file */
+
+/* Role transition animations */
+@keyframes circle-expand {
+  0% {
+    transform: scale(0);
+    opacity: 0.8;
+  }
+  70% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(20);
+    opacity: 0;
+  }
+}
+
+@keyframes text-blur {
+  0% {
+    filter: blur(0);
+    opacity: 1;
+  }
+  100% {
+    filter: blur(10px);
+    opacity: 0;
+  }
+}
+
+@keyframes text-unblur {
+  0% {
+    filter: blur(10px);
+    opacity: 0;
+  }
+  100% {
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up-fade {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-down-fade {
+  0% {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-circle-expand {
+  animation: circle-expand 1.5s ease-out forwards;
+}
+
+.animate-text-blur {
+  animation: text-blur 0.5s ease-out forwards;
+}
+
+.animate-text-unblur {
+  animation: text-unblur 0.5s ease-out forwards;
+}
+
+.animate-slide-up-fade {
+  animation: slide-up-fade 0.5s ease-out forwards;
+}
+
+.animate-slide-down-fade {
+  animation: slide-down-fade 0.5s ease-out forwards;
+}
+
+/* Staggered animation delays for features */
+.feature-item:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.feature-item:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.feature-item:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* Particle effects for transitions */
+.transition-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: white;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.transition-particle-1 {
+  width: 10px;
+  height: 10px;
+  animation: particle-float 3s ease-in-out infinite;
+}
+
+.transition-particle-2 {
+  width: 15px;
+  height: 15px;
+  animation: particle-float 4s ease-in-out infinite 0.5s;
+}
+
+.transition-particle-3 {
+  width: 8px;
+  height: 8px;
+  animation: particle-float 3.5s ease-in-out infinite 1s;
+}
+
+@keyframes particle-float {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-100px) translateX(50px);
+    opacity: 0;
+  }
 }

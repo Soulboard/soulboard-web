@@ -10,6 +10,7 @@ export function useRole(initialRole: Role = "advertiser") {
   const [role, setRole] = useState<Role>(initialRole)
   const [isLoaded, setIsLoaded] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const [previousRole, setPreviousRole] = useState<Role | null>(null)
 
   useEffect(() => {
     if (!ready) return
@@ -29,6 +30,7 @@ export function useRole(initialRole: Role = "advertiser") {
     }
 
     if (role !== newRole) {
+      setPreviousRole(role)
       setIsTransitioning(true)
 
       // We'll set the role immediately for localStorage, but the UI will transition
@@ -46,10 +48,12 @@ export function useRole(initialRole: Role = "advertiser") {
 
   const completeTransition = () => {
     setIsTransitioning(false)
+    setPreviousRole(null)
   }
 
   return { 
-    role, 
+    role,
+    previousRole,
     changeRole, 
     isLoaded: isLoaded && ready, 
     isTransitioning, 
