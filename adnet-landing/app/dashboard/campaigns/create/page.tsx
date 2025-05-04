@@ -8,6 +8,7 @@ import { DashboardLayout } from "@/components/dashboard-layout"
 import { PageTransition } from "@/components/page-transition"
 import { Calendar, DollarSign, MapPin, ArrowLeft, Search, ImageIcon, Upload, Target } from "lucide-react"
 
+
 export default function CreateCampaign() {
   const router = useRouter()
   const [formData, setFormData] = useState({
@@ -20,8 +21,8 @@ export default function CreateCampaign() {
     locations: [],
     timeSlots: {}, // Object to store time slots for each location
     creativeType: "image",
-    creativeFile: null,
-    creativePreview: null,
+    creativeFile: null as File | null,
+    creativePreview: null as string | null,
   })
 
   const [step, setStep] = useState(1)

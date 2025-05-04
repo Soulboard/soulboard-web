@@ -6,7 +6,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { PageTransition } from "@/components/page-transition"
-import { ArrowLeft, Edit, MapPin, Calendar, DollarSign, Users, BarChart3, Check } from "lucide-react"
+import { ArrowLeft, Edit, MapPin, Calendar, DollarSign, Users, BarChart3, Check, Clock } from "lucide-react"
 import { EditLocationModal } from "@/components/edit-location-modal"
 
 // Sample location data - in a real app, you would fetch this based on the ID
@@ -32,6 +32,11 @@ const locationData = {
     lastVerified: "Apr 5, 2025",
     status: "Verified",
   },
+  availableSlots: [
+    { id: "slot1", day: "Weekdays", startTime: "09:00", endTime: "17:00" },
+    { id: "slot2", day: "Weekends", startTime: "10:00", endTime: "22:00" },
+    { id: "slot3", day: "All Days", startTime: "00:00", endTime: "06:00" },
+  ],
 }
 
 export default function LocationDetails({ params }) {
@@ -146,6 +151,32 @@ export default function LocationDetails({ params }) {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Available Time Slots */}
+        <div className="bg-white dark:bg-[#1e1e28] border-[6px] border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-colors duration-300 mb-8">
+          <h2 className="text-2xl font-bold mb-6 dark:text-white">Available Time Slots</h2>
+
+          {location.availableSlots && location.availableSlots.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {location.availableSlots.map((slot) => (
+                <div key={slot.id} className="bg-gray-50 dark:bg-[#252530] p-4 rounded-xl border-[4px] border-black">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-lg dark:text-white">{slot.day}</h3>
+                    <span className="bg-[#FF6B97] text-white px-3 py-1 rounded-full text-sm">Available</span>
+                  </div>
+                  <div className="mt-2 flex items-center space-x-2">
+                    <Clock className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                    <p className="text-gray-700 dark:text-gray-300">
+                      {slot.startTime} - {slot.endTime}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400">No time slots have been specified for this location.</p>
+          )}
         </div>
 
         {/* Active Campaigns */}

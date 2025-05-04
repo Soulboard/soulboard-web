@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { X, Save } from "lucide-react"
 
+// Update the Location interface to include availableSlots
 interface Location {
   id: string
   name: string
@@ -11,6 +12,12 @@ interface Location {
   size?: string
   status: string
   description?: string
+  availableSlots?: Array<{
+    id: string
+    day: string
+    startTime: string
+    endTime: string
+  }>
 }
 
 interface EditLocationModalProps {
@@ -24,6 +31,13 @@ export function EditLocationModal({ isOpen, onClose, location, onSave }: EditLoc
   const [formData, setFormData] = useState<Location>(location)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // Add these new states in the EditLocationModal component
+  const [currentSlot, setCurrentSlot] = useState({
+    day: "",
+    startTime: "",
+    endTime: "",
+  })
+
   useEffect(() => {
     // Update form data when location changes
     setFormData(location)
@@ -32,6 +46,36 @@ export function EditLocationModal({ isOpen, onClose, location, onSave }: EditLoc
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  // Add these functions to handle slot management
+  const handleSlotChange = (e) => {
+    const { name, value } = e.target
+    setCurrentSlot((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const addSlot = () => {
+    if (!currentSlot.day || !currentSlot.startTime || !currentSlot.endTime) {
+      return
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      availableSlots: [...(prev.availableSlots || []), { ...currentSlot, id: Date.now().toString() }],
+    }))
+
+    setCurrentSlot({
+      day: "",
+      startTime: "",
+      endTime: "",
+    })
+  }
+
+  const removeSlot = (slotId) => {
+    setFormData((prev) => ({
+      ...prev,
+      availableSlots: prev.availableSlots?.filter((slot) => slot.id !== slotId) || [],
+    }))
   }
 
   const handleSubmit = (e) => {
@@ -147,6 +191,94 @@ export function EditLocationModal({ isOpen, onClose, location, onSave }: EditLoc
               rows={4}
               className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
             ></textarea>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-bold mb-4 dark:text-white">Available Time Slots</h3>
+
+            <div className="bg-gray-50 dark:bg-[#252530] p-6 rounded-xl border-[4px] border-black mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-bold mb-2 dark:text-white">Day</label>
+                  <select
+                    name="day"
+                    value={currentSlot.day}
+                    onChange={handleSlotChange}
+                    className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
+                  >
+                    <option value="">Select day</option>
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                    <option value="Weekdays">Weekdays</option>
+                    <option value="Weekends">Weekends</option>
+                    <option value="All Days">All Days</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold mb-2 dark:text-white">Start Time</label>
+                  <input
+                    type="time"
+                    name="startTime"
+                    value={currentSlot.startTime}
+                    onChange={handleSlotChange}
+                    className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold mb-2 dark:text-white">End Time</label>
+                  <input
+                    type="time"
+                    name="endTime"
+                    value={currentSlot.endTime}
+                    onChange={handleSlotChange}
+                    className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={addSlot}
+                disabled={!currentSlot.day || !currentSlot.startTime || !currentSlot.endTime}
+                className="px-4 py-2 bg-[#FF6B97] text-white font-bold rounded-lg border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Add Time Slot
+              </button>
+            </div>
+
+            {/* Display added slots */}
+            {formData.availableSlots && formData.availableSlots.length > 0 && (
+              <div className="space-y-3">
+                <h4 className="font-bold dark:text-white">Current Slots:</h4>
+                {formData.availableSlots.map((slot) => (
+                  <div
+                    key={slot.id}
+                    className="flex items-center justify-between p-3 bg-white dark:bg-[#1e1e28] rounded-lg border-2 border-black"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium dark:text-white">{slot.day}:</span>
+                      <span className="dark:text-gray-300">
+                        {slot.startTime} - {slot.endTime}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeSlot(slot.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end space-x-4">

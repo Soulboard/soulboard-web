@@ -13,8 +13,12 @@ soulboard = "61yLHnb8vjRGzkKUPGjN4zviBfsy7wHmwwnZpNP8SfcQ"
 [registry]
 url = "https://api.apr.dev"
 
+# [provider]
+# cluster = "devnet"
+# wallet = "~/.config/solana/id.json"
+
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 
