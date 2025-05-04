@@ -2,12 +2,12 @@
 
 import { Wallet, ChevronDown, Copy, ExternalLink, LogOut } from "lucide-react"
 import type React from "react"
-import { usePrivy, useWallets } from "@privy-io/react-auth"
+import { usePrivy, useSolanaWallets } from "@privy-io/react-auth"
 import { useState, useRef, useEffect } from "react"
 
 export function ConnectWallet() {
-  const { login, logout, authenticated, user } = usePrivy()
-  const { wallets } = useWallets()
+  const { login, logout, authenticated } = usePrivy()
+  const { wallets } = useSolanaWallets()
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -107,7 +107,7 @@ export function ConnectWallet() {
           <div className="p-4 border-b-2 border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Network</span>
-              <span className="font-bold dark:text-white">Solana {wallets[0].chainId}</span>
+              <span className="font-bold dark:text-white">solana</span>
             </div>
           </div>
 
