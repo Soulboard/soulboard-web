@@ -9,12 +9,14 @@ skip-lint = false
 SoulBoardOracle = "9hpXQKdSM4gJLa37Lb259dNJ5J2d6wA2sy2sAzni5nNF"
 soulboard = "61yLHnb8vjRGzkKUPGjN4zviBfsy7wHmwwnZpNP8SfcQ"
 
+
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
+
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

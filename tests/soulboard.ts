@@ -122,7 +122,7 @@
     );
 
     const tx = await program.methods
-      .addBudget(new BN(1000000000000000), 0)
+      .addBudget(0, new BN(1000000000000000))
       .accounts({
         advertiser: advertiserPda,
         authority: user.publicKey,

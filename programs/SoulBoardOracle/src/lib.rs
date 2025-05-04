@@ -43,8 +43,6 @@ pub mod soul_board_oracle {
         device.device_id = device.device_id + 1;
         Ok(())
     }
-
-    
 }
 
 

@@ -17,7 +17,6 @@ pub struct Initialize<'info> {
         bump,
     )]
     pub device: Account<'info, Device>,
-    
 }
 
 
