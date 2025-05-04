@@ -1,24 +1,33 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { usePrivy } from '@privy-io/react-auth'
 
 export type Role = "advertiser" | "provider"
 
 export function useRole(initialRole: Role = "advertiser") {
+  const { user, ready } = usePrivy()
   const [role, setRole] = useState<Role>(initialRole)
   const [isLoaded, setIsLoaded] = useState(false)
   const [isTransitioning, setIsTransitioning] = useState(false)
 
   useEffect(() => {
+    if (!ready) return
+
     // Check for saved role preference on mount
     const savedRole = localStorage.getItem("userRole") as Role | null
     if (savedRole) {
       setRole(savedRole)
     }
     setIsLoaded(true)
-  }, [])
+  }, [ready])
 
   const changeRole = (newRole: Role) => {
+    if (!user) {
+      console.error("User must be authenticated to change role")
+      return
+    }
+
     if (role !== newRole) {
       setIsTransitioning(true)
 
@@ -39,5 +48,12 @@ export function useRole(initialRole: Role = "advertiser") {
     setIsTransitioning(false)
   }
 
-  return { role, changeRole, isLoaded, isTransitioning, completeTransition }
+  return { 
+    role, 
+    changeRole, 
+    isLoaded: isLoaded && ready, 
+    isTransitioning, 
+    completeTransition,
+    isAuthenticated: !!user 
+  }
 }

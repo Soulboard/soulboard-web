@@ -2,11 +2,13 @@
 
 import { useEffect } from "react";
 import { useDashboardStore } from "@/store/dashboard-store";
+import { usePrivy } from '@privy-io/react-auth';
 
 /* ──────────────────────────────────────────────────────────── */
 /*                         CAMPAIGNS                           */
 /* ──────────────────────────────────────────────────────────── */
 export function useCampaigns() {
+  const { user, ready } = usePrivy();
   const {
     campaigns,
     isLoading,
@@ -16,10 +18,12 @@ export function useCampaigns() {
     addBudget,
   } = useDashboardStore();
 
-  /* auto-refresh once when the hook first mounts */
+  /* auto-refresh once when the hook first mounts and when user is ready */
   useEffect(() => {
-    fetchCampaigns();
-  }, [fetchCampaigns]);
+    if (ready && user) {
+      fetchCampaigns();
+    }
+  }, [fetchCampaigns, ready, user]);
 
   /* helpers */
   const getActiveCampaigns   = () => campaigns.filter(c => c.status === "Active");
@@ -35,6 +39,8 @@ export function useCampaigns() {
     isLoading: isLoading.campaigns,
     error: error.campaigns,
     refresh: fetchCampaigns,
+    isAuthenticated: !!user,
+    isReady: ready,
 
     /* helpers */
     getActiveCampaigns,
@@ -53,6 +59,7 @@ export function useCampaigns() {
 /*                          LOCATIONS                          */
 /* ──────────────────────────────────────────────────────────── */
 export function useLocations() {
+  const { user, ready } = usePrivy();
   const {
     locations,
     isLoading,
@@ -62,8 +69,10 @@ export function useLocations() {
   } = useDashboardStore();
 
   useEffect(() => {
-    fetchLocations();
-  }, [fetchLocations]);
+    if (ready && user) {
+      fetchLocations();
+    }
+  }, [fetchLocations, ready, user]);
 
   /* helpers */
   const getActiveLocations       = () => locations.filter(l => l.status === "Active");
@@ -79,6 +88,8 @@ export function useLocations() {
     isLoading: isLoading.locations,
     error: error.locations,
     refresh: fetchLocations,
+    isAuthenticated: !!user,
+    isReady: ready,
 
     /* helpers */
     getActiveLocations,

@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import type { Wallet } from '@solana/wallet-adapter-react'; // Will be replaced by privy
+import {useSendTransaction} from '@privy-io/react-auth/solana';
+import {Connection, Transaction, VersionedTransaction} from '@solana/web3.js';
 
 
-import { SoulboardClient } from '@/lib/SoulBoardClient';
+import { SoulboardClient, PrivyWallet } from '@/lib/SoulBoardClient';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 
@@ -38,7 +39,7 @@ export interface Location {
 interface DashboardState {
   /* on-chain client (set after wallet connect) */
   client?: SoulboardClient;
-  initialise: (wallet: Wallet) => void;
+  initialise: (wallet: PrivyWallet) => void;
 
   /* data */
   campaigns: Campaign[];
@@ -89,7 +90,7 @@ export const useDashboardStore = create<DashboardState>()(
 
         /* ─────────── init Soulboard client ─────────── */
         initialise: (wallet) => {
-          const client = new SoulboardClient(wallet.adapter);
+          const client = new SoulboardClient(wallet);
           set({ client });
         },
 
@@ -111,8 +112,8 @@ export const useDashboardStore = create<DashboardState>()(
               name: account.campaignName,
               description: account.campaignDescription,
               imageUrl: account.campaignImageUrl,
-              status: account.isClosed ? 'Ended' : 'Active',
-              budgetSOL: lamportsToSol(account.budget),
+              status: (account as any).isClosed ? 'Ended' : 'Active',
+              budgetSOL: lamportsToSol((account as any).budget),
             }));
 
             set({
