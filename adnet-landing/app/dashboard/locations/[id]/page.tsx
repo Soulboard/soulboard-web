@@ -33,9 +33,9 @@ const locationData = {
     status: "Verified",
   },
   availableSlots: [
-    { id: "slot1", day: "Weekdays", startTime: "09:00", endTime: "17:00" },
-    { id: "slot2", day: "Weekends", startTime: "10:00", endTime: "22:00" },
-    { id: "slot3", day: "All Days", startTime: "00:00", endTime: "06:00" },
+    { id: "slot1", day: "Weekdays", startTime: "09:00", endTime: "17:00", basePrice: "0.25" },
+    { id: "slot2", day: "Weekends", startTime: "10:00", endTime: "22:00", basePrice: "0.45" },
+    { id: "slot3", day: "All Days", startTime: "00:00", endTime: "06:00", basePrice: "0.15" },
   ],
 }
 
@@ -170,6 +170,10 @@ export default function LocationDetails({ params }) {
                     <p className="text-gray-700 dark:text-gray-300">
                       {slot.startTime} - {slot.endTime}
                     </p>
+                  </div>
+                  <div className="mt-2 flex items-center space-x-2">
+                    <DollarSign className="w-5 h-5 text-green-500 dark:text-green-400" />
+                    <p className="text-green-700 dark:text-green-300 font-medium">{slot.basePrice} SOL</p>
                   </div>
                 </div>
               ))}

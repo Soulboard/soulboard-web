@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { X, Save } from "lucide-react"
+import { X, Save, DollarSign } from "lucide-react"
 
 // Update the Location interface to include availableSlots
 interface Location {
@@ -17,6 +17,7 @@ interface Location {
     day: string
     startTime: string
     endTime: string
+    basePrice: string // Add base price field
   }>
 }
 
@@ -36,6 +37,7 @@ export function EditLocationModal({ isOpen, onClose, location, onSave }: EditLoc
     day: "",
     startTime: "",
     endTime: "",
+    basePrice: "", // Add base price field
   })
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export function EditLocationModal({ isOpen, onClose, location, onSave }: EditLoc
   }
 
   const addSlot = () => {
-    if (!currentSlot.day || !currentSlot.startTime || !currentSlot.endTime) {
+    if (!currentSlot.day || !currentSlot.startTime || !currentSlot.endTime || !currentSlot.basePrice) {
       return
     }
 
@@ -68,6 +70,7 @@ export function EditLocationModal({ isOpen, onClose, location, onSave }: EditLoc
       day: "",
       startTime: "",
       endTime: "",
+      basePrice: "", // Reset base price
     })
   }
 
@@ -197,7 +200,7 @@ export function EditLocationModal({ isOpen, onClose, location, onSave }: EditLoc
             <h3 className="text-lg font-bold mb-4 dark:text-white">Available Time Slots</h3>
 
             <div className="bg-gray-50 dark:bg-[#252530] p-6 rounded-xl border-[4px] border-black mb-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 <div>
                   <label className="block text-sm font-bold mb-2 dark:text-white">Day</label>
                   <select
@@ -241,12 +244,31 @@ export function EditLocationModal({ isOpen, onClose, location, onSave }: EditLoc
                     className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-sm font-bold mb-2 dark:text-white">Base Price (SOL)</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <DollarSign className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="number"
+                      name="basePrice"
+                      value={currentSlot.basePrice}
+                      onChange={handleSlotChange}
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      className="w-full pl-10 px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
+                    />
+                  </div>
+                </div>
               </div>
 
               <button
                 type="button"
                 onClick={addSlot}
-                disabled={!currentSlot.day || !currentSlot.startTime || !currentSlot.endTime}
+                disabled={!currentSlot.day || !currentSlot.startTime || !currentSlot.endTime || !currentSlot.basePrice}
                 className="px-4 py-2 bg-[#FF6B97] text-white font-bold rounded-lg border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Add Time Slot
@@ -266,6 +288,9 @@ export function EditLocationModal({ isOpen, onClose, location, onSave }: EditLoc
                       <span className="font-medium dark:text-white">{slot.day}:</span>
                       <span className="dark:text-gray-300">
                         {slot.startTime} - {slot.endTime}
+                      </span>
+                      <span className="ml-2 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-sm">
+                        {slot.basePrice} SOL
                       </span>
                     </div>
                     <button

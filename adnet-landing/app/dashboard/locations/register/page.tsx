@@ -1,14 +1,106 @@
+/* -------------------------------------------------------------------------- */
+/*  app/(dashboard)/locations/register/page.tsx                               */
+/* -------------------------------------------------------------------------- */
 "use client"
 
-import { useState } from "react"
+import { useState, ChangeEvent, FormEvent } from "react"
+
 import { useRouter } from "next/navigation"
+import { ArrowLeft, Camera, Upload, Check, MapPin, DollarSign } from "lucide-react"
+import BN from "bn.js"
+import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js"
+
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { PageTransition } from "@/components/page-transition"
-import { ArrowLeft, Camera, Upload, Check, MapPin } from "lucide-react"
+import { TimeSlotInput } from "@/lib/SoulBoardClient"
+import { useLocations } from "@/hooks/use-dashboard-data"
+
+/* -------------------------------------------------------------------------- */
+/*  Helpers                                                                   */
+/* -------------------------------------------------------------------------- */
+
+const DAY_INDEX: Record<string, number> = {
+  Sunday: 0,
+  Monday: 1,
+  Tuesday: 2,
+  Wednesday: 3,
+  Thursday: 4,
+  Friday: 5,
+  Saturday: 6,
+}
+
+/** get the next occurrence (future) of the given DOW */
+function nextWeekday(base: Date, target: number) {
+  const d = new Date(base)
+  const diff = (7 + target - d.getDay()) % 7 || 7      // ensure non-zero
+  d.setDate(d.getDate() + diff)
+  return d
+}
+
+type UiSlot = {
+  id: string
+  day: string
+  startTime: string
+  endTime: string
+  basePrice: string
+}
+
+/** Expand “Weekdays”, “Weekends”, etc. into individual days */
+function expandSlot({ day, startTime, basePrice }: UiSlot): TimeSlotInput[] {
+  const targets =
+    day === "Weekdays"
+      ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+      : day === "Weekends"
+        ? ["Saturday", "Sunday"]
+        : day === "All Days"
+          ? ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+          : [day]
+
+  return targets.map((d) => {
+    const [h, m] = startTime.split(":").map(Number)
+    const date = nextWeekday(new Date(), DAY_INDEX[d])
+    date.setHours(h, m, 0, 0)
+
+    return {
+      slotId: new BN(Math.floor(date.getTime() / 1000)),                     // seconds
+      price: new BN(Number(basePrice) * LAMPORTS_PER_SOL),                  // lamports
+      status: { available: {} },
+    }
+  })
+  
+}
+
+type FormDataState = {
+  name: string
+  address: string
+  city: string
+  state: string
+  zipCode: string
+  locationType: string
+  displaySize: string
+  description: string
+  availableSlots: UiSlot[]
+}
+
+interface StepOneProps {
+  formData: FormDataState
+  handleChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void
+  currentSlot: UiSlot
+  handleSlotChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void
+  addSlot: () => void
+  removeSlot: (id: string) => void
+  nextStep: () => void
+}
+/* -------------------------------------------------------------------------- */
+/*  Component                                                                 */
+/* -------------------------------------------------------------------------- */
 
 export default function RegisterLocation() {
   const router = useRouter()
-  // Update the formData state to include availableSlots
+  const {registerLocation} = useLocations()
+
+  /* ----------------------------- form state ------------------------------ */
+
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -18,28 +110,52 @@ export default function RegisterLocation() {
     locationType: "",
     displaySize: "",
     description: "",
-    availableSlots: [], // Add this new field
+    availableSlots: [] as UiSlot[],
   })
 
-  // Add a new state for managing the current slot being added
-  const [currentSlot, setCurrentSlot] = useState({
+  const [currentSlot, setCurrentSlot] = useState<UiSlot>({
+    id: "",
     day: "",
     startTime: "",
     endTime: "",
+    basePrice: "",
   })
 
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [uploadedImages, setUploadedImages] = useState([])
-  const [verificationStatus, setVerificationStatus] = useState("pending") // pending, verifying, verified
+  const [uploadedImages, setUploadedImages] = useState<{ id: number; name: string }[]>([])
+  const [verificationStatus, setVerificationStatus] = useState<"pending" | "verifying" | "verified">("pending")
 
-  const handleChange = (e) => {
+  /* ------------------------------ handlers ------------------------------- */
+
+  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
+  const handleSlotChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setCurrentSlot((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const addSlot = () => {
+    const { day, startTime, endTime, basePrice } = currentSlot
+    if (!day || !startTime || !endTime || !basePrice) return
+    setFormData((prev) => ({
+      ...prev,
+      availableSlots: [...prev.availableSlots, { ...currentSlot, id: Date.now().toString() }],
+    }))
+    setCurrentSlot({ id: "", day: "", startTime: "", endTime: "", basePrice: "" })
+  }
+
+  const removeSlot = (slotId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      availableSlots: prev.availableSlots.filter((s) => s.id !== slotId),
+    }))
+  }
+
   const handleImageUpload = () => {
-    // Simulate image upload
     setUploadedImages([
       { id: 1, name: "location-front.jpg" },
       { id: 2, name: "location-side.jpg" },
@@ -48,68 +164,51 @@ export default function RegisterLocation() {
 
   const startVerification = () => {
     setVerificationStatus("verifying")
-
-    // Simulate verification process
-    setTimeout(() => {
-      setVerificationStatus("verified")
-    }, 2000)
+    setTimeout(() => setVerificationStatus("verified"), 2000)
   }
 
-  const handleSubmit = (e) => {
+  /* ----------------------------- submission ----------------------------- */
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false)
+    try {
+      /* transform UI → on-chain TimeSlotInput[] */
+      const slotInputs: TimeSlotInput[] = formData.availableSlots.flatMap(expandSlot)
+
+      /* call SDK */
+      await registerLocation({
+        idx: Date.now(),                                // just a unique client-side idx
+        name: formData.name,
+        description: formData.description,
+        slots: slotInputs,
+      })
+
       router.push("/dashboard/locations")
-    }, 1500)
-  }
-
-  const nextStep = () => setStep((prev) => prev + 1)
-  const prevStep = () => setStep((prev) => prev - 1)
-
-  // Add a function to handle adding a new slot
-  const addSlot = () => {
-    if (!currentSlot.day || !currentSlot.startTime || !currentSlot.endTime) {
-      return // Don't add incomplete slots
+    } catch (err) {
+      console.error(err)
+      alert(`Failed to register: ${String(err)}`)
+    } finally {
+      setIsSubmitting(false)
     }
-
-    setFormData((prev) => ({
-      ...prev,
-      availableSlots: [...prev.availableSlots, { ...currentSlot, id: Date.now().toString() }],
-    }))
-
-    // Reset the current slot
-    setCurrentSlot({
-      day: "",
-      startTime: "",
-      endTime: "",
-    })
   }
 
-  // Add a function to handle removing a slot
-  const removeSlot = (slotId) => {
-    setFormData((prev) => ({
-      ...prev,
-      availableSlots: prev.availableSlots.filter((slot) => slot.id !== slotId),
-    }))
-  }
+  /* ----------------------------- navigation ----------------------------- */
 
-  // Add a function to handle changes in the current slot
-  const handleSlotChange = (e) => {
-    const { name, value } = e.target
-    setCurrentSlot((prev) => ({ ...prev, [name]: value }))
-  }
+  const nextStep = () => setStep((s) => s + 1)
+  const prevStep = () => setStep((s) => s - 1)
+
+  /* ---------------------------------------------------------------------- */
+  /*  Render                                                                */
+  /* ---------------------------------------------------------------------- */
 
   return (
     <DashboardLayout>
       <PageTransition>
+        {/* ---------- header ---------- */}
         <div className="mb-8">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-gray-600 dark:text-gray-300 hover:underline mb-4"
-          >
+          <button onClick={() => router.back()} className="flex items-center text-gray-600 dark:text-gray-300 hover:underline mb-4">
             <ArrowLeft className="w-4 h-4 mr-1" />
             Back to locations
           </button>
@@ -117,465 +216,41 @@ export default function RegisterLocation() {
           <p className="text-lg mt-2 dark:text-gray-300">Register your display location to start earning</p>
         </div>
 
-        {/* Progress Steps */}
-        <div className="flex items-center justify-between mb-8 max-w-3xl mx-auto">
-          <ProgressStep number={1} title="Details" active={step >= 1} completed={step > 1} />
-          <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700">
-            <div className="h-full bg-[#FF6B97]" style={{ width: step > 1 ? "100%" : "0%" }}></div>
-          </div>
-          <ProgressStep number={2} title="Verification" active={step >= 2} completed={step > 2} />
-          <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700">
-            <div className="h-full bg-[#FF6B97]" style={{ width: step > 2 ? "100%" : "0%" }}></div>
-          </div>
-          <ProgressStep number={3} title="Review" active={step >= 3} completed={step > 3} />
-        </div>
+        {/* ---------- progress bar ---------- */}
+        <ProgressBar step={step} />
 
-        {/* Form Container */}
-        <div className="bg-white dark:bg-[#1e1e28] border-[6px] border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-colors duration-300">
+        {/* ---------- form card ---------- */}
+        <div className="bg-white dark:bg-[#1e1e28] border-[6px] border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
           <form onSubmit={handleSubmit}>
-            {/* Step 1: Location Details */}
             {step === 1 && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold dark:text-white">Location Details</h2>
-
-                <div>
-                  <label className="block text-sm font-bold mb-2 dark:text-white">Location Name</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-                    placeholder="Enter location name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold mb-2 dark:text-white">Street Address</label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-                    placeholder="Enter street address"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold mb-2 dark:text-white">City</label>
-                    <input
-                      type="text"
-                      name="city"
-                      value={formData.city}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-                      placeholder="City"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold mb-2 dark:text-white">State</label>
-                    <input
-                      type="text"
-                      name="state"
-                      value={formData.state}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-                      placeholder="State"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold mb-2 dark:text-white">Zip Code</label>
-                    <input
-                      type="text"
-                      name="zipCode"
-                      value={formData.zipCode}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-                      placeholder="Zip Code"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold mb-2 dark:text-white">Display Type</label>
-                    <select
-                      name="locationType"
-                      value={formData.locationType}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-                    >
-                      <option value="">Select display type</option>
-                      <option value="Digital Billboard">Digital Billboard</option>
-                      <option value="Interactive Display">Interactive Display</option>
-                      <option value="LED Wall">LED Wall</option>
-                      <option value="Projection">Projection</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold mb-2 dark:text-white">Display Size</label>
-                    <select
-                      name="displaySize"
-                      value={formData.displaySize}
-                      onChange={handleChange}
-                      required
-                      className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-                    >
-                      <option value="">Select display size</option>
-                      <option value="Small (< 10 sq ft)">Small ({"<"} 10 sq ft)</option>
-                      <option value="Medium (10-50 sq ft)">Medium (10-50 sq ft)</option>
-                      <option value="Large (50-100 sq ft)">Large (50-100 sq ft)</option>
-                      <option value="Extra Large (> 100 sq ft)">Extra Large ({">"} 100 sq ft)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold mb-2 dark:text-white">Description</label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    rows={4}
-                    className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-                    placeholder="Describe your location"
-                  ></textarea>
-                </div>
-
-                {/* Add the new Time Slots section here */}
-                <div>
-                  <h3 className="text-lg font-bold mb-4 dark:text-white">Available Time Slots</h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">
-                    Add the days and times your display is available for advertisers.
-                  </p>
-
-                  <div className="bg-gray-50 dark:bg-[#252530] p-6 rounded-xl border-[4px] border-black mb-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                      <div>
-                        <label className="block text-sm font-bold mb-2 dark:text-white">Day</label>
-                        <select
-                          name="day"
-                          value={currentSlot.day}
-                          onChange={handleSlotChange}
-                          className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-                        >
-                          <option value="">Select day</option>
-                          <option value="Monday">Monday</option>
-                          <option value="Tuesday">Tuesday</option>
-                          <option value="Wednesday">Wednesday</option>
-                          <option value="Thursday">Thursday</option>
-                          <option value="Friday">Friday</option>
-                          <option value="Saturday">Saturday</option>
-                          <option value="Sunday">Sunday</option>
-                          <option value="Weekdays">Weekdays</option>
-                          <option value="Weekends">Weekends</option>
-                          <option value="All Days">All Days</option>
-                        </select>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-bold mb-2 dark:text-white">Start Time</label>
-                        <input
-                          type="time"
-                          name="startTime"
-                          value={currentSlot.startTime}
-                          onChange={handleSlotChange}
-                          className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-bold mb-2 dark:text-white">End Time</label>
-                        <input
-                          type="time"
-                          name="endTime"
-                          value={currentSlot.endTime}
-                          onChange={handleSlotChange}
-                          className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={addSlot}
-                      disabled={!currentSlot.day || !currentSlot.startTime || !currentSlot.endTime}
-                      className="px-4 py-2 bg-[#FF6B97] text-white font-bold rounded-lg border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Add Time Slot
-                    </button>
-                  </div>
-
-                  {/* Display added slots */}
-                  {formData.availableSlots.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="font-bold dark:text-white">Added Slots:</h4>
-                      {formData.availableSlots.map((slot) => (
-                        <div
-                          key={slot.id}
-                          className="flex items-center justify-between p-3 bg-white dark:bg-[#1e1e28] rounded-lg border-2 border-black"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium dark:text-white">{slot.day}:</span>
-                            <span className="dark:text-gray-300">
-                              {slot.startTime} - {slot.endTime}
-                            </span>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removeSlot(slot.id)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-6">
-                  <label className="block text-sm font-bold mb-2 dark:text-white">Pin Location on Map</label>
-                  <div className="border-[4px] border-black rounded-lg overflow-hidden h-[300px] relative">
-                    {/* Map placeholder - in a real app, you would use a map library */}
-                    <div className="w-full h-full bg-gray-100 dark:bg-[#252530] flex items-center justify-center">
-                      <div className="text-center">
-                        <MapPin className="w-12 h-12 mx-auto text-[#FF6B97]" />
-                        <p className="mt-2 text-gray-500 dark:text-gray-400">Interactive map would be displayed here</p>
-                        <p className="text-sm text-gray-400 dark:text-gray-500">
-                          Click to place a pin at your display location
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Sample pins */}
-                    <div className="absolute top-1/4 left-1/3">
-                      <MapPin className="w-8 h-8 text-[#FF6B97] -mt-8" />
-                    </div>
-
-                    {/* Coordinates display */}
-                    <div className="absolute bottom-2 right-2 bg-white dark:bg-[#1e1e28] px-3 py-1 rounded-lg border-2 border-black text-sm font-mono">
-                      <span className="dark:text-white">40.7580° N, 73.9855° W</span>
-                    </div>
-                  </div>
-
-                  <div className="mt-2 flex items-center text-sm text-gray-600 dark:text-gray-400">
-                    <Check className="w-4 h-4 mr-1 text-green-500" />
-                    <span>Location coordinates will be used for IoT device verification</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    onClick={nextStep}
-                    className="px-6 py-3 bg-[#FF6B97] text-white font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform"
-                  >
-                    Next Step
-                  </button>
-                </div>
-              </div>
+              <StepOne
+                formData={formData}
+                handleChange={handleChange}
+                currentSlot={currentSlot}
+                handleSlotChange={handleSlotChange}
+                addSlot={addSlot}
+                removeSlot={removeSlot}
+                nextStep={nextStep}
+              />
             )}
 
-            {/* Step 2: Verification */}
             {step === 2 && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold dark:text-white">Location Verification</h2>
-
-                <div className="bg-gray-50 dark:bg-[#252530] p-6 rounded-xl border-[4px] border-black">
-                  <h3 className="font-bold text-lg mb-4 dark:text-white">Upload Photos</h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">
-                    Please upload clear photos of your display location from different angles.
-                  </p>
-
-                  {uploadedImages.length === 0 ? (
-                    <div
-                      onClick={handleImageUpload}
-                      className="border-4 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-[#FF6B97] dark:hover:border-[#FF6B97]"
-                    >
-                      <Upload className="w-12 h-12 mx-auto text-gray-400" />
-                      <p className="mt-2 text-gray-500 dark:text-gray-400">Click to upload photos</p>
-                      <p className="text-sm text-gray-400 dark:text-gray-500">PNG, JPG up to 10MB</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {uploadedImages.map((image) => (
-                        <div
-                          key={image.id}
-                          className="flex items-center justify-between p-3 bg-white dark:bg-[#1e1e28] rounded-lg border-2 border-gray-200 dark:border-gray-700"
-                        >
-                          <div className="flex items-center">
-                            <Camera className="w-5 h-5 mr-3 text-[#FF6B97]" />
-                            <span className="dark:text-white">{image.name}</span>
-                          </div>
-                          <button type="button" className="text-red-500 hover:text-red-700">
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-
-                      <button
-                        type="button"
-                        onClick={handleImageUpload}
-                        className="px-4 py-2 bg-white dark:bg-[#252530] text-[#FF6B97] font-medium rounded-lg border-2 border-[#FF6B97] hover:bg-[#FF6B97] hover:text-white transition-colors"
-                      >
-                        Upload More
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="bg-gray-50 dark:bg-[#252530] p-6 rounded-xl border-[4px] border-black">
-                  <h3 className="font-bold text-lg mb-4 dark:text-white">IoT Device Verification</h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-4">
-                    Connect your IoT device to verify your display location.
-                  </p>
-
-                  {verificationStatus === "pending" && (
-                    <button
-                      type="button"
-                      onClick={startVerification}
-                      className="px-6 py-3 bg-[#0055FF] text-white font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform"
-                    >
-                      Start Verification
-                    </button>
-                  )}
-
-                  {verificationStatus === "verifying" && (
-                    <div className="flex items-center space-x-3">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#0055FF]"></div>
-                      <span className="font-medium dark:text-white">Verifying device...</span>
-                    </div>
-                  )}
-
-                  {verificationStatus === "verified" && (
-                    <div className="flex items-center space-x-3 text-green-600 dark:text-green-400">
-                      <Check className="w-6 h-6" />
-                      <span className="font-medium">Device verified successfully!</span>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex justify-between">
-                  <button
-                    type="button"
-                    onClick={prevStep}
-                    className="px-6 py-3 bg-white dark:bg-[#252530] text-black dark:text-white font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="button"
-                    onClick={nextStep}
-                    disabled={verificationStatus !== "verified"}
-                    className="px-6 py-3 bg-[#FF6B97] text-white font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next Step
-                  </button>
-                </div>
-              </div>
+              <StepTwo
+                uploadedImages={uploadedImages}
+                handleImageUpload={handleImageUpload}
+                verificationStatus={verificationStatus}
+                startVerification={startVerification}
+                prevStep={prevStep}
+                nextStep={nextStep}
+              />
             )}
 
-            {/* Step 3: Review */}
             {step === 3 && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold dark:text-white">Review Location</h2>
-
-                <div className="bg-gray-50 dark:bg-[#252530] p-6 rounded-xl border-[4px] border-black">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm mb-1">Location Name</h3>
-                      <p className="font-bold dark:text-white">{formData.name || "Not specified"}</p>
-                    </div>
-
-                    <div>
-                      <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm mb-1">Display Type</h3>
-                      <p className="font-bold dark:text-white">{formData.locationType || "Not specified"}</p>
-                    </div>
-
-                    <div>
-                      <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm mb-1">Address</h3>
-                      <p className="font-bold dark:text-white">
-                        {formData.address}, {formData.city}, {formData.state} {formData.zipCode}
-                      </p>
-                    </div>
-
-                    <div>
-                      <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm mb-1">Display Size</h3>
-                      <p className="font-bold dark:text-white">{formData.displaySize || "Not specified"}</p>
-                    </div>
-                  </div>
-
-                  <div className="mt-6">
-                    <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm mb-1">Description</h3>
-                    <p className="dark:text-white">{formData.description || "No description provided."}</p>
-                  </div>
-
-                  <div className="mt-6">
-                    <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm mb-1">Verification</h3>
-                    <div className="flex items-center space-x-3 text-green-600 dark:text-green-400">
-                      <Check className="w-5 h-5" />
-                      <span className="font-medium">Location verified</span>
-                    </div>
-                  </div>
-                  {/* Add this new section for available slots */}
-                  <div className="mt-6">
-                    <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm mb-1">Available Time Slots</h3>
-                    {formData.availableSlots.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
-                        {formData.availableSlots.map((slot) => (
-                          <div
-                            key={slot.id}
-                            className="bg-white dark:bg-[#1e1e28] p-2 rounded-lg border border-gray-200 dark:border-gray-700"
-                          >
-                            <span className="font-medium dark:text-white">{slot.day}: </span>
-                            <span className="dark:text-gray-300">
-                              {slot.startTime} - {slot.endTime}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="dark:text-white">No time slots specified.</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border-l-4 border-yellow-400">
-                  <p className="text-yellow-800 dark:text-yellow-200">
-                    By registering this location, you confirm that you have the legal right to use this display for
-                    advertising purposes.
-                  </p>
-                </div>
-
-                <div className="flex justify-between">
-                  <button
-                    type="button"
-                    onClick={prevStep}
-                    className="px-6 py-3 bg-white dark:bg-[#252530] text-black dark:text-white font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="px-6 py-3 bg-[#FF6B97] text-white font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform disabled:opacity-70 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? "Registering..." : "Register Location"}
-                  </button>
-                </div>
-              </div>
+              <StepThree
+                formData={formData}
+                prevStep={prevStep}
+                isSubmitting={isSubmitting}
+              />
             )}
           </form>
         </div>
@@ -584,11 +259,36 @@ export default function RegisterLocation() {
   )
 }
 
+/* -------------------------------------------------------------------------- */
+/*  (Tiny) Presentational Sub-components                                      */
+/* -------------------------------------------------------------------------- */
+
+/* … ProgressBar, StepOne, StepTwo, StepThree and the small reusable parts …  */
+/* (they are identical to the ones you already posted, only imports change)   */
+/* For brevity they’re omitted – just keep your existing JSX for each step.   */
+/* -------------------------------------------------------------------------- */
+
 interface ProgressStepProps {
   number: number
   title: string
   active: boolean
   completed: boolean
+}
+
+function ProgressBar({ step }: { step: number }) {
+  return (
+    <div className="flex items-center justify-between mb-8 max-w-3xl mx-auto">
+      <ProgressStep number={1} title="Details" active={step >= 1} completed={step > 1} />
+      <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700">
+        <div className="h-full bg-[#FF6B97]" style={{ width: step > 1 ? "100%" : "0%" }} />
+      </div>
+      <ProgressStep number={2} title="Verification" active={step >= 2} completed={step > 2} />
+      <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700">
+        <div className="h-full bg-[#FF6B97]" style={{ width: step > 2 ? "100%" : "0%" }} />
+      </div>
+      <ProgressStep number={3} title="Review" active={step >= 3} completed={step > 3} />
+    </div>
+  )
 }
 
 function ProgressStep({ number, title, active, completed }: ProgressStepProps) {
@@ -612,6 +312,537 @@ function ProgressStep({ number, title, active, completed }: ProgressStepProps) {
       >
         {title}
       </span>
+    </div>
+  )
+}
+
+/* -------------------------------------------------------------------------- */
+/*  NOTE                                                                      */
+/* -------------------------------------------------------------------------- */
+/*  ⬧  The sub-components StepOne / StepTwo / StepThree are unchanged         */
+/*     compared with your earlier code – only the submit handler              */
+/*     (handleSubmit) and slot logic are new.                                 */
+/*  ⬧  If you want the full JSX for those steps again, copy the blocks you    */
+/*     already had; no other edits are required.                              */
+/* -------------------------------------------------------------------------- */
+export function StepOne({
+  formData,
+  handleChange,
+  currentSlot,
+  handleSlotChange,
+  addSlot,
+  removeSlot,
+  nextStep,
+}: StepOneProps) {
+  return (
+    <div className="space-y-6">
+      {/* ---------- heading ---------- */}
+      <h2 className="text-2xl font-bold dark:text-white">Location Details</h2>
+
+      {/* ---------- basic inputs ---------- */}
+      {/* Name */}
+      <div>
+        <label className="block text-sm font-bold mb-2 dark:text-white">Location Name</label>
+        <input
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+          className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
+          placeholder="Enter location name"
+        />
+      </div>
+
+      {/* Address */}
+      <div>
+        <label className="block text-sm font-bold mb-2 dark:text-white">Street Address</label>
+        <input
+          type="text"
+          name="address"
+          value={formData.address}
+          onChange={handleChange}
+          required
+          className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
+          placeholder="Enter street address"
+        />
+      </div>
+
+      {/* City / State / ZIP */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {["city", "state", "zipCode"].map((field) => (
+          <div key={field}>
+            <label className="block text-sm font-bold mb-2 capitalize dark:text-white">
+              {field === "zipCode" ? "Zip Code" : field}
+            </label>
+            <input
+              type="text"
+              name={field}
+              value={(formData as any)[field]}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
+              placeholder={field === "zipCode" ? "Zip Code" : field}
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Display type / size */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-bold mb-2 dark:text-white">Display Type</label>
+          <select
+            name="locationType"
+            value={formData.locationType}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
+          >
+            <option value="">Select display type</option>
+            <option value="Digital Billboard">Digital Billboard</option>
+            <option value="Interactive Display">Interactive Display</option>
+            <option value="LED Wall">LED Wall</option>
+            <option value="Projection">Projection</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold mb-2 dark:text-white">Display Size</label>
+          <select
+            name="displaySize"
+            value={formData.displaySize}
+            onChange={handleChange}
+            required
+            className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
+          >
+            <option value="">Select display size</option>
+            <option value="Small (< 10 sq ft)">Small ({"<"} 10 sq ft)</option>
+            <option value="Medium (10-50 sq ft)">Medium (10-50 sq ft)</option>
+            <option value="Large (50-100 sq ft)">Large (50-100 sq ft)</option>
+            <option value="Extra Large (> 100 sq ft)">Extra Large ({">"} 100 sq ft)</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Description */}
+      <div>
+        <label className="block text-sm font-bold mb-2 dark:text-white">Description</label>
+        <textarea
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          rows={4}
+          className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
+          placeholder="Describe your location"
+        />
+      </div>
+
+      {/* ---------- Time-slot section ---------- */}
+      <TimeSlotSection
+        currentSlot={currentSlot}
+        handleSlotChange={handleSlotChange}
+        addSlot={addSlot}
+        formData={formData}
+        removeSlot={removeSlot}
+      />
+
+      {/* ---------- Map placeholder ---------- */}
+      <MapPlaceholder />
+
+      {/* ---------- nav ---------- */}
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={nextStep}
+          className="px-6 py-3 bg-[#FF6B97] text-white font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform"
+        >
+          Next Step
+        </button>
+      </div>
+    </div>
+  )
+}
+
+
+function TimeSlotSection({
+  currentSlot,
+  handleSlotChange,
+  addSlot,
+  formData,
+  removeSlot,
+}: {
+  currentSlot: UiSlot
+  handleSlotChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void
+  addSlot: () => void
+  formData: FormDataState
+  removeSlot: (id: string) => void
+}) {
+  return (
+    <div>
+      <h3 className="text-lg font-bold mb-4 dark:text-white">Available Time Slots</h3>
+      <p className="text-gray-600 dark:text-gray-300 mb-4">
+        Add the days, times, and base prices your display is available for advertisers.
+      </p>
+
+      {/* input row */}
+      <div className="bg-gray-50 dark:bg-[#252530] p-6 rounded-xl border-[4px] border-black mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          {/* Day */}
+          <div>
+            <label className="block text-sm font-bold mb-2 dark:text-white">Day</label>
+            <select
+              name="day"
+              value={currentSlot.day}
+              onChange={handleSlotChange}
+              className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
+            >
+              <option value="">Select day</option>
+              {["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday","Weekdays","Weekends","All Days"]
+                .map((d)=>(
+                  <option key={d} value={d}>{d}</option>
+                ))}
+            </select>
+          </div>
+
+          {/* Start */}
+          <div>
+            <label className="block text-sm font-bold mb-2 dark:text-white">Start Time</label>
+            <input
+              type="time"
+              name="startTime"
+              value={currentSlot.startTime}
+              onChange={handleSlotChange}
+              className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
+            />
+          </div>
+
+          {/* End */}
+          <div>
+            <label className="block text-sm font-bold mb-2 dark:text-white">End Time</label>
+            <input
+              type="time"
+              name="endTime"
+              value={currentSlot.endTime}
+              onChange={handleSlotChange}
+              className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
+            />
+          </div>
+
+          {/* Price */}
+          <div>
+            <label className="block text-sm font-bold mb-2 dark:text-white">Base Price (SOL)</label>
+            <div className="relative">
+              <DollarSign className="absolute inset-y-0 left-0 ml-3 my-auto h-5 w-5 text-gray-400" />
+              <input
+                type="number"
+                name="basePrice"
+                value={currentSlot.basePrice}
+                onChange={handleSlotChange}
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                className="w-full pl-10 px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
+              />
+            </div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={addSlot}
+          disabled={!currentSlot.day || !currentSlot.startTime || !currentSlot.endTime || !currentSlot.basePrice}
+          className="px-4 py-2 bg-[#FF6B97] text-white font-bold rounded-lg border-[4px] border-black shadow-[4px_4px_0_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform disabled:opacity-50"
+        >
+          Add Time Slot
+        </button>
+      </div>
+
+      {/* list of slots */}
+      {formData.availableSlots.length > 0 && (
+        <div className="space-y-3">
+          <h4 className="font-bold dark:text-white">Added Slots:</h4>
+          {formData.availableSlots.map((slot) => (
+            <div
+              key={slot.id}
+              className="flex items-center justify-between p-3 bg-white dark:bg-[#1e1e28] rounded-lg border-2 border-black"
+            >
+              <div className="flex items-center space-x-2">
+                <span className="font-medium dark:text-white">{slot.day}:</span>
+                <span className="dark:text-gray-300">
+                  {slot.startTime} – {slot.endTime}
+                </span>
+                <span className="ml-2 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-sm">
+                  {slot.basePrice} SOL
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => removeSlot(slot.id)}
+                className="text-red-500 hover:text-red-700"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* sub-component: Fake map */
+function MapPlaceholder() {
+  return (
+    <div>
+      <label className="block text-sm font-bold mb-2 dark:text-white">Pin Location on Map</label>
+      <div className="border-[4px] border-black rounded-lg overflow-hidden h-[300px] relative">
+        {/* placeholder */}
+        <div className="w-full h-full bg-gray-100 dark:bg-[#252530] flex items-center justify-center">
+          <div className="text-center">
+            <MapPin className="w-12 h-12 mx-auto text-[#FF6B97]" />
+            <p className="mt-2 text-gray-500 dark:text-gray-400">Interactive map would be displayed here</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">Click to place a pin at your display location</p>
+          </div>
+        </div>
+        {/* demo pin */}
+        <MapPin className="absolute top-1/4 left-1/3 w-8 h-8 text-[#FF6B97] -mt-8" />
+        <div className="absolute bottom-2 right-2 bg-white dark:bg-[#1e1e28] px-3 py-1 rounded-lg border-2 border-black text-sm font-mono">
+          <span className="dark:text-white">40.7580° N, 73.9855° W</span>
+        </div>
+      </div>
+
+      <div className="mt-2 flex items-center text-sm text-gray-600 dark:text-gray-400">
+        <Check className="w-4 h-4 mr-1 text-green-500" />
+        <span>Location coordinates will be used for IoT device verification</span>
+      </div>
+    </div>
+  )
+}
+
+/* -------------------------------------------------------------------------- */
+/*  STEP-2  ▸  Verification                                                   */
+/* -------------------------------------------------------------------------- */
+
+
+interface StepTwoProps {
+  uploadedImages: { id: number; name: string }[]
+  handleImageUpload: () => void
+  verificationStatus: "pending" | "verifying" | "verified"
+  startVerification: () => void
+  prevStep: () => void
+  nextStep: () => void
+}
+
+export function StepTwo({
+  uploadedImages,
+  handleImageUpload,
+  verificationStatus,
+  startVerification,
+  prevStep,
+  nextStep,
+}: StepTwoProps) {
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold dark:text-white">Location Verification</h2>
+
+      {/* photo upload */}
+      <div className="bg-gray-50 dark:bg-[#252530] p-6 rounded-xl border-[4px] border-black">
+        <h3 className="font-bold text-lg mb-4 dark:text-white">Upload Photos</h3>
+        <p className="text-gray-600 dark:text-gray-300 mb-4">
+          Please upload clear photos of your display location from different angles.
+        </p>
+
+        {uploadedImages.length === 0 ? (
+          <div
+            onClick={handleImageUpload}
+            className="border-4 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-[#FF6B97] dark:hover:border-[#FF6B97]"
+          >
+            <Upload className="w-12 h-12 mx-auto text-gray-400" />
+            <p className="mt-2 text-gray-500 dark:text-gray-400">Click to upload photos</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">PNG, JPG up to 10 MB</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {uploadedImages.map((img) => (
+              <div
+                key={img.id}
+                className="flex items-center justify-between p-3 bg-white dark:bg-[#1e1e28] rounded-lg border-2 border-gray-200 dark:border-gray-700"
+              >
+                <div className="flex items-center">
+                  <Camera className="w-5 h-5 mr-3 text-[#FF6B97]" />
+                  <span className="dark:text-white">{img.name}</span>
+                </div>
+                <button type="button" className="text-red-500 hover:text-red-700">
+                  Remove
+                </button>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={handleImageUpload}
+              className="px-4 py-2 bg-white dark:bg-[#252530] text-[#FF6B97] font-medium rounded-lg border-2 border-[#FF6B97] hover:bg-[#FF6B97] hover:text-white transition-colors"
+            >
+              Upload More
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* IoT verification */}
+      <div className="bg-gray-50 dark:bg-[#252530] p-6 rounded-xl border-[4px] border-black">
+        <h3 className="font-bold text-lg mb-4 dark:text-white">IoT Device Verification</h3>
+        <p className="text-gray-600 dark:text-gray-300 mb-4">
+          Connect your IoT device to verify your display location.
+        </p>
+
+        {verificationStatus === "pending" && (
+          <button
+            type="button"
+            onClick={startVerification}
+            className="px-6 py-3 bg-[#0055FF] text-white font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform"
+          >
+            Start Verification
+          </button>
+        )}
+
+        {verificationStatus === "verifying" && (
+          <div className="flex items-center space-x-3">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#0055FF]" />
+            <span className="font-medium dark:text-white">Verifying device…</span>
+          </div>
+        )}
+
+        {verificationStatus === "verified" && (
+          <div className="flex items-center space-x-3 text-green-600 dark:text-green-400">
+            <Check className="w-6 h-6" />
+            <span className="font-medium">Device verified successfully!</span>
+          </div>
+        )}
+      </div>
+
+      {/* nav */}
+      <div className="flex justify-between">
+        <button
+          type="button"
+          onClick={prevStep}
+          className="px-6 py-3 bg-white dark:bg-[#252530] text-black dark:text-white font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform"
+        >
+          Previous
+        </button>
+        <button
+          type="button"
+          onClick={nextStep}
+          disabled={verificationStatus !== "verified"}
+          className="px-6 py-3 bg-[#FF6B97] text-white font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Next Step
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/* -------------------------------------------------------------------------- */
+/*  STEP-3  ▸  Review & Submit                                                */
+/* -------------------------------------------------------------------------- */
+interface StepThreeProps {
+  formData: FormDataState
+  prevStep: () => void
+  isSubmitting: boolean
+}
+
+export function StepThree({ formData, prevStep, isSubmitting }: StepThreeProps) {
+  return (
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold dark:text-white">Review Location</h2>
+
+      {/* summary card */}
+      <div className="bg-gray-50 dark:bg-[#252530] p-6 rounded-xl border-[4px] border-black">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[
+            ["Location Name", formData.name || "Not specified"],
+            ["Display Type", formData.locationType || "Not specified"],
+            [
+              "Address",
+              `${formData.address}, ${formData.city}, ${formData.state} ${formData.zipCode}`,
+            ],
+            ["Display Size", formData.displaySize || "Not specified"],
+          ].map(([label, val]) => (
+            <div key={label as string}>
+              <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm mb-1">{label}</h3>
+              <p className="font-bold dark:text-white">{val}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* description */}
+        <div className="mt-6">
+          <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm mb-1">Description</h3>
+          <p className="dark:text-white">{formData.description || "No description provided."}</p>
+        </div>
+
+        {/* verification */}
+        <div className="mt-6">
+          <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm mb-1">Verification</h3>
+          <div className="flex items-center space-x-3 text-green-600 dark:text-green-400">
+            <Check className="w-5 h-5" />
+            <span className="font-medium">Location verified</span>
+          </div>
+        </div>
+
+        {/* slots */}
+        <div className="mt-6">
+          <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm mb-1">Available Time Slots</h3>
+          {formData.availableSlots.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2">
+              {formData.availableSlots.map((s) => (
+                <div
+                  key={s.id}
+                  className="bg-white dark:bg-[#1e1e28] p-2 rounded-lg border border-gray-200 dark:border-gray-700 flex justify-between items-center"
+                >
+                  <div>
+                    <span className="font-medium dark:text-white">{s.day}: </span>
+                    <span className="dark:text-gray-300">
+                      {s.startTime} – {s.endTime}
+                    </span>
+                  </div>
+                  <span className="ml-2 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 rounded-full text-sm">
+                    {s.basePrice} SOL
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="dark:text-white">No time slots specified.</p>
+          )}
+        </div>
+      </div>
+
+      {/* disclaimer */}
+      <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg border-l-4 border-yellow-400 text-yellow-800 dark:text-yellow-200">
+        By registering this location you confirm that you have the legal right to use this display for advertising
+        purposes.
+      </div>
+
+      {/* nav */}
+      <div className="flex justify-between">
+        <button
+          type="button"
+          onClick={prevStep}
+          className="px-6 py-3 bg-white dark:bg-[#252530] text-black dark:text-white font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform"
+        >
+          Previous
+        </button>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="px-6 py-3 bg-[#FF6B97] text-white font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform disabled:opacity-70"
+        >
+          {isSubmitting ? "Registering…" : "Register Location"}
+        </button>
+      </div>
     </div>
   )
 }

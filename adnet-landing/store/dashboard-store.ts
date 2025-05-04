@@ -2,9 +2,7 @@ import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import {useSendTransaction} from '@privy-io/react-auth/solana';
 import {Connection, Transaction, VersionedTransaction} from '@solana/web3.js';
-
-
-import { SoulboardClient, PrivyWallet } from '@/lib/SoulBoardClient';
+import { SoulboardClient, PrivyWallet, TimeSlotInput } from '@/lib/SoulBoardClient';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
 
@@ -62,7 +60,7 @@ interface DashboardState {
   ) => Promise<string>;                          // returns Campaign PDA
   addBudget: (idx: number, extraSOL: number) => Promise<void>;
   registerLocation: (
-    opts: { idx: number; name: string; description: string }
+    opts: { idx: number; name: string; description: string , slots  : TimeSlotInput }
   ) => Promise<string>;                          // returns Location PDA
 }
 
@@ -202,7 +200,7 @@ export const useDashboardStore = create<DashboardState>()(
           await get().fetchCampaigns();
         },
 
-        registerLocation: async ({ idx, name, description }) => {
+        registerLocation: async ({ idx, name, description , slots }) => {
           const { client } = get();
           if (!client) throw new Error('client not initialised');
 

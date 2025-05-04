@@ -4,66 +4,20 @@ import { useState } from "react"
 import Link from "next/link"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { PageTransition } from "@/components/page-transition"
-import { Search, PlusCircle, Eye, Edit, Trash2 } from "lucide-react"
-
-// Sample location data
-const locationData = [
-  {
-    id: "1",
-    name: "Times Square North",
-    address: "1535 Broadway, New York, NY 10036",
-    type: "Digital Billboard",
-    status: "Active",
-    impressions: "120K/day",
-    earnings: "$1,850/month",
-  },
-  {
-    id: "2",
-    name: "Santa Monica Pier",
-    address: "200 Santa Monica Pier, Santa Monica, CA 90401",
-    type: "Interactive Display",
-    status: "Active",
-    impressions: "95K/day",
-    earnings: "$1,200/month",
-  },
-  {
-    id: "3",
-    name: "Magnificent Mile",
-    address: "401 N Michigan Ave, Chicago, IL 60611",
-    type: "Digital Billboard",
-    status: "Active",
-    impressions: "85K/day",
-    earnings: "$1,400/month",
-  },
-  {
-    id: "4",
-    name: "South Beach",
-    address: "1001 Ocean Drive, Miami Beach, FL 33139",
-    type: "Interactive Display",
-    status: "Maintenance",
-    impressions: "0/day",
-    earnings: "$0/month",
-  },
-  {
-    id: "5",
-    name: "Union Square",
-    address: "333 Post St, San Francisco, CA 94108",
-    type: "Digital Billboard",
-    status: "Active",
-    impressions: "75K/day",
-    earnings: "$1,100/month",
-  },
-]
+import { Search, PlusCircle, Eye, Edit, Trash2, Clock } from "lucide-react"
+import { useLocations } from "@/hooks/use-dashboard-data"
+import { useFlourishData } from "@/hooks/use-location-flourish"
 
 export default function Locations() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
+  const { locations, isLoading } = useLocations()
+  const { flourishData } = useFlourishData()
 
   // Filter locations based on search term and status
-  const filteredLocations = locationData.filter((location) => {
+  const filteredLocations = locations.filter((location) => {
     const matchesSearch =
-      location.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      location.address.toLowerCase().includes(searchTerm.toLowerCase())
+      location.name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "All" || location.status === statusFilter
     return matchesSearch && matchesStatus
   })
@@ -83,6 +37,23 @@ export default function Locations() {
             <PlusCircle className="w-5 h-5 mr-2" />
             Register Location
           </Link>
+        </div>
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="bg-white dark:bg-[#1e1e28] border-[6px] border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-colors duration-300">
+            <h3 className="text-lg font-bold dark:text-gray-300">Active Displays</h3>
+            <p className="text-3xl font-black mt-2 dark:text-white">{flourishData.keyMetrics.primary.value}</p>
+          </div>
+          {flourishData.keyMetrics.secondary.map((metric, index) => (
+            <div
+              key={index}
+              className="bg-white dark:bg-[#1e1e28] border-[6px] border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-colors duration-300"
+            >
+              <h3 className="text-lg font-bold dark:text-gray-300">{metric.label}</h3>
+              <p className="text-3xl font-black mt-2 dark:text-white">{metric.value}</p>
+            </div>
+          ))}
         </div>
 
         {/* Filters */}
@@ -120,22 +91,30 @@ export default function Locations() {
                   <th className="px-6 py-3 text-left font-bold dark:text-white">Location</th>
                   <th className="px-6 py-3 text-left font-bold dark:text-white">Type</th>
                   <th className="px-6 py-3 text-left font-bold dark:text-white">Status</th>
-                  <th className="px-6 py-3 text-left font-bold dark:text-white">Impressions</th>
+                  <th className="px-6 py-3 text-left font-bold dark:text-white">Slots</th>
                   <th className="px-6 py-3 text-left font-bold dark:text-white">Earnings</th>
                   <th className="px-6 py-3 text-center font-bold dark:text-white">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredLocations.length > 0 ? (
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-8 text-center">
+                      <div className="flex justify-center items-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF6B97]"></div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredLocations.length > 0 ? (
                   filteredLocations.map((location) => (
                     <tr key={location.id} className="hover:bg-gray-50 dark:hover:bg-[#252530]">
                       <td className="px-6 py-4 dark:text-white">
                         <Link href={`/dashboard/locations/${location.id}`} className="font-bold hover:underline">
                           {location.name}
                         </Link>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{location.address}</p>
+                        {/* <p className="text-sm text-gray-500 dark:text-gray-400">{location.address}</p> */}
                       </td>
-                      <td className="px-6 py-4 dark:text-white">{location.type}</td>
+                      {/* <td className="px-6 py-4 dark:text-white">{location.}</td> */}
                       <td className="px-6 py-4">
                         <span
                           className={`px-3 py-1 rounded-full text-sm font-medium ${
@@ -149,8 +128,12 @@ export default function Locations() {
                           {location.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 dark:text-white">{location.impressions}</td>
-                      <td className="px-6 py-4 dark:text-white">{location.earnings}</td>
+                      <td className="px-6 py-4 dark:text-white">
+                        <div className="flex items-center">
+                          <Clock className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400" />
+                          {location.slotCount || location.slotCount || 0}
+                        </div>
+                      </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center space-x-2">
                           <Link

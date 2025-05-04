@@ -5,19 +5,20 @@ import * as anchor from '@coral-xyz/anchor';
 import {
   AnchorProvider,
   Program,
-  web3 as anchorWeb3,
+  web3 ,
 } from '@coral-xyz/anchor';
-import type { Commitment, PublicKeyInitData } from '@solana/web3.js';
+import type { Commitment} from '@solana/web3.js';
 import { PublicKey, SystemProgram, Connection, Transaction, VersionedTransaction } from '@solana/web3.js';
 import BN from 'bn.js';
-import { usePrivy } from '@privy-io/react-auth';
 
 /* ──────────────────────────────────────────────────────────── */
 /*                         CONFIG                              */
 /* ──────────────────────────────────────────────────────────── */
 
+
+
 export const SOULBOARD_PROGRAM_ID = new PublicKey(
-  '61yLHnb8vjRGzkKUPGjN4zviBfsy7wHmwwnZpNP8SfcQd',
+  '61yLHnb8vjRGzkKUPGjN4zviBfsy7wHmwwnZpNP8SfcQ',
 );
 
 const DEFAULT_COMMITMENT: Commitment = 'confirmed';
@@ -27,6 +28,7 @@ const DEFAULT_RPC = 'https://devnet.helius-rpc.com/?api-key=5f1828f6-a7b9-417d-9
 /*                       IDL IMPORT                            */
 /* ──────────────────────────────────────────────────────────── */
 import { Soulboard } from "../../target/types/soulboard";
+
 
 // We'll use a type assertion for the IDL since we don't have access to the JSON file
 const soulboardIdl = {} as anchor.Idl;
@@ -287,7 +289,7 @@ export class SoulboardClient {
   }
 
   async registerLocation(
-    locationIdx: number,
+    locationIdx: number, //TODO : Store this in the DB for better management 
     name: string,
     description: string,
     slots: TimeSlotInput[],

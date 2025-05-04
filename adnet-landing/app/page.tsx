@@ -143,7 +143,7 @@ export default function Home() {
                 <SocialButton icon={<Github className="w-6 h-6" />} />
               </div>
               <div className="bg-white dark:bg-[#FF6B97] text-black dark:text-white inline-block px-6 py-3 rounded-xl border-[4px] border-[#0055FF] dark:border-black font-bold transform -rotate-2 dark:dark-glow">
-                Built on Ethereum
+                Built on Solana
               </div>
             </div>
           </div>
