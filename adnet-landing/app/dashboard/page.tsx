@@ -7,6 +7,8 @@ import { DashboardLayout } from "@/components/dashboard-layout"
 import { PageTransition } from "@/components/page-transition"
 import { BarChart3, TrendingUp, DollarSign, Users, Clock, MapPin } from "lucide-react"
 import { useLocations } from "@/hooks/use-dashboard-data"
+import { useCampaignFlourish } from "@/hooks/use-campaign-flourish"
+import { useCampaigns } from "@/hooks/use-dashboard-data"
 import { useFlourishData } from "@/hooks/use-location-flourish"
 
 
@@ -16,7 +18,11 @@ export default function Dashboard() {
   const [role, setRole] = useState<Role>("advertiser")
   const { locations, isLoading } = useLocations()
   const { flourishData } = useFlourishData()
+  const { campaigns , getActiveCampaigns ,getTotalBudgetSOL   } = useCampaigns()
+  const { flourishData : campaignData } = useCampaignFlourish()
 
+  const activeCampaigns = getActiveCampaigns()
+  const budget = getTotalBudgetSOL()
 
   useEffect(() => {
     // Check for saved role preference
@@ -55,9 +61,9 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {role === "advertiser" ? (
             <>
-              <StatCard title="Active Campaigns" value="12" icon={<BarChart3 className="w-6 h-6" />} color="#0055FF" />
+              <StatCard title="Active Campaigns" value={ activeCampaigns.length.toString() } icon={<BarChart3 className="w-6 h-6" />} color="#0055FF" />
               <StatCard title="Total Impressions" value="1.2M" icon={<Users className="w-6 h-6" />} color="#FFCC00" />
-              <StatCard title="Budget Spent" value="$5,240" icon={<DollarSign className="w-6 h-6" />} color="#FF6B97" />
+              <StatCard title="Budget Spent" value={budget.toString()} icon={<DollarSign className="w-6 h-6" />} color="#FF6B97" />
               <StatCard title="ROI" value="+24%" icon={<TrendingUp className="w-6 h-6" />} color="#00C853" />
             </>
           ) : (

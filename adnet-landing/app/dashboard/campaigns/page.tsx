@@ -4,68 +4,71 @@ import { useState } from "react"
 import Link from "next/link"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { PageTransition } from "@/components/page-transition"
+import { useCampaignFlourish } from "@/hooks/use-campaign-flourish"
+import { useCampaigns } from "@/hooks/use-dashboard-data"
 import { Search, PlusCircle, Eye, Edit, Trash2 } from "lucide-react"
 
 // Sample campaign data
-const campaignData = [
-  {
-    id: "1",
-    name: "Summer Sale Promotion",
-    status: "Active",
-    budget: "$2,500",
-    spent: "$1,245",
-    impressions: "450K",
-    startDate: "Jun 1, 2025",
-    endDate: "Aug 31, 2025",
-  },
-  {
-    id: "2",
-    name: "New Product Launch",
-    status: "Active",
-    budget: "$5,000",
-    spent: "$2,340",
-    impressions: "780K",
-    startDate: "May 15, 2025",
-    endDate: "Jul 15, 2025",
-  },
-  {
-    id: "3",
-    name: "Holiday Special",
-    status: "Draft",
-    budget: "$3,000",
-    spent: "$0",
-    impressions: "0",
-    startDate: "Nov 1, 2025",
-    endDate: "Dec 31, 2025",
-  },
-  {
-    id: "4",
-    name: "Spring Collection",
-    status: "Ended",
-    budget: "$1,800",
-    spent: "$1,800",
-    impressions: "620K",
-    startDate: "Mar 1, 2025",
-    endDate: "May 1, 2025",
-  },
-  {
-    id: "5",
-    name: "Brand Awareness",
-    status: "Active",
-    budget: "$10,000",
-    spent: "$4,230",
-    impressions: "1.2M",
-    startDate: "Jan 1, 2025",
-    endDate: "Dec 31, 2025",
-  },
-]
+// const campaignData = [
+//   {
+//     id: "1",
+//     name: "Summer Sale Promotion",
+//     status: "Active",
+//     budget: "$2,500",
+//     spent: "$1,245",
+//     impressions: "450K",
+//     startDate: "Jun 1, 2025",
+//     endDate: "Aug 31, 2025",
+//   },
+//   {
+//     id: "2",
+//     name: "New Product Launch",
+//     status: "Active",
+//     budget: "$5,000",
+//     spent: "$2,340",
+//     impressions: "780K",
+//     startDate: "May 15, 2025",
+//     endDate: "Jul 15, 2025",
+//   },
+//   {
+//     id: "3",
+//     name: "Holiday Special",
+//     status: "Draft",
+//     budget: "$3,000",
+//     spent: "$0",
+//     impressions: "0",
+//     startDate: "Nov 1, 2025",
+//     endDate: "Dec 31, 2025",
+//   },
+//   {
+//     id: "4",
+//     name: "Spring Collection",
+//     status: "Ended",
+//     budget: "$1,800",
+//     spent: "$1,800",
+//     impressions: "620K",
+//     startDate: "Mar 1, 2025",
+//     endDate: "May 1, 2025",
+//   },
+//   {
+//     id: "5",
+//     name: "Brand Awareness",
+//     status: "Active",
+//     budget: "$10,000",
+//     spent: "$4,230",
+//     impressions: "1.2M",
+//     startDate: "Jan 1, 2025",
+//     endDate: "Dec 31, 2025",
+//   },
+// ]
 
 export default function Campaigns() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
+  const { campaigns  } = useCampaigns()
 
   // Filter campaigns based on search term and status
-  const filteredCampaigns = campaignData.filter((campaign) => {
+  const filteredCampaigns = campaigns.filter((campaign) => {
     const matchesSearch = campaign.name.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesStatus = statusFilter === "All" || campaign.status === statusFilter
     return matchesSearch && matchesStatus
@@ -143,7 +146,7 @@ export default function Campaigns() {
                           className={`px-3 py-1 rounded-full text-sm font-medium ${
                             campaign.status === "Active"
                               ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                              : campaign.status === "Draft"
+                              : campaign.status === "Ended"
                                 ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                                 : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
                           }`}
@@ -151,9 +154,8 @@ export default function Campaigns() {
                           {campaign.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 dark:text-white">{campaign.budget}</td>
-                      <td className="px-6 py-4 dark:text-white">{campaign.spent}</td>
-                      <td className="px-6 py-4 dark:text-white">{campaign.impressions}</td>
+                      <td className="px-6 py-4 dark:text-white">{campaign.budgetSOL}</td>
+                      <td className="px-6 py-4 dark:text-white">{campaign.status}</td>
                       <td className="px-6 py-4 dark:text-white">
                         {campaign.startDate} - {campaign.endDate}
                       </td>
