@@ -206,6 +206,10 @@ export class SoulboardClient {
       .accounts({ authority: this.wallet.publicKey })
       .transaction();
 
+      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = this.wallet.publicKey;
+
+
     const txSig = await this.wallet.sendTransaction({
       transaction: tx,
       connection: this.connection
@@ -233,6 +237,10 @@ export class SoulboardClient {
         systemProgram: SystemProgram.programId,
       })
       .transaction();
+
+      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = this.wallet.publicKey;
+
 
     const txSig = await this.wallet.sendTransaction({
       transaction: tx,
@@ -273,6 +281,10 @@ export class SoulboardClient {
       })
       .transaction();
 
+      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = this.wallet.publicKey;
+
+
     return this.wallet.sendTransaction({
       transaction: tx,
       connection: this.connection
@@ -298,6 +310,10 @@ export class SoulboardClient {
       })
       .transaction();
 
+      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = this.wallet.publicKey;
+
+
     return this.wallet.sendTransaction({
       transaction: tx,
       connection: this.connection
@@ -311,6 +327,10 @@ export class SoulboardClient {
       .createProvider()
       .accounts({ authority: this.wallet.publicKey })
       .transaction();
+
+      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = this.wallet.publicKey;
+
 
     const txSig = await this.wallet.sendTransaction({
       transaction: tx,
@@ -380,6 +400,12 @@ export class SoulboardClient {
       })
       .transaction();
 
+
+      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = this.wallet.publicKey;
+
+
+
     return this.wallet.sendTransaction({
       transaction: tx,
       connection: this.connection
@@ -410,6 +436,10 @@ export class SoulboardClient {
         campaign: campaignPda,
       } as any)
       .transaction();
+
+      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = this.wallet.publicKey;
+
 
     return this.wallet.sendTransaction({
       transaction: tx,
@@ -442,6 +472,11 @@ export class SoulboardClient {
       } as any)
       .transaction();
 
+
+      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = this.wallet.publicKey;
+
+
     return this.wallet.sendTransaction({
       transaction: tx,
       connection: this.connection
@@ -465,6 +500,10 @@ export class SoulboardClient {
         campaign: campaignPda,
       })
       .transaction();
+
+      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = this.wallet.publicKey;
+
 
     return this.wallet.sendTransaction({
       transaction: tx,
