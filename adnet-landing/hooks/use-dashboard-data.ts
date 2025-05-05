@@ -3,13 +3,16 @@
 import { useEffect } from "react";
 import { useDashboardStore } from "@/store/dashboard-store";
 import { usePrivy } from '@privy-io/react-auth';
+import { useSolanaWallets } from "@privy-io/react-auth";
 
 /* ──────────────────────────────────────────────────────────── */
 /*                         CAMPAIGNS                           */
 /* ──────────────────────────────────────────────────────────── */
 export function useCampaigns() {
   const { user, ready } = usePrivy();
+  const { wallets } = useSolanaWallets()
   const {
+    initialise,
     campaigns,
     isLoading,
     error,
@@ -43,6 +46,7 @@ export function useCampaigns() {
     isReady: ready,
 
     /* helpers */
+    initialise,
     getActiveCampaigns,
     getEndedCampaigns,
     getPausedCampaigns,
@@ -61,6 +65,7 @@ export function useCampaigns() {
 export function useLocations() {
   const { user, ready } = usePrivy();
   const {
+    initialise,
     locations,
     isLoading,
     error,
@@ -92,6 +97,7 @@ export function useLocations() {
     isReady: ready,
 
     /* helpers */
+    initialise,
     getActiveLocations,
     getMaintenanceLocations,
     getInactiveLocations,

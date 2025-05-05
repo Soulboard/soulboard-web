@@ -10,6 +10,12 @@ import {
 import type { Commitment} from '@solana/web3.js';
 import { PublicKey, SystemProgram, Connection, Transaction, VersionedTransaction } from '@solana/web3.js';
 import BN from 'bn.js';
+import { SendTransactionOptions } from '@solana/wallet-adapter-base';
+import {useSendTransaction} from '@privy-io/react-auth/solana';
+import { ConnectedSolanaWallet } from '@privy-io/react-auth';
+import { SupportedSolanaTransaction  } from '@privy-io/react-auth/solana';
+import { SendTransactionModalUIOptions  } from '@privy-io/react-auth';
+import { SolanaFundingConfig , SolanaTransactionReceipt } from '@privy-io/react-auth';
 
 /* ──────────────────────────────────────────────────────────── */
 /*                         CONFIG                              */
@@ -28,7 +34,8 @@ const DEFAULT_RPC = 'https://devnet.helius-rpc.com/?api-key=5f1828f6-a7b9-417d-9
 /*                       IDL IMPORT                            */
 /* ──────────────────────────────────────────────────────────── */
 import { Soulboard } from "../../target/types/soulboard";
-import soulboardIdl from "../../target/idl/soul_board_oracle.json"
+import soulboardIdl  from "../../target/idl/soulboard.json"
+
 
 // We'll use a type assertion for the IDL since we don't have access to the JSON file
 
@@ -66,9 +73,17 @@ export interface TimeSlotInput {
 /* ──────────────────────────────────────────────────────────── */
 
 export interface PrivyWallet {
+  wallet : ConnectedSolanaWallet
   publicKey: PublicKey;
-  sendTransaction: (transaction: Transaction | VersionedTransaction) => Promise<string>;
-}
+  sendTransaction: (input: {
+    transaction: SupportedSolanaTransaction;
+    connection: Connection;
+    uiOptions?: SendTransactionModalUIOptions;
+    transactionOptions?: SendTransactionOptions;
+    fundWalletConfig?: SolanaFundingConfig;
+    address?: string;
+  }) => Promise<SolanaTransactionReceipt>
+} 
 
 export class SoulboardClient {
   readonly connection: Connection;
@@ -109,14 +124,16 @@ export class SoulboardClient {
       },
       { commitment },
     );
-    anchor.setProvider(provider);
+    
     this.provider = provider;
 
-    this.program = new Program<Soulboard>(
-      soulboardIdl,
-      SOULBOARD_PROGRAM_ID,
-      this.provider,
-    );
+    this.program = new Program( 
+       soulboardIdl as Soulboard , {
+        connection,
+       }
+    )
+
+    anchor.setProvider(provider);
   }
 
   /* ────────────────────── PDA HELPERS ────────────────────── */
@@ -158,7 +175,8 @@ export class SoulboardClient {
       [
         Buffer.from('location'),
         authority.toBuffer(),
-        new BN(locationIdx).toArrayLike(Buffer, 'le', 1),
+        Buffer.from([locationIdx])
+        ,
       ],
       SOULBOARD_PROGRAM_ID,
     );
@@ -188,7 +206,10 @@ export class SoulboardClient {
       .accounts({ authority: this.wallet.publicKey })
       .transaction();
 
-    const txSig = await this.wallet.sendTransaction(tx);
+    const txSig = await this.wallet.sendTransaction({
+      transaction: tx,
+      connection: this.connection
+    });
     return txSig;
   }
 
@@ -213,7 +234,10 @@ export class SoulboardClient {
       })
       .transaction();
 
-    const txSig = await this.wallet.sendTransaction(tx);
+    const txSig = await this.wallet.sendTransaction({
+      transaction: tx,
+      connection: this.connection
+    });
 
     // Re-fetch advertiser to learn lastCampaignId
     const advertiserAcc = await this.program.account.advertiser.fetch(
@@ -249,7 +273,10 @@ export class SoulboardClient {
       })
       .transaction();
 
-    return this.wallet.sendTransaction(tx);
+    return this.wallet.sendTransaction({
+      transaction: tx,
+      connection: this.connection
+    });
   }
 
   async withdrawAmount(
@@ -271,7 +298,10 @@ export class SoulboardClient {
       })
       .transaction();
 
-    return this.wallet.sendTransaction(tx);
+    return this.wallet.sendTransaction({
+      transaction: tx,
+      connection: this.connection
+    });
   }
 
   /* -------- Provider / Location flow -------- */
@@ -282,13 +312,16 @@ export class SoulboardClient {
       .accounts({ authority: this.wallet.publicKey })
       .transaction();
 
-    const txSig = await this.wallet.sendTransaction(tx);
+    const txSig = await this.wallet.sendTransaction({
+      transaction: tx,
+      connection: this.connection
+    });
     const providerPda = this.getProviderPda()[0];
     return { txSig, providerPda };
   }
 
   async registerLocation(
-    locationIdx: number, //TODO : Store this in the DB for better management 
+    locationIdx: number,
     name: string,
     description: string,
     slots: TimeSlotInput[],
@@ -313,10 +346,17 @@ export class SoulboardClient {
         provider: providerPda,
         location: locationPda,
         systemProgram: SystemProgram.programId,
-      } as any) // Type assertion to handle account type mismatch
+      } as any)
       .transaction();
 
-    return this.wallet.sendTransaction(tx);
+      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+      tx.feePayer = this.wallet.publicKey;
+
+
+    return this.wallet.sendTransaction({
+      transaction: tx,
+      connection: this.connection
+    });
   }
 
   async addTimeSlot(
@@ -340,7 +380,10 @@ export class SoulboardClient {
       })
       .transaction();
 
-    return this.wallet.sendTransaction(tx);
+    return this.wallet.sendTransaction({
+      transaction: tx,
+      connection: this.connection
+    });
   }
 
   async bookLocation(
@@ -365,10 +408,13 @@ export class SoulboardClient {
         adProvider: providerPda,
         location: locationPda,
         campaign: campaignPda,
-      } as any) // Type assertion to handle account type mismatch
+      } as any)
       .transaction();
 
-    return this.wallet.sendTransaction(tx);
+    return this.wallet.sendTransaction({
+      transaction: tx,
+      connection: this.connection
+    });
   }
 
   async cancelBooking(
@@ -393,10 +439,13 @@ export class SoulboardClient {
         adProvider: providerPda,
         location: locationPda,
         campaign: campaignPda,
-      } as any) // Type assertion to handle account type mismatch
+      } as any)
       .transaction();
 
-    return this.wallet.sendTransaction(tx);
+    return this.wallet.sendTransaction({
+      transaction: tx,
+      connection: this.connection
+    });
   }
 
   /* -------- Campaign closure -------- */
@@ -417,7 +466,10 @@ export class SoulboardClient {
       })
       .transaction();
 
-    return this.wallet.sendTransaction(tx);
+    return this.wallet.sendTransaction({
+      transaction: tx,
+      connection: this.connection
+    });
   }
 
   /* ─────────────────────── QUERIES ─────────────────────── */

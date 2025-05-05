@@ -65,7 +65,7 @@ import { Search, PlusCircle, Eye, Edit, Trash2 } from "lucide-react"
 export default function Campaigns() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("All")
-  const { campaigns  } = useCampaigns()
+  const { campaigns   } = useCampaigns()
 
   // Filter campaigns based on search term and status
   const filteredCampaigns = campaigns.filter((campaign) => {
@@ -146,7 +146,7 @@ export default function Campaigns() {
                           className={`px-3 py-1 rounded-full text-sm font-medium ${
                             campaign.status === "Active"
                               ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                              : campaign.status === "Ended"
+                              : campaign.status === "Paused"
                                 ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
                                 : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
                           }`}

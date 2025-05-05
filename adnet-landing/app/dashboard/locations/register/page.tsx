@@ -14,6 +14,10 @@ import { DashboardLayout } from "@/components/dashboard-layout"
 import { PageTransition } from "@/components/page-transition"
 import { TimeSlotInput } from "@/lib/SoulBoardClient"
 import { useLocations } from "@/hooks/use-dashboard-data"
+import { useSolanaWallets } from "@privy-io/react-auth"
+import { PrivyWallet } from "@/lib/SoulBoardClient"
+import {useSendTransaction} from '@privy-io/react-auth/solana';
+
 
 /* -------------------------------------------------------------------------- */
 /*  Helpers                                                                   */
@@ -45,7 +49,7 @@ type UiSlot = {
   basePrice: string
 }
 
-/** Expand “Weekdays”, “Weekends”, etc. into individual days */
+/** Expand "Weekdays", "Weekends", etc. into individual days */
 function expandSlot({ day, startTime, basePrice }: UiSlot): TimeSlotInput[] {
   const targets =
     day === "Weekdays"
@@ -97,10 +101,13 @@ interface StepOneProps {
 
 export default function RegisterLocation() {
   const router = useRouter()
-  const {registerLocation} = useLocations()
+  const {initialise , registerLocation} = useLocations()
+  const {wallets} = useSolanaWallets()
+  const { sendTransaction } = useSendTransaction()
 
   /* ----------------------------- form state ------------------------------ */
 
+  
   const [formData, setFormData] = useState({
     name: "",
     address: "",
@@ -174,9 +181,16 @@ export default function RegisterLocation() {
     setIsSubmitting(true)
 
     try {
+
+
       /* transform UI → on-chain TimeSlotInput[] */
       const slotInputs: TimeSlotInput[] = formData.availableSlots.flatMap(expandSlot)
-
+      
+      await initialise( { 
+        wallet : wallets[0] , 
+        publicKey : new PublicKey(wallets[0].address) , 
+        sendTransaction : sendTransaction
+      })
       /* call SDK */
       await registerLocation({
         idx: Date.now(),                                // just a unique client-side idx
@@ -265,7 +279,7 @@ export default function RegisterLocation() {
 
 /* … ProgressBar, StepOne, StepTwo, StepThree and the small reusable parts …  */
 /* (they are identical to the ones you already posted, only imports change)   */
-/* For brevity they’re omitted – just keep your existing JSX for each step.   */
+/* For brevity they're omitted – just keep your existing JSX for each step.   */
 /* -------------------------------------------------------------------------- */
 
 interface ProgressStepProps {

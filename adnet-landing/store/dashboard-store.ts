@@ -5,6 +5,7 @@ import {Connection, Transaction, VersionedTransaction} from '@solana/web3.js';
 import { SoulboardClient, PrivyWallet, TimeSlotInput } from '@/lib/SoulBoardClient';
 import { LAMPORTS_PER_SOL, PublicKey } from '@solana/web3.js';
 import BN from 'bn.js';
+import { ConnectedSolanaWallet } from '@privy-io/react-auth/solana';
 
 /* ──────────────────────────────────────────────────────────── */
 /*                     Minimal domain models                    */
@@ -60,7 +61,7 @@ interface DashboardState {
   ) => Promise<string>;                          // returns Campaign PDA
   addBudget: (idx: number, extraSOL: number) => Promise<void>;
   registerLocation: (
-    opts: { idx: number; name: string; description: string , slots  : TimeSlotInput }
+    opts: { idx: number; name: string; description: string , slots  : TimeSlotInput[] }
   ) => Promise<string>;                          // returns Location PDA
 }
 
