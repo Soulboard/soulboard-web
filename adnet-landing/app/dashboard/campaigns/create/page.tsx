@@ -2,15 +2,23 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { PageTransition } from "@/components/page-transition"
 import { Calendar, DollarSign, MapPin, ArrowLeft, Search, ImageIcon, Upload, Target } from "lucide-react"
+import { useCampaigns, useLocations } from "@/hooks/use-dashboard-data"
+import { useSolanaWallets } from "@privy-io/react-auth"
+import { useSendTransaction } from "@privy-io/react-auth/solana"
+import { PublicKey } from "@solana/web3.js"
 
 
 export default function CreateCampaign() {
   const router = useRouter()
+  const { initialise , createCampaign   } = useCampaigns() ; 
+  const { getActiveLocations  } = useLocations()
+  const {wallets} = useSolanaWallets()
+  const { sendTransaction } = useSendTransaction()
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -121,7 +129,7 @@ export default function CreateCampaign() {
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit =  async  (e : FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
@@ -133,62 +141,82 @@ export default function CreateCampaign() {
       timeSlots: Object.fromEntries(Object.entries(formData.timeSlots).filter(([_, slots]) => slots.length > 0)),
     }
 
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Submitting campaign:", finalFormData)
-      setIsSubmitting(false)
+    try { 
+      await initialise( { 
+        wallet : wallets[0] , 
+        publicKey : new PublicKey(wallets[0].address) , 
+        sendTransaction : sendTransaction
+      })
+
+      await createCampaign({ 
+        name : finalFormData.name , 
+        description : finalFormData.description , 
+        budgetSOL : Number(finalFormData.budget) , 
+        imageUrl : finalFormData.creativeFile // to be uploaded to ipfs 
+      })
+
+      
+      
       router.push("/dashboard/campaigns")
-    }, 1500)
+    } catch(err) { 
+      console.log(err) ; 
+      alert(`Failed to create campaign : ${String(err)} `)
+    }finally { 
+      setIsSubmitting(false)
+    }
+ 
   }
 
   const nextStep = () => setStep((prev) => prev + 1)
   const prevStep = () => setStep((prev) => prev - 1)
 
   // Sample locations data
-  const availableLocations = [
-    {
-      id: "nyc",
-      name: "New York City - Times Square",
-      address: "1535 Broadway, New York, NY 10036",
-      impressions: "120K",
-      price: "$180",
-    },
-    {
-      id: "la",
-      name: "Los Angeles - Santa Monica",
-      address: "200 Santa Monica Pier, Santa Monica, CA 90401",
-      impressions: "95K",
-      price: "$150",
-    },
-    {
-      id: "chicago",
-      name: "Chicago - Magnificent Mile",
-      address: "401 N Michigan Ave, Chicago, IL 60611",
-      impressions: "85K",
-      price: "$130",
-    },
-    {
-      id: "miami",
-      name: "Miami - South Beach",
-      address: "1001 Ocean Drive, Miami Beach, FL 33139",
-      impressions: "150K",
-      price: "$200",
-    },
-    {
-      id: "sf",
-      name: "San Francisco - Union Square",
-      address: "333 Post St, San Francisco, CA 94108",
-      impressions: "75K",
-      price: "$120",
-    },
-    {
-      id: "seattle",
-      name: "Seattle - Pike Place",
-      address: "85 Pike St, Seattle, WA 98101",
-      impressions: "65K",
-      price: "$110",
-    },
-  ]
+  // const availableLocations = [
+  //   {
+  //     id: "nyc",
+  //     name: "New York City - Times Square",
+  //     address: "1535 Broadway, New York, NY 10036",
+  //     impressions: "120K",
+  //     price: "$180",
+  //   },
+  //   {
+  //     id: "la",
+  //     name: "Los Angeles - Santa Monica",
+  //     address: "200 Santa Monica Pier, Santa Monica, CA 90401",
+  //     impressions: "95K",
+  //     price: "$150",
+  //   },
+  //   {
+  //     id: "chicago",
+  //     name: "Chicago - Magnificent Mile",
+  //     address: "401 N Michigan Ave, Chicago, IL 60611",
+  //     impressions: "85K",
+  //     price: "$130",
+  //   },
+  //   {
+  //     id: "miami",
+  //     name: "Miami - South Beach",
+  //     address: "1001 Ocean Drive, Miami Beach, FL 33139",
+  //     impressions: "150K",
+  //     price: "$200",
+  //   },
+  //   {
+  //     id: "sf",
+  //     name: "San Francisco - Union Square",
+  //     address: "333 Post St, San Francisco, CA 94108",
+  //     impressions: "75K",
+  //     price: "$120",
+  //   },
+  //   {
+  //     id: "seattle",
+  //     name: "Seattle - Pike Place",
+  //     address: "85 Pike St, Seattle, WA 98101",
+  //     impressions: "65K",
+  //     price: "$110",
+  //   },
+  // ]
+
+  const availableLocations = getActiveLocations()
 
   // Calculate total budget based on selected locations
   const calculateTotalBudget = () => {
