@@ -50,18 +50,19 @@ pub struct Location {
 
     pub location_idx: u8,
 
+    pub price: u64,
+
     #[max_len(64)]
     pub location_name: String,
 
     #[max_len(100)]
     pub location_description: String,
 
-    #[max_len(10)]
-    pub slots: Vec<TimeSlot>,  
+    pub location_status: LocationStatus,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace, PartialEq, Debug)]
-pub enum SlotStatus {
+pub enum LocationStatus {
     Available,
     Booked {
         campaign_id: Pubkey,
@@ -70,16 +71,11 @@ pub enum SlotStatus {
 }
 
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
-pub struct TimeSlot {
-    pub slot_id: u64, // UNIX timestamp or slot number
-    pub status: SlotStatus,
-    pub price: u64, // price of the slot or a security deposit
-}
+
 
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, InitSpace)]
 pub struct LocationBooking {
     pub location: Pubkey,    // Location account
-    pub slot_id: u64,        // Booked slot
+          // Booked slot
 }

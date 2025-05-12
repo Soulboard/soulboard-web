@@ -5,7 +5,7 @@ pub mod states;
 pub mod errors;
 
 use context::*;
-use states::{LocationBooking, SlotStatus, TimeSlot};
+use states::{LocationBooking};
 use constant::CAMPAIGN_KEY;
 use errors::SoulboardError;
 declare_id!("61yLHnb8vjRGzkKUPGjN4zviBfsy7wHmwwnZpNP8SfcQ");
@@ -15,8 +15,8 @@ pub mod soulboard {
 
     use anchor_lang::solana_program::{ program::invoke, program_error::ProgramError, system_instruction::transfer};
 
-    use crate::states::TimeSlot;
-    use crate::states::SlotStatus;
+    use crate::states::LocationStatus;
+    
     use crate::states::LocationBooking;
     use super::*;
 
@@ -103,41 +103,32 @@ pub mod soulboard {
     }
 
     //register a location by a provider
-    pub fn register_location(ctx: Context<RegisterLocation> , location_name: String, location_description: String , slots :Vec<TimeSlot>) -> Result<()> {
+    pub fn register_location(ctx: Context<RegisterLocation> , location_name: String, location_description: String ) -> Result<()> {
         let provider = &mut ctx.accounts.provider;
         let location = &mut ctx.accounts.location;
 
         location.authority = provider.authority.key();
         location.location_name = location_name;
         location.location_description = location_description;
-        location.slots = slots;
         location.location_idx = provider.last_location_id;
         provider.last_location_id = provider.last_location_id.checked_add(1).unwrap();
         provider.location_count = provider.location_count.checked_add(1).unwrap();
 
-        if location.slots.len() > 10 {
-            return Err(SoulboardError::MaxSlotsReached.into());
-        }
+       
 
         Ok(())
     }
 
     //TODO : add payment logic 
 
-    pub fn book_location(ctx: Context<BookLocation>, _campaign_idx: u8,  location_idx: u8, slot_id: u64) -> Result<()> {
+    pub fn book_location(ctx: Context<BookLocation>, _campaign_idx: u8,  location_idx: u8) -> Result<()> {
         let location = &mut ctx.accounts.location;
         let campaign = &mut ctx.accounts.campaign;
         let location_info = location.to_account_info();
         let campaign_info = campaign.to_account_info();
 
-        let slot_index = location.slots.iter().position(|s| s.slot_id == slot_id)
-            .ok_or(SoulboardError::SlotNotFound)?;
 
-        let slot = &mut location.slots[slot_index];
-
-        require!(slot.status == SlotStatus::Available, SoulboardError::SlotAlreadyBooked);
-
-        let price = slot.price;
+        let price = location.price;
         require!(campaign_info.lamports() >= price, SoulboardError::InsufficientBudget);
 
         **campaign_info.try_borrow_mut_lamports()? = campaign_info.lamports()
@@ -147,12 +138,11 @@ pub mod soulboard {
             .checked_add(price)
             .ok_or(SoulboardError::ArithmeticOverflow)?;
 
-        slot.status = SlotStatus::Booked { 
+        location.location_status = LocationStatus::Booked { 
             campaign_id : campaign.key(),
         };
         campaign.booked_locations.push(LocationBooking {
             location: location.key(),
-            slot_id: slot_id,
         });
 
         Ok(())
@@ -164,35 +154,20 @@ pub mod soulboard {
         let location = &mut ctx.accounts.location;
         let campaign = &mut ctx.accounts.campaign;
         
-        let slot_index = location.slots.iter().position(|s| s.slot_id == slot_id)
-            .ok_or(SoulboardError::SlotNotFound)?;
-
-        let booked_campaign_id = match location.slots[slot_index].status {
-            SlotStatus::Booked { campaign_id } => campaign_id,
+       
+        let booked_campaign_id = match location.location_status {
+            LocationStatus::Booked { campaign_id } => campaign_id,
             _ => return Err(SoulboardError::SlotNotBooked.into()),
         };
         require!(booked_campaign_id == campaign.key(), SoulboardError::Unauthorized);
 
-        location.slots[slot_index].status = SlotStatus::Available;
+        location.location_status = LocationStatus::Available;
 
-        campaign.booked_locations.retain(|booking| 
-            !(booking.location == location.key() && booking.slot_id == slot_id)
-        );
-
+    
         Ok(())
     }
 
-    pub fn add_time_slot(ctx: Context<AddTimeSlot>, _location_idx: u8, slot: TimeSlot) -> Result<()> {
-        let location = &mut ctx.accounts.location;
-
-        require!(
-            location.slots.iter().all(|s| s.slot_id != slot.slot_id),
-            SoulboardError::SlotAlreadyExists
-        );
-
-        location.slots.push(slot);
-        Ok(())
-    }
+   
 
     pub fn withdraw_earnings(ctx: Context<WithdrawEarnings>, _location_idx: u8, amount: u64) -> Result<()> {
         let location = &mut ctx.accounts.location;
