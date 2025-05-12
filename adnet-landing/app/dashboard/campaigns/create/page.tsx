@@ -257,21 +257,15 @@ export default function CreateCampaign() {
               style={{ width: step > 1 ? "100%" : "0%" }}
             ></div>
           </div>
-          <ProgressStep number={2} title="Targeting" active={step >= 2} completed={step > 2} />
+         
+          <ProgressStep number={2} title="Creative" active={step >= 2} completed={step > 2} />
           <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700">
             <div
               className="h-full bg-[#0055FF] transition-all duration-300 ease-in-out"
               style={{ width: step > 2 ? "100%" : "0%" }}
             ></div>
           </div>
-          <ProgressStep number={3} title="Creative" active={step >= 3} completed={step > 3} />
-          <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700">
-            <div
-              className="h-full bg-[#0055FF] transition-all duration-300 ease-in-out"
-              style={{ width: step > 3 ? "100%" : "0%" }}
-            ></div>
-          </div>
-          <ProgressStep number={4} title="Review" active={step >= 4} completed={step > 4} />
+          <ProgressStep number={3} title="Review" active={step >= 3} completed={step > 3} />
         </div>
 
         {/* Form Container */}
@@ -369,238 +363,10 @@ export default function CreateCampaign() {
             )}
 
             {/* Step 2: Targeting */}
-            {step === 2 && (
-              <div className="space-y-6">
-                <h2 className="text-2xl font-bold dark:text-white">Targeting Options</h2>
-
-                <div>
-                  <label className="block text-sm font-bold mb-2 dark:text-white">Target Audience</label>
-                  <div className="relative">
-                    <Target className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <select
-                      name="targetAudience"
-                      value={formData.targetAudience}
-                      onChange={handleChange}
-                      required
-                      className="w-full pl-10 pr-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-                    >
-                      <option value="">Select target audience</option>
-                      <option value="General Public">General Public</option>
-                      <option value="Young Adults (18-24)">Young Adults (18-24)</option>
-                      <option value="Professionals (25-40)">Professionals (25-40)</option>
-                      <option value="Seniors (55+)">Seniors (55+)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Location Selection */}
-                  <div>
-                    <label className="block text-sm font-bold mb-2 dark:text-white">Display Locations</label>
-
-                    <div className="relative mb-4">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                      <input
-                        type="text"
-                        placeholder="Search locations..."
-                        className="w-full pl-10 pr-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-4 mb-4 max-h-[400px] overflow-y-auto pr-2">
-                      {availableLocations.map((location) => (
-                        <div
-                          key={location.id}
-                          className={`flex flex-col p-4 border-[3px] rounded-lg cursor-pointer transition-all ${
-                            selectedLocations.includes(location.id)
-                              ? "bg-blue-50 dark:bg-blue-900/20 border-[#0055FF]"
-                              : "border-black hover:bg-gray-50 dark:hover:bg-[#252530]"
-                          }`}
-                        >
-                          <div className="flex items-start">
-                            <input
-                              type="checkbox"
-                              id={location.id}
-                              className="w-5 h-5 accent-[#0055FF] mt-1 mr-3"
-                              checked={selectedLocations.includes(location.id)}
-                              onChange={() => handleLocationToggle(location.id)}
-                            />
-                            <div className="flex-1">
-                              <div className="flex items-center">
-                                <MapPin className="w-5 h-5 mr-2 text-[#0055FF]" />
-                                <span className="font-bold dark:text-white">{location.name}</span>
-                              </div>
-                              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{location.address}</p>
-                              <div className="flex justify-between mt-2 text-sm">
-                                <span className="text-gray-600 dark:text-gray-400">
-                                  <strong className="text-black dark:text-white">{location.impressions}</strong> daily
-                                  impressions
-                                </span>
-                                <span className="font-medium text-[#0055FF]">{location.price}/day</span>
-                              </div>
-                            </div>
-                          </div>
-                          {selectedLocations.includes(location.id) && (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                handleLocationForSlotsSelect(location)
-                              }}
-                              className="mt-3 text-sm text-[#0055FF] font-medium hover:underline self-end"
-                            >
-                              {formData.timeSlots[location.id]?.length > 0
-                                ? `Edit Time Slots (${formData.timeSlots[location.id]?.length})`
-                                : "Add Time Slots"}
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border-l-4 border-[#0055FF]">
-                      <div className="flex justify-between items-center">
-                        <p className="text-blue-800 dark:text-blue-200 text-sm">
-                          Selected locations: {selectedLocations.length}
-                        </p>
-                        <p className="text-blue-800 dark:text-blue-200 font-bold">
-                          Estimated cost: ${calculateTotalBudget()}/day
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Time Slot Selection */}
-                  <div>
-                    <label className="block text-sm font-bold mb-2 dark:text-white">Time Slots</label>
-
-                    {selectedLocationForSlots ? (
-                      <div className="border-[4px] border-black rounded-lg p-4 dark:bg-[#252530]">
-                        <div className="flex items-center justify-between mb-4">
-                          <h3 className="font-bold dark:text-white">{selectedLocationForSlots.name}</h3>
-                          <button
-                            type="button"
-                            onClick={() => setSelectedLocationForSlots(null)}
-                            className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                          >
-                            Close
-                          </button>
-                        </div>
-
-                        <div className="space-y-4 mb-4">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-xs font-medium mb-1 dark:text-gray-300">Start Time</label>
-                              <input
-                                type="time"
-                                value={currentSlot.startTime}
-                                onChange={(e) => handleSlotChange("startTime", e.target.value)}
-                                className="w-full px-3 py-2 border-[3px] border-black rounded-lg focus:outline-none dark:bg-[#1e1e28] dark:text-white"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-xs font-medium mb-1 dark:text-gray-300">End Time</label>
-                              <input
-                                type="time"
-                                value={currentSlot.endTime}
-                                onChange={(e) => handleSlotChange("endTime", e.target.value)}
-                                className="w-full px-3 py-2 border-[3px] border-black rounded-lg focus:outline-none dark:bg-[#1e1e28] dark:text-white"
-                              />
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="block text-xs font-medium mb-1 dark:text-gray-300">Days</label>
-                            <div className="flex flex-wrap gap-2">
-                              {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-                                <button
-                                  key={day}
-                                  type="button"
-                                  onClick={() => handleDayToggle(day)}
-                                  className={`px-3 py-1 text-sm rounded-lg border-2 ${
-                                    currentSlot.days.includes(day)
-                                      ? "bg-[#0055FF] text-white border-[#0055FF]"
-                                      : "border-gray-300 dark:border-gray-600 dark:text-white"
-                                  }`}
-                                >
-                                  {day}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={addTimeSlot}
-                            disabled={!currentSlot.startTime || !currentSlot.endTime || currentSlot.days.length === 0}
-                            className="w-full px-4 py-2 bg-[#0055FF] text-white font-bold rounded-lg border-[3px] border-black disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            Add Time Slot
-                          </button>
-                        </div>
-
-                        {formData.timeSlots[selectedLocationForSlots.id]?.length > 0 && (
-                          <div>
-                            <h4 className="font-medium text-sm mb-2 dark:text-white">Added Time Slots:</h4>
-                            <div className="space-y-2 max-h-[200px] overflow-y-auto">
-                              {formData.timeSlots[selectedLocationForSlots.id].map((slot, index) => (
-                                <div
-                                  key={index}
-                                  className="flex justify-between items-center p-2 bg-gray-50 dark:bg-[#1e1e28] rounded-lg"
-                                >
-                                  <div className="text-sm dark:text-white">
-                                    <span className="font-medium">
-                                      {slot.startTime} - {slot.endTime}
-                                    </span>
-                                    <span className="ml-2 text-gray-500 dark:text-gray-400">
-                                      {slot.days.join(", ")}
-                                    </span>
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => removeTimeSlot(selectedLocationForSlots.id, index)}
-                                    className="text-red-500 hover:text-red-700"
-                                  >
-                                    Remove
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="border-[4px] border-dashed border-gray-300 dark:border-gray-700 rounded-lg p-8 text-center h-full flex items-center justify-center">
-                        <div>
-                          <Calendar className="w-12 h-12 mx-auto text-gray-400 mb-2" />
-                          <p className="text-gray-500 dark:text-gray-400">Select a location to add time slots</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex justify-between">
-                  <button
-                    type="button"
-                    onClick={prevStep}
-                    className="px-6 py-3 bg-white dark:bg-[#252530] text-black dark:text-white font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    type="button"
-                    onClick={nextStep}
-                    className="px-6 py-3 bg-[#0055FF] text-white font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform"
-                  >
-                    Next Step
-                  </button>
-                </div>
-              </div>
-            )}
+           
 
             {/* Step 3: Creative */}
-            {step === 3 && (
+            {step === 2 && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold dark:text-white">Campaign Creative</h2>
 
@@ -711,7 +477,7 @@ export default function CreateCampaign() {
             )}
 
             {/* Step 4: Review */}
-            {step === 4 && (
+            {step === 3 && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold dark:text-white">Review Campaign</h2>
 
@@ -769,40 +535,7 @@ export default function CreateCampaign() {
                     )}
                   </div>
 
-                  {/* Time Slots Section in Review */}
-                  <div className="mt-6">
-                    <h3 className="font-bold text-gray-500 dark:text-gray-400 text-sm mb-1">Time Slots</h3>
-                    {Object.keys(formData.timeSlots).length > 0 ? (
-                      <div className="space-y-3">
-                        {Object.entries(formData.timeSlots).map(([locationId, slots]) => {
-                          if (slots.length === 0) return null
-                          const location = availableLocations.find((loc) => loc.id === locationId)
-                          return (
-                            <div
-                              key={locationId}
-                              className="p-3 bg-white dark:bg-[#1e1e28] rounded-lg border border-gray-200 dark:border-gray-700"
-                            >
-                              <h4 className="font-medium dark:text-white">{location?.name}</h4>
-                              <div className="mt-2 space-y-1">
-                                {slots.map((slot, index) => (
-                                  <div key={index} className="text-sm dark:text-gray-300">
-                                    <span className="font-medium">
-                                      {slot.startTime} - {slot.endTime}
-                                    </span>
-                                    <span className="ml-2 text-gray-500 dark:text-gray-400">
-                                      {slot.days.join(", ")}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 dark:text-gray-400">No time slots specified</p>
-                    )}
-                  </div>
+                  
 
                   {formData.creativePreview && (
                     <div className="mt-6">

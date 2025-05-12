@@ -493,83 +493,11 @@ function TimeSlotSection({
 }) {
   return (
     <div>
-      <h3 className="text-lg font-bold mb-4 dark:text-white">Available Time Slots</h3>
-      <p className="text-gray-600 dark:text-gray-300 mb-4">
-        Add the days, times, and base prices your display is available for advertisers.
-      </p>
+      
+     
 
       {/* input row */}
-      <div className="bg-gray-50 dark:bg-[#252530] p-6 rounded-xl border-[4px] border-black mb-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-          {/* Day */}
-          <div>
-            <label className="block text-sm font-bold mb-2 dark:text-white">Day</label>
-            <select
-              name="day"
-              value={currentSlot.day}
-              onChange={handleSlotChange}
-              className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-            >
-              <option value="">Select day</option>
-              {["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday","Weekdays","Weekends","All Days"]
-                .map((d)=>(
-                  <option key={d} value={d}>{d}</option>
-                ))}
-            </select>
-          </div>
-
-          {/* Start */}
-          <div>
-            <label className="block text-sm font-bold mb-2 dark:text-white">Start Time</label>
-            <input
-              type="time"
-              name="startTime"
-              value={currentSlot.startTime}
-              onChange={handleSlotChange}
-              className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-            />
-          </div>
-
-          {/* End */}
-          <div>
-            <label className="block text-sm font-bold mb-2 dark:text-white">End Time</label>
-            <input
-              type="time"
-              name="endTime"
-              value={currentSlot.endTime}
-              onChange={handleSlotChange}
-              className="w-full px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-            />
-          </div>
-
-          {/* Price */}
-          <div>
-            <label className="block text-sm font-bold mb-2 dark:text-white">Base Price (SOL)</label>
-            <div className="relative">
-              <DollarSign className="absolute inset-y-0 left-0 ml-3 my-auto h-5 w-5 text-gray-400" />
-              <input
-                type="number"
-                name="basePrice"
-                value={currentSlot.basePrice}
-                onChange={handleSlotChange}
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                className="w-full pl-10 px-4 py-3 border-[4px] border-black rounded-lg focus:outline-none dark:bg-[#252530] dark:text-white"
-              />
-            </div>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={addSlot}
-          disabled={!currentSlot.day || !currentSlot.startTime || !currentSlot.endTime || !currentSlot.basePrice}
-          className="px-4 py-2 bg-[#FF6B97] text-white font-bold rounded-lg border-[4px] border-black shadow-[4px_4px_0_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform disabled:opacity-50"
-        >
-          Add Time Slot
-        </button>
-      </div>
+     
 
       {/* list of slots */}
       {formData.availableSlots.length > 0 && (
