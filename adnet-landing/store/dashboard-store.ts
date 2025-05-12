@@ -28,7 +28,7 @@ export interface Location {
   name: string;
   description: string;
   status: LocationStatus;
-  slotCount: number;
+  
 }
 
 /* ──────────────────────────────────────────────────────────── */
@@ -63,7 +63,7 @@ interface DashboardState {
   ) => Promise<string>;                          // returns Campaign PDA
   addBudget: (idx: number, extraSOL: number) => Promise<void>;
   registerLocation: (
-    opts: {  name: string; description: string , slots  : TimeSlotInput[] }
+    opts: {  name: string; description: string  }
   ) => Promise<string>;           
   registerAdvertiser :() => Promise<string>  // returns Location PDA
   registerProvider :() => Promise<string>  // returns Location PDA
@@ -150,7 +150,7 @@ export const useDashboardStore = create<DashboardState>()(
               name: account.locationName,
               description: account.locationDescription,
               status: 'Active',                // refine if you encode status on-chain
-              slotCount: account.slots.length,
+              
             }));
 
             set({
@@ -207,13 +207,13 @@ export const useDashboardStore = create<DashboardState>()(
           await get().fetchCampaigns();
         },
 
-        registerLocation: async ({  name, description , slots }) => {
+        registerLocation: async ({  name, description }) => {
           const { client ,provider } = get();
           if (!client) throw new Error('client not initialised');
      
 
         
-          await client.registerLocation( name, description, slots);
+          await client.registerLocation( name, description);
 
           const pda = client.getLocationPda(
             client.wallet.publicKey!,

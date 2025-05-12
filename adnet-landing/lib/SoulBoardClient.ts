@@ -336,7 +336,6 @@ export class SoulboardClient {
 async registerLocation(
   name: string,
   description: string,
-  slots: TimeSlotInput[],
 ) {
   const providerPda = this.getProviderPda()[0];
   const provider = await this.program.account.provider.fetch(providerPda);
@@ -349,16 +348,12 @@ async registerLocation(
   console.log('provider', provider);
   console.log('provider.lastLocationId', provider.lastLocationId);
   console.log('provider.lastLocationId - 1', provider.lastLocationId - 1);
-  console.log('slots', slots);
 
-  const normalizedSlots = slots.map(slot => ({
-    slotId: slot.slotId,
-    price: slot.price,
-    status: slot.status ?? { available: {} },
-  }));
+
+  
 
   const tx = await this.program.methods
-    .registerLocation(name, description, normalizedSlots)
+    .registerLocation(name, description)
     .accounts({
       authority: this.wallet.publicKey,
       provider: providerPda,
@@ -380,7 +375,7 @@ async registerLocation(
   async bookLocation(
     locationIdx: number,
     campaignIdx: number,
-    slotUnix: BN,
+   
   ) {
     const locationPda = this.getLocationPda(
       this.wallet.publicKey,
@@ -393,7 +388,7 @@ async registerLocation(
     )[0];
 
     const tx = await this.program.methods
-      .bookLocation(locationIdx, campaignIdx, slotUnix)
+      .bookLocation(locationIdx, campaignIdx)
       .accounts({
         authority: this.wallet.publicKey,
         adProvider: providerPda,
