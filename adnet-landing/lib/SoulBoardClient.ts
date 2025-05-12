@@ -228,7 +228,7 @@ export class SoulboardClient {
     .createCampaign(
       metadata.campaignName,
       metadata.campaignDescription,
-      metadata.campaignImageUrl,
+      "example.com",
       budgetLamports,
     )
     .accounts({

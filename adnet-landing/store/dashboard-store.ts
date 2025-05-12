@@ -170,7 +170,6 @@ export const useDashboardStore = create<DashboardState>()(
         createCampaign: async ({ name, description, imageUrl, budgetSOL }) => {
           const { client , advertiser } = get();
           if (!client) throw new Error('client not initialised');
-          if (!advertiser) throw new Error('advertiser not initialised');
 
           const { campaignPda } = await client.createCampaign(
             { campaignName: name, campaignDescription: description, campaignImageUrl: imageUrl },
