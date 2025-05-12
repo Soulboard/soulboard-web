@@ -11,6 +11,7 @@ import { useCampaigns, useLocations } from "@/hooks/use-dashboard-data"
 import { useSolanaWallets } from "@privy-io/react-auth"
 import { useSendTransaction } from "@privy-io/react-auth/solana"
 import { PublicKey } from "@solana/web3.js"
+import { PinataSDK } from "pinata";
 
 
 export default function CreateCampaign() {
@@ -27,7 +28,7 @@ export default function CreateCampaign() {
     endDate: "",
     targetAudience: "",
     locations: [],
-    timeSlots: {}, // Object to store time slots for each location
+    timeSlots: {} as Record<string, { startTime: string; endTime: string; days: string[] }[]>, // Object to store time slots for each location
     creativeType: "image",
     creativeFile: null as File | null,
     creativePreview: null as string | null,
@@ -35,9 +36,13 @@ export default function CreateCampaign() {
 
   const [step, setStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedLocations, setSelectedLocations] = useState([])
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([])
   const [selectedLocationForSlots, setSelectedLocationForSlots] = useState(null)
-  const [currentSlot, setCurrentSlot] = useState({ startTime: "", endTime: "", days: [] })
+  const [currentSlot, setCurrentSlot] = useState<{ startTime: string; endTime: string; days: string[] }>({
+    startTime: "",
+    endTime: "",
+    days: [],
+  })
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -55,7 +60,7 @@ export default function CreateCampaign() {
     }
   }
 
-  const handleLocationToggle = (locationId) => {
+  const handleLocationToggle = (locationId: string) => {
     setSelectedLocations((prev) => {
       if (prev.includes(locationId)) {
         return prev.filter((id) => id !== locationId)

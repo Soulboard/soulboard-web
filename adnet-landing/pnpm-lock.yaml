@@ -140,6 +140,9 @@ importers:
       next-themes:
         specifier: ^0.4.4
         version: 0.4.6(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      pinata:
+        specifier: ^2.2.2
+        version: 2.2.2
       react:
         specifier: ^19
         version: 19.1.0
@@ -2680,6 +2683,10 @@ packages:
   pify@2.3.0:
     resolution: {integrity: sha512-udgsAY+fTnvv7kI7aaxbqwWNb0AHiB0qBO89PZKPkoTmGOgdbrHDKD+0B2X4uTfJ/FT1R09r9gTsjUjNJotuog==}
     engines: {node: '>=0.10.0'}
+
+  pinata@2.2.2:
+    resolution: {integrity: sha512-xIPWyN7xFU/YBBqXlPoMaAQYBNKlP6Zuq0HZ75KituByHzeCqxMdF87YXcZpADxyGcYRQ5JEJn1IBzX909erow==}
+    engines: {node: '>=20'}
 
   pino-abstract-transport@0.5.0:
     resolution: {integrity: sha512-+KAgmVeqXYbTtU2FScx1XS3kNyfZ5TrXY07V96QnUSFqo2gAqlvmaxH67Lj7SWazqsMabf+58ctdTcBgnOLUOQ==}
@@ -6675,6 +6682,8 @@ snapshots:
   picomatch@2.3.1: {}
 
   pify@2.3.0: {}
+
+  pinata@2.2.2: {}
 
   pino-abstract-transport@0.5.0:
     dependencies:
