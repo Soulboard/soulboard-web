@@ -388,9 +388,9 @@
 
       const location = await program.account.location.fetch(locationPda);
       console.log("location", location);
-      console.log("location.slots", location.slots);
+      
       console.log("Campaign PDA", campaignPda.toBase58());
-      console.log("location.slots[0].status", location.slots[0].status.available);
+    
     })
   
     
