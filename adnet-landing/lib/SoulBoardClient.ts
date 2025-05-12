@@ -17,6 +17,7 @@ import { SupportedSolanaTransaction  } from '@privy-io/react-auth/solana';
 import { SendTransactionModalUIOptions  } from '@privy-io/react-auth';
 import { SolanaFundingConfig , SolanaTransactionReceipt } from '@privy-io/react-auth';
 
+
 /* ──────────────────────────────────────────────────────────── */
 /*                         CONFIG                              */
 /* ──────────────────────────────────────────────────────────── */
@@ -105,7 +106,7 @@ export class SoulboardClient {
     } = {},
   ) {
     this.connection =
-      connection ?? new Connection(rpcEndpoint, { commitment });
+      connection ?? new Connection(rpcEndpoint);
     this.wallet = wallet;
 
     const provider = new AnchorProvider(
@@ -127,11 +128,10 @@ export class SoulboardClient {
     
     this.provider = provider;
 
-    this.program = new Program( 
-       soulboardIdl as Soulboard , {
-        connection,
-       }
-    )
+    this.program = new Program(
+  soulboardIdl as Soulboard,
+  this.provider // <- important: use full AnchorProvider
+);
 
     anchor.setProvider(provider);
   }
@@ -219,47 +219,41 @@ export class SoulboardClient {
 
   /** Creates a campaign and returns its PDA (already cached on-chain). */
   async createCampaign(
-    metadata: CampaignMetadata,
-    budgetLamports: BN,
-  ) {
-    const advertiserPda = this.getAdvertiserPda()[0];
+  metadata: CampaignMetadata,
+  budgetLamports: BN,
+) {
+  const advertiserPda = this.getAdvertiserPda()[0];
 
-    const tx = await this.program.methods
-      .createCampaign(
-        metadata.campaignName,
-        metadata.campaignDescription,
-        metadata.campaignImageUrl,
-        budgetLamports,
-      )
-      .accounts({
-        advertiser: advertiserPda,
-        authority: this.wallet.publicKey,
-        systemProgram: SystemProgram.programId,
-      })
-      .transaction();
+  const tx = await this.program.methods
+    .createCampaign(
+      metadata.campaignName,
+      metadata.campaignDescription,
+      metadata.campaignImageUrl,
+      budgetLamports,
+    )
+    .accounts({
+      advertiser: advertiserPda,
+      authority: this.wallet.publicKey,
+      systemProgram: SystemProgram.programId,
+    })
+    .transaction();
 
-      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-      tx.feePayer = this.wallet.publicKey;
+  tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+  tx.feePayer = this.wallet.publicKey;
 
+  const txSig = await this.wallet.sendTransaction({
+    transaction: tx,
+    connection: this.connection
+  });
 
-    const txSig = await this.wallet.sendTransaction({
-      transaction: tx,
-      connection: this.connection
-    });
+  // Re-fetch to get the latest campaign index
+  const advertiser = await this.program.account.advertiser.fetch(advertiserPda);
+  const campaignIdx = advertiser.lastCampaignId - 1;
 
-    // Re-fetch advertiser to learn lastCampaignId
-    const advertiserAcc = await this.program.account.advertiser.fetch(
-      advertiserPda,
-    );
-    const campaignIdx = advertiserAcc.lastCampaignId - 1; // new campaign = last-1
-    const campaignPda = this.getCampaignPda(
-      this.wallet.publicKey,
-      campaignIdx,
-    )[0];
+  const campaignPda = this.getCampaignPda(this.wallet.publicKey, campaignIdx)[0];
 
-    return { txSig, campaignPda, campaignIdx };
-  }
-
+  return { txSig, campaignPda, campaignIdx };
+}
   /** Tops up campaign escrow */
   async addBudget(
     campaignIdx: number,
@@ -339,79 +333,50 @@ export class SoulboardClient {
     const providerPda = this.getProviderPda()[0];
     return { txSig, providerPda };
   }
+async registerLocation(
+  name: string,
+  description: string,
+  slots: TimeSlotInput[],
+) {
+  const providerPda = this.getProviderPda()[0];
+  const provider = await this.program.account.provider.fetch(providerPda);
 
-  async registerLocation(
-    locationIdx: number,
-    name: string,
-    description: string,
-    slots: TimeSlotInput[],
-  ) {
-    const providerPda = this.getProviderPda()[0];
-    const locationPda = this.getLocationPda(
-      this.wallet.publicKey,
-      locationIdx,
-    )[0];
+  const locationIdx = provider.lastLocationId;
+  const [locationPda] = this.getLocationPda(this.wallet.publicKey, locationIdx);
 
-    // Normalise slots → program expects each slot.status to be fully specified
-    const _slots = slots.map((s) => ({
-      slotId: s.slotId,
-      price: s.price,
-      status: s.status ?? { available: {} },
-    }));
+  console.log('locationPda', locationPda.toBase58());
+  console.log('providerPda', providerPda.toBase58());
+  console.log('provider', provider);
+  console.log('provider.lastLocationId', provider.lastLocationId);
+  console.log('provider.lastLocationId - 1', provider.lastLocationId - 1);
+  console.log('slots', slots);
 
-    const tx = await this.program.methods
-      .registerLocation(name, description, _slots)
-      .accounts({
-        authority: this.wallet.publicKey,
-        provider: providerPda,
-        location: locationPda,
-        systemProgram: SystemProgram.programId,
-      } as any)
-      .transaction();
+  const normalizedSlots = slots.map(slot => ({
+    slotId: slot.slotId,
+    price: slot.price,
+    status: slot.status ?? { available: {} },
+  }));
 
-      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-      tx.feePayer = this.wallet.publicKey;
+  const tx = await this.program.methods
+    .registerLocation(name, description, normalizedSlots)
+    .accounts({
+      authority: this.wallet.publicKey,
+      provider: providerPda,
+      location: locationPda,
+      systemProgram: SystemProgram.programId,
+    })
+    .transaction();
 
+  tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+  tx.feePayer = this.wallet.publicKey;
 
-    return this.wallet.sendTransaction({
-      transaction: tx,
-      connection: this.connection
-    });
-  }
+  const txSig = await this.wallet.sendTransaction({
+    transaction: tx,
+    connection: this.connection,
+  });
 
-  async addTimeSlot(
-    locationIdx: number,
-    slot: TimeSlotInput,
-  ) {
-    const locationPda = this.getLocationPda(
-      this.wallet.publicKey,
-      locationIdx,
-    )[0];
-
-    const tx = await this.program.methods
-      .addTimeSlot(locationIdx, {
-        slotId: slot.slotId,
-        price: slot.price,
-        status: slot.status ?? { available: {} },
-      })
-      .accounts({
-        authority: this.wallet.publicKey,
-        location: locationPda,
-      })
-      .transaction();
-
-
-      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-      tx.feePayer = this.wallet.publicKey;
-
-
-
-    return this.wallet.sendTransaction({
-      transaction: tx,
-      connection: this.connection
-    });
-  }
-
+  return { txSig, locationPda, locationIdx };
+}
   async bookLocation(
     locationIdx: number,
     campaignIdx: number,

@@ -192,8 +192,7 @@ export default function RegisterLocation() {
         sendTransaction : sendTransaction
       })
       /* call SDK */
-      await registerLocation({
-        idx: Date.now(),                                // just a unique client-side idx
+      await registerLocation({                       // just a unique client-side idx
         name: formData.name,
         description: formData.description,
         slots: slotInputs,

@@ -43,6 +43,8 @@ interface DashboardState {
   /* data */
   campaigns: Campaign[];
   locations: Location[];
+  advertiser: { id: string; name: string; description: string; status: string } | null;
+  provider: { id: string; name: string; description: string; status: string } | null;
 
   /* ui */
   isLoading: { campaigns: boolean; locations: boolean };
@@ -61,8 +63,10 @@ interface DashboardState {
   ) => Promise<string>;                          // returns Campaign PDA
   addBudget: (idx: number, extraSOL: number) => Promise<void>;
   registerLocation: (
-    opts: { idx: number; name: string; description: string , slots  : TimeSlotInput[] }
-  ) => Promise<string>;                          // returns Location PDA
+    opts: {  name: string; description: string , slots  : TimeSlotInput[] }
+  ) => Promise<string>;           
+  registerAdvertiser :() => Promise<string>  // returns Location PDA
+  registerProvider :() => Promise<string>  // returns Location PDA
 }
 
 /* ──────────────────────────────────────────────────────────── */
@@ -84,6 +88,8 @@ export const useDashboardStore = create<DashboardState>()(
         /* ───────────── initial state ───────────── */
         campaigns: [],
         locations: [],
+        advertiser : null,  
+        provider : null,
         isLoading: { campaigns: false, locations: false },
         error: { campaigns: null, locations: null },
 
@@ -162,8 +168,9 @@ export const useDashboardStore = create<DashboardState>()(
         /* ───────────────── tx actions ─────────────── */
 
         createCampaign: async ({ name, description, imageUrl, budgetSOL }) => {
-          const { client } = get();
+          const { client , advertiser } = get();
           if (!client) throw new Error('client not initialised');
+          if (!advertiser) throw new Error('advertiser not initialised');
 
           const { campaignPda } = await client.createCampaign(
             { campaignName: name, campaignDescription: description, campaignImageUrl: imageUrl },
@@ -201,11 +208,13 @@ export const useDashboardStore = create<DashboardState>()(
           await get().fetchCampaigns();
         },
 
-        registerLocation: async ({ idx, name, description , slots }) => {
-          const { client } = get();
+        registerLocation: async ({  name, description , slots }) => {
+          const { client ,provider } = get();
           if (!client) throw new Error('client not initialised');
+     
 
-          await client.registerLocation(idx, name, description, []);
+        
+          await client.registerLocation( name, description, slots);
 
           const pda = client.getLocationPda(
             client.wallet.publicKey!,
@@ -227,6 +236,54 @@ export const useDashboardStore = create<DashboardState>()(
 
           return pda.toBase58();
         },
+
+        registerAdvertiser: async () => {
+          const { client , advertiser } = get();
+          if (!client) throw new Error('client not initialised');
+
+          await client.createAdvertiser();
+
+          const pda = client.getAdvertiserPda(
+            client.wallet.publicKey!,
+          )[0];
+
+          set((s) => ({
+            ...s,
+            advertiser: {
+              id: pda.toBase58(),
+              name: '',
+              description: '',
+              status: 'Active',
+            },
+          }));
+          
+          return pda.toBase58();
+          
+        },
+
+        registerProvider: async () => {
+          const { client } = get();
+          if (!client) throw new Error('client not initialised');
+
+          await client.createProvider();
+
+          const pda = client.getProviderPda(
+            client.wallet.publicKey!,
+          )[0];
+
+          set((s) => ({
+            ...s,
+            provider: {
+              id: pda.toBase58(),
+              name: '',
+              description: '',
+              status: 'Active',
+            },
+          }));
+
+          
+          return pda.toBase58();
+        }
       }),
       {
         name: 'dashboard-storage',
