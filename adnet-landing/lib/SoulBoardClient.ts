@@ -349,9 +349,6 @@ async registerLocation(
   console.log('provider.lastLocationId', provider.lastLocationId);
   console.log('provider.lastLocationId - 1', provider.lastLocationId - 1);
 
-
-  
-
   const tx = await this.program.methods
     .registerLocation(name, description)
     .accounts({
