@@ -9,7 +9,6 @@ Welcome to **Soulboard Web** — a detailed breakdown of your implementation-foc
 
 ## Architecture
 <img width="885" alt="Screenshot 2025-04-06 at 6 14 21 AM" src="https://github.com/user-attachments/assets/5a4352c5-8f63-4fe2-bbf9-97d4ac5d2160" />
-<img width="723" alt="Screenshot 2025-04-06 at 7 20 55 AM" src="https://github.com/user-attachments/assets/a6a59657-87e8-4858-adcb-27ead8e4a230" />
 
 ## UI Screenshots
 ![WhatsApp Image 2025-04-06 at 06 03 24](https://github.com/user-attachments/assets/39b0f08a-33ae-48e5-8e15-e59aa6c6fe65)
