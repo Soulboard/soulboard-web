@@ -195,7 +195,6 @@ export default function RegisterLocation() {
       await registerLocation({                       // just a unique client-side idx
         name: formData.name,
         description: formData.description,
-        slots: slotInputs,
       })
 
       router.push("/dashboard/locations")
@@ -493,9 +492,6 @@ function TimeSlotSection({
 }) {
   return (
     <div>
-      
-     
-
       {/* input row */}
      
 

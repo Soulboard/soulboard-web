@@ -53,6 +53,9 @@ interface DashboardState {
   /* actions */
   fetchCampaigns: () => Promise<void>;
   fetchLocations: () => Promise<void>;
+  getCampaignById: (id: string) => Promise<Campaign | undefined>;
+  getLocationById: (id: string) => Promise<Location | undefined>;
+  getAllCampaignLocations: (id : string ) => Promise<Location[]>;
   createCampaign: (
     opts: {
       name: string;
@@ -282,8 +285,48 @@ export const useDashboardStore = create<DashboardState>()(
 
           
           return pda.toBase58();
+        }, 
+        getCampaignById: async (id) => {
+          const { campaigns } = get();
+          const campaign = campaigns.find((c) => c.id === id);
+          if (!campaign) {
+            throw new Error(`Campaign with id ${id} not found`);
+          }
+          return campaign;
+        },
+        
+        getLocationById: async (id) => {
+          const { locations } = get();
+          const location = locations.find((l) => l.id === id);
+          if (!location) {
+            throw new Error(`Location with id ${id} not found`);
+          }
+          return location;
+        }, 
+
+        getAllCampaignLocations: async ( id ) => {
+          const { client } = get();
+          if (!client) throw new Error('client not initialised');
+          
+          const pda = new PublicKey(id);
+          
+          const locations = await client.getAllCampaignLocations(pda);
+
+          const finalLocations: Location[] = [];
+          for (const { location } of locations) {
+            const locationData = await client.getLocationById(location);
+            finalLocations.push({
+              id: location.toBase58(),
+              name: locationData.locationName,
+              description: locationData.locationDescription,
+              status: 'Active', // or map locationData.locationStatus if needed
+            });
+          }
+          return finalLocations;
         }
       }),
+
+  
       {
         name: 'dashboard-storage',
         partialize: (s) => ({

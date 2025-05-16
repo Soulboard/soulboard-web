@@ -475,6 +475,15 @@ async registerLocation(
     return this.program.account.campaign.all();
   }
 
+  async getAllCampaignLocations( id : PublicKey ) {
+   const camapign = await this.program.account.campaign.fetch(id);
+    return camapign.bookedLocations
+  }
+
+  getAllLocations() {
+    return this.program.account.location.all();
+  }
+
   async getAdvertiser() {
     const [pda] = this.getAdvertiserPda();
     return this.program.account.advertiser.fetch(pda);
@@ -483,6 +492,24 @@ async registerLocation(
   async getProvider() {
     const [pda] = this.getProviderPda();
     return this.program.account.provider.fetch(pda);
+  }
+
+  async getCampaignLocations( pda: PublicKey ) { 
+    const  campaign = await   this.program.account.campaign.fetch(pda);
+
+   return campaign.bookedLocations    
+  }
+
+  async getCampaignById( pda : PublicKey ) { 
+    const campaign = await this.program.account.campaign.fetch(pda);
+    return campaign;
+
+  }
+
+  async getLocationById( pda: PublicKey ) { 
+    const location = await this.program.account.location.fetch(pda);
+    return location;
+
   }
 
   async getLocation(locationIdx: number) {

@@ -4,6 +4,8 @@ import { useEffect } from "react"
 import WalletProvider from "../providers/WalletProvider"
 import { ThingSpeakProvider } from "../providers/thingspeak-provider"
 import "./globals.css"
+import "leaflet/dist/leaflet.css";
+
 
 // Initialize the Space Grotesk font
 const spaceGrotesk = Space_Grotesk({

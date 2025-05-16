@@ -19,6 +19,8 @@ export function useCampaigns() {
     fetchCampaigns,
     createCampaign,
     addBudget,
+    getCampaignById,
+    getAllCampaignLocations,
   } = useDashboardStore();
 
   /* auto-refresh once when the hook first mounts and when user is ready */
@@ -32,7 +34,6 @@ export function useCampaigns() {
   const getActiveCampaigns   = () => campaigns.filter(c => c.status === "Active");
   const getEndedCampaigns    = () => campaigns.filter(c => c.status === "Ended");
   const getPausedCampaigns   = () => campaigns.filter(c => c.status === "Paused");
-  const getCampaignById      = (id: string) => campaigns.find(c => c.id === id);
 
   const getTotalBudgetSOL    = () =>
     campaigns.reduce((sum, c) => sum + (c.budgetSOL ?? 0), 0);
@@ -52,7 +53,7 @@ export function useCampaigns() {
     getPausedCampaigns,
     getCampaignById,
     getTotalBudgetSOL,
-
+    getAllCampaignLocations,
     /* mutations */
     createCampaign,
     addBudget,
@@ -71,6 +72,7 @@ export function useLocations() {
     error,
     fetchLocations,
     registerLocation,
+    getLocationById,
   } = useDashboardStore();
 
   useEffect(() => {
@@ -83,7 +85,6 @@ export function useLocations() {
   const getActiveLocations       = () => locations.filter(l => l.status === "Active");
   const getMaintenanceLocations  = () => locations.filter(l => l.status === "Maintenance");
   const getInactiveLocations     = () => locations.filter(l => l.status === "Inactive");
-  const getLocationById          = (id: string) => locations.find(l => l.id === id);
 
   const getTotalSlots            = () =>
     locations.reduce((sum, l) => sum + l.slotCount, 0);
