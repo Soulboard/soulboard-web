@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ArrowUpRight, ChevronDown, BarChart3, MapPin, Briefcase, Users, DollarSign, Shield } from "lucide-react"
 import { useRole } from "@/hooks/use-role"
 import { AdvertiserIllustration, ProviderIllustration } from "@/components/role-illustrations"
+import { useThingSpeakContext } from "@/providers/thingspeak-provider"
 
 export function HeroBillboard() {
   const [isVisible, setIsVisible] = useState(false)
@@ -16,6 +17,16 @@ export function HeroBillboard() {
   const frames = 5
   const frameInterval = 800 // milliseconds
   const { role } = useRole()
+  const { viewsData, tapsData, isLoading } = useThingSpeakContext()
+
+  // Get the latest values from ThingSpeak data
+  const latestViews = viewsData?.feeds && viewsData.feeds.length > 0 
+    ? viewsData.feeds[viewsData.feeds.length - 1].field1 ?? "0"
+    : "0"
+  
+  const latestTaps = tapsData?.feeds && tapsData.feeds.length > 0 
+    ? tapsData.feeds[tapsData.feeds.length - 1].field2 ?? "0"
+    : "0"
 
   // Store the current role to compare during transitions
   const prevRoleRef = useRef(role)
@@ -40,9 +51,10 @@ export function HeroBillboard() {
     }, frameInterval)
 
     // Listen for role changes
-    const handleRoleChange = (event) => {
+    const handleRoleChange = (event: Event) => {
       // Get the new role from the event
-      const newRole = event.detail?.newRole || (role === "advertiser" ? "provider" : "advertiser")
+      const customEvent = event as CustomEvent;
+      const newRole = customEvent.detail?.newRole || (role === "advertiser" ? "provider" : "advertiser")
 
       // Store the previous role before updating
       prevRoleRef.current = role
@@ -243,53 +255,73 @@ export function HeroBillboard() {
 }
 
 // Different headline frames for animation
-function HeadlineFrame({ index, role }) {
+function HeadlineFrame({ index, role }: { index: number; role: string }) {
+  const { viewsData, tapsData, isLoading } = useThingSpeakContext()
+  
+  // Get the latest values from ThingSpeak data
+  const latestViews = viewsData?.feeds && viewsData.feeds.length > 0 
+    ? viewsData.feeds[viewsData.feeds.length - 1].field1 ?? "0"
+    : "0"
+  
+  const latestTaps = tapsData?.feeds && tapsData.feeds.length > 0 
+    ? tapsData.feeds[tapsData.feeds.length - 1].field2 ?? "0"
+    : "0"
+
   const textColor = role === "advertiser" ? "text-blue" : "text-pink"
 
   switch (index) {
     case 0:
       return (
-        <h1 className="text-5xl md:text-7xl font-black tracking-wider leading-tight">
-          <span className={`block ${textColor}`}>SOULBOARD:</span>
-          <span className="block text-white">DECENTRALIZED</span>
-          <span className="block text-white">ADVERTISING</span>
-          <span className={`block ${role === "advertiser" ? "text-pink" : "text-blue"}`}>PROTOCOL</span>
+        <h1 className="text-5xl md:text-7xl font-black leading-tight dark:text-white">
+          <span className={textColor}>DECENTRALIZED</span>
+          <br />
+          ADVERTISING
+          <br />
+          PROTOCOL
         </h1>
       )
     case 1:
       return (
-        <h1 className="text-5xl md:text-7xl font-black tracking-wider leading-tight">
-          <span className="block text-yellow">CONNECT</span>
-          <span className="block text-white">PHYSICAL</span>
-          <span className="block text-white">DISPLAYS TO</span>
-          <span className={`block ${textColor}`}>BLOCKCHAIN</span>
+        <h1 className="text-5xl md:text-7xl font-black leading-tight dark:text-white">
+          <span className={textColor}>
+            {isLoading ? "LOADING..." : latestViews} VIEWS
+          </span>
+          <br />
+          VERIFIED ON
+          <br />
+          BLOCKCHAIN
         </h1>
       )
     case 2:
       return (
-        <h1 className="text-5xl md:text-7xl font-black tracking-wider leading-tight">
-          <span className={`block ${role === "advertiser" ? "text-pink" : "text-blue"}`}>VERIFIED</span>
-          <span className="block text-white">IMPRESSIONS</span>
-          <span className="block text-white">TRANSPARENT</span>
-          <span className="block text-yellow">PAYMENTS</span>
+        <h1 className="text-5xl md:text-7xl font-black leading-tight dark:text-white">
+          CONNECT
+          <br />
+          <span className={textColor}>DIGITAL</span> TO
+          <br />
+          PHYSICAL
         </h1>
       )
     case 3:
       return (
-        <h1 className="text-5xl md:text-7xl font-black tracking-wider leading-tight">
-          <span className={`block ${textColor}`}>GLOBAL</span>
-          <span className="block text-white">ADVERTISING</span>
-          <span className="block text-white">NETWORK</span>
-          <span className={`block ${role === "advertiser" ? "text-pink" : "text-blue"}`}>FOR ALL</span>
+        <h1 className="text-5xl md:text-7xl font-black leading-tight dark:text-white">
+          <span className={textColor}>
+            {isLoading ? "LOADING..." : latestTaps} TAPS
+          </span>
+          <br />
+          RECORDED
+          <br />
+          THIS MONTH
         </h1>
       )
     case 4:
       return (
-        <h1 className="text-5xl md:text-7xl font-black tracking-wider leading-tight">
-          <span className="block text-yellow">JOIN THE</span>
-          <span className="block text-white">ADVERTISING</span>
-          <span className="block text-white">REVOLUTION</span>
-          <span className={`block ${textColor}`}>TODAY</span>
+        <h1 className="text-5xl md:text-7xl font-black leading-tight dark:text-white">
+          TRANSPARENT
+          <br />
+          <span className={textColor}>VERIFIABLE</span>
+          <br />
+          RESULTS
         </h1>
       )
     default:
@@ -298,7 +330,7 @@ function HeadlineFrame({ index, role }) {
 }
 
 // Improved Role transition animation component with illustrations
-function RoleTransitionAnimation({ fromRole, toRole }) {
+function RoleTransitionAnimation({ fromRole, toRole }: { fromRole: string; toRole: string }) {
   const isToAdvertiser = toRole === "advertiser"
   const isFromAdvertiser = fromRole === "advertiser"
 
@@ -459,7 +491,7 @@ function RoleTransitionAnimation({ fromRole, toRole }) {
 }
 
 // Helper component for feature items
-function FeatureItem({ icon, text }) {
+function FeatureItem({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <motion.div
       className="flex items-center gap-2 text-white"

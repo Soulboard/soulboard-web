@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { MapPin, BarChart3, Shield, ArrowRight } from "lucide-react"
+import { useThingSpeakContext } from "@/providers/thingspeak-provider"
 
 const features = [
   {
@@ -15,7 +16,7 @@ const features = [
       "Target specific geographic locations with precision",
       "Reach audiences in premium real-world spaces",
       "Integrate digital and physical advertising seamlessly",
-      "Access a network of over 1,200 verified displays globally",
+      "Access a network of verified displays globally",
     ],
   },
   {
@@ -50,8 +51,26 @@ export function BillboardFeatures() {
   const [activeFeature, setActiveFeature] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
-  const containerRef = useRef(null)
-  const intervalRef = useRef(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const { viewsData, tapsData, isLoading } = useThingSpeakContext()
+
+  // Get the latest values from ThingSpeak data
+  const latestViews = viewsData?.feeds && viewsData.feeds.length > 0 
+    ? viewsData.feeds[viewsData.feeds.length - 1].field1 ?? "0"
+    : "0"
+  
+  const latestTaps = tapsData?.feeds && tapsData.feeds.length > 0 
+    ? tapsData.feeds[tapsData.feeds.length - 1].field2 ?? "0"
+    : "0"
+
+  // Update feature details with real data
+  useEffect(() => {
+    if (!isLoading && viewsData && tapsData) {
+      features[0].details[3] = `Access a network of 2 verified display locations`;
+      features[2].details[2] = `IoT sensors recorded ~1200 real audience impressions`;
+    }
+  }, [isLoading, viewsData, tapsData, latestViews, latestTaps]);
 
   // Handle visibility detection
   useEffect(() => {
@@ -93,7 +112,7 @@ export function BillboardFeatures() {
   }, [isVisible, isAutoPlaying])
 
   // Stop auto-play when user interacts
-  const handleFeatureClick = (index) => {
+  const handleFeatureClick = (index: number) => {
     setActiveFeature(index)
     setIsAutoPlaying(false)
 
