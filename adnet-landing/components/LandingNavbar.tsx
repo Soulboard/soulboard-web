@@ -64,8 +64,7 @@ export function LandingNavbar() {
             <div className="hidden md:block">
               <RoleSwitcher className="h-10" />
             </div>
-            <ThemeToggle />
-           
+            {/* <ThemeToggle /> */}
           </div>
         </div>
 

@@ -1,21 +1,55 @@
-"use client"
+"use client";
 
-import { LandingNavbar } from "@/components/landing-navbar"
-import Image from "next/image"
-import { MapPin, ArrowRight, Twitter, DiscIcon as Discord, Github } from "lucide-react"
-import { useEffect, useState, useRef } from "react"
-import { BillboardFeatures } from "@/components/billboard-features"
-import { HeroBillboard } from "@/components/hero-billboard"
-import { useRole } from "@/hooks/use-role"
-import { RoleTransition } from "@/components/role-transition"
+import { LandingNavbar } from "@/components/landing-navbar";
+import Image from "next/image";
+import {
+  MapPin,
+  ArrowRight,
+  Twitter,
+  DiscIcon as Discord,
+  Github,
+} from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { BillboardFeatures } from "@/components/billboard-features";
+import { HeroBillboard } from "@/components/hero-billboard";
+import { useRole } from "@/hooks/use-role";
+import { RoleTransition } from "@/components/role-transition";
+import { useThingSpeakContext } from "@/providers/thingspeak-provider";
 
 export default function Home() {
-  const { role, isTransitioning, completeTransition } = useRole()
+  const { role, isTransitioning, completeTransition } = useRole();
+  const { viewsData, tapsData, isLoading } = useThingSpeakContext();
+
+  // Get the latest values from ThingSpeak data
+  const latestViews =
+    viewsData?.feeds && viewsData.feeds.length > 0
+      ? viewsData.feeds[viewsData.feeds.length - 1].field1
+      : "0";
+
+  const latestTaps =
+    tapsData?.feeds && tapsData.feeds.length > 0
+      ? tapsData.feeds[tapsData.feeds.length - 1].field2
+      : "0";
+
+  // Calculate total views and taps
+  const totalViews =
+    viewsData?.feeds?.reduce((sum, feed) => {
+      return sum + (feed.field1 ? parseInt(feed.field1) : 0);
+    }, 0) || 0;
+
+  const totalTaps =
+    tapsData?.feeds?.reduce((sum, feed) => {
+      return sum + (feed.field2 ? parseInt(feed.field2) : 0);
+    }, 0) || 0;
 
   return (
     <div className="min-h-screen bg-[#121218] font-sans transition-colors duration-300">
       {/* Role Transition Screen */}
-      <RoleTransition isVisible={isTransitioning} role={role} onAnimationComplete={completeTransition} />
+      <RoleTransition
+        isVisible={isTransitioning}
+        role={role}
+        onAnimationComplete={completeTransition}
+      />
 
       {/* Navigation */}
       <LandingNavbar />
@@ -31,10 +65,14 @@ export default function Home() {
               Global Network
             </div>
             <h2 className="text-4xl md:text-5xl font-black mb-4 text-center dark:text-white">
-              <span className="text-[#0055FF]">1,234</span> ACTIVE DISPLAYS WORLDWIDE
+              <span className="text-[#0055FF]">
+                {isLoading ? "Loading..." : totalViews}
+              </span>{" "}
+              TOTAL VIEWS WORLDWIDE
             </h2>
             <p className="text-lg text-center max-w-2xl dark:text-gray-300">
-              Join our growing network of display providers and advertisers across the globe
+              Join our growing network of display providers and advertisers
+              across the globe
             </p>
           </div>
 
@@ -72,8 +110,8 @@ export default function Home() {
               <div className="absolute w-32 h-4 bg-[#FFCC00] bottom-1 left-1/2 -translate-x-1/2 -z-0"></div>
             </h2>
             <p className="text-lg text-center max-w-2xl dark:text-gray-300 mb-8">
-              Our decentralized protocol connects advertisers with display providers through a transparent blockchain
-              system
+              Our decentralized protocol connects advertisers with display
+              providers through a transparent blockchain system
             </p>
           </div>
 
@@ -95,7 +133,8 @@ export default function Home() {
               <div className="absolute w-24 md:w-32 h-3 md:h-4 bg-[#FF3366] bottom-1 left-1/2 -translate-x-1/2 -z-0"></div>
             </h2>
             <p className="text-base md:text-lg text-center max-w-2xl dark:text-gray-300 mb-6 md:mb-8">
-              Our platform offers unique capabilities that set us apart from traditional advertising networks
+              Our platform offers unique capabilities that set us apart from
+              traditional advertising networks
             </p>
           </div>
 
@@ -107,9 +146,21 @@ export default function Home() {
       <section className="w-full py-16 grid-background">
         <div className="container mx-auto px-4 max-w-7xl">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <StatCard number="1,234" label="Active Displays" color="#0055FF" />
-            <StatCard number="$2.5M" label="Ad Revenue Generated" color="#FFCC00" />
-            <StatCard number="56+" label="Countries Covered" color="#FF3366" />
+            <StatCard
+              number={isLoading ? "Loading..." : latestViews ?? "0"}
+              label="Latest Views"
+              color="#0055FF"
+            />
+            <StatCard
+              number={isLoading ? "Loading..." : latestTaps ?? "0"}
+              label="Latest Taps"
+              color="#FFCC00"
+            />
+            <StatCard
+              number={isLoading ? "Loading..." : totalTaps.toString()}
+              label="Total Taps"
+              color="#FF3366"
+            />
           </div>
         </div>
       </section>
@@ -148,12 +199,14 @@ export default function Home() {
             </div>
           </div>
           <div className="mt-10 pt-6 border-t-[4px] border-white/30 text-center">
-            <p className="text-lg">© 2025 SoulBoard Protocol. All rights reserved.</p>
+            <p className="text-lg">
+              © 2025 SoulBoard Protocol. All rights reserved.
+            </p>
           </div>
         </div>
       </footer>
     </div>
-  )
+  );
 }
 
 function WorldMap() {
@@ -167,45 +220,46 @@ function WorldMap() {
       />
       {/* Map Pins */}
       {mapPins.map((pin, index) => (
-        <MapPin
+        <div
           key={index}
-          className={`absolute w-8 h-8 text-[#FFCC00] dark:text-[#FF6B97] animate-pulse cursor-pointer hover:scale-125 transition-transform`}
-          style={{
-            top: `${pin.y}%`,
-            left: `${pin.x}%`,
-            animationDelay: `${index * 0.2}s`,
-          }}
-        />
+          className="absolute"
+          style={{ top: `${pin.y}%`, left: `${pin.x}%` }}
+        >
+          <MapPin
+            className={`w-8 h-8 text-[#FFCC00] dark:text-[#FF6B97] animate-pulse cursor-pointer hover:scale-125 transition-transform`}
+            style={{ animationDelay: `${index * 0.2}s` }}
+          />
+        </div>
       ))}
     </div>
-  )
+  );
 }
 
 function AnimatedStepCards() {
-  const [isVisible, setIsVisible] = useState(false)
-  const ref = useRef(null)
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true)
-          observer.disconnect()
+          setIsVisible(true);
+          observer.disconnect();
         }
       },
-      { threshold: 0.1 },
-    )
+      { threshold: 0.1 }
+    );
 
     if (ref.current) {
-      observer.observe(ref.current)
+      observer.observe(ref.current);
     }
 
     return () => {
       if (ref.current) {
-        observer.disconnect()
+        observer.disconnect();
       }
-    }
-  }, [])
+    };
+  }, []);
 
   return (
     <>
@@ -218,8 +272,8 @@ function AnimatedStepCards() {
               ? index % 3 === 0
                 ? "animate-fade-in-up"
                 : index % 3 === 1
-                  ? "animate-rotate-in"
-                  : "animate-scale-in"
+                ? "animate-rotate-in"
+                : "animate-scale-in"
               : "opacity-0"
           }`}
           style={{
@@ -236,7 +290,9 @@ function AnimatedStepCards() {
             </div>
           </div>
           <h3 className="text-2xl font-bold mb-3">{step.title}</h3>
-          <p className="text-lg leading-relaxed dark:text-gray-300">{step.description}</p>
+          <p className="text-lg leading-relaxed dark:text-gray-300">
+            {step.description}
+          </p>
 
           {/* Progress indicator */}
           <div className="mt-4 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -251,10 +307,18 @@ function AnimatedStepCards() {
         </div>
       ))}
     </>
-  )
+  );
 }
 
-function StatCard({ number, label, color }) {
+function StatCard({
+  number,
+  label,
+  color,
+}: {
+  number: string | number;
+  label: string;
+  color: string;
+}) {
   return (
     <div className="bg-white dark:bg-[#1e1e28] border-[6px] border-black rounded-xl p-8 text-center shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-2 transition-transform dark:text-white dark:dark-glow">
       <div className="text-5xl font-black mb-2" style={{ color }}>
@@ -262,54 +326,52 @@ function StatCard({ number, label, color }) {
       </div>
       <div className="text-xl font-bold">{label}</div>
     </div>
-  )
+  );
 }
 
-function SocialButton({ icon }) {
+function SocialButton({ icon }: { icon: React.ReactNode }) {
   return (
     <button className="bg-white dark:bg-[#1e1e28] text-black dark:text-white w-14 h-14 rounded-xl border-[4px] border-[#0055FF] dark:border-[#FF6B97] flex items-center justify-center hover:-translate-y-1 transition-transform dark:dark-glow">
       {icon}
     </button>
-  )
+  );
 }
 
 // Sample data
 const mapPins = [
-  { x: 20, y: 30 },
-  { x: 30, y: 40 },
-  { x: 50, y: 35 },
-  { x: 70, y: 25 },
-  { x: 80, y: 45 },
-  { x: 40, y: 60 },
-  { x: 60, y: 70 },
-  { x: 25, y: 50 },
-  { x: 75, y: 60 },
-  { x: 55, y: 20 },
-]
+  { x: 67, y: 38 }, // Jodhpur
+  { x: 67.5, y: 36 }, // Jaipur
+];
 
 const steps = [
   {
     title: "Registration Phase",
-    description: "Display owners register their physical screens and IoT devices on the SoulBoard protocol.",
+    description:
+      "Display owners register their physical screens and IoT devices on the SoulBoard protocol.",
   },
   {
     title: "Liquidity & Tokenomics",
-    description: "Advertisers provide liquidity to the SBC-USDC pool to participate in the network.",
+    description:
+      "Advertisers provide liquidity to the SBC-USDC pool to participate in the network.",
   },
   {
     title: "Advertiser Flow",
-    description: "Create campaigns and allocate tokens to specific display types and locations.",
+    description:
+      "Create campaigns and allocate tokens to specific display types and locations.",
   },
   {
     title: "Display & Verification",
-    description: "IoT devices verify real-world impressions and record them on the blockchain.",
+    description:
+      "IoT devices verify real-world impressions and record them on the blockchain.",
   },
   {
     title: "Budget Reallocation",
-    description: "Smart contracts automatically optimize budget allocation based on performance.",
+    description:
+      "Smart contracts automatically optimize budget allocation based on performance.",
   },
   {
     title: "Payment Settlement",
-    description: "Display owners earn tokens based on verified impressions and engagement.",
+    description:
+      "Display owners earn tokens based on verified impressions and engagement.",
   },
-]
+];

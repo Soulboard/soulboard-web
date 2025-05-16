@@ -2,6 +2,7 @@ import type React from "react"
 import { Space_Grotesk } from "next/font/google"
 import { useEffect } from "react"
 import WalletProvider from "../providers/WalletProvider"
+import { ThingSpeakProvider } from "../providers/thingspeak-provider"
 import "./globals.css"
 
 // Initialize the Space Grotesk font
@@ -31,7 +32,9 @@ export default function RootLayout({
       </head>
       <body>
         <WalletProvider>
-          {children}
+          <ThingSpeakProvider>
+            {children}
+          </ThingSpeakProvider>
         </WalletProvider>
       </body>
     </html>
