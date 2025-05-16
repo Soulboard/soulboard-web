@@ -103,6 +103,14 @@ export default function CampaignDetails({ params  }) {
             </div>
 
             <button
+                onClick={() => router.push(`/dashboard/campaigns/book-locations?campaignId=${campaign.id}`)}
+                className="inline-flex items-center px-6 py-3 bg-[#FFCC00] text-black font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform"
+              >
+                <MapPin className="w-5 h-5 mr-2" />
+                Book Locations
+              </button>
+
+            <button
               onClick={() => setIsModalOpen(true)}
               className="mt-4 md:mt-0 inline-flex items-center px-6 py-3 bg-[#0055FF] text-white font-bold rounded-xl border-[4px] border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:-translate-y-1 transition-transform"
             >
