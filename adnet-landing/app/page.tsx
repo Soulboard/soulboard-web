@@ -189,10 +189,19 @@ export default function Home() {
             <div>
               <h2 className="text-4xl font-black mb-6">CONNECT WITH US</h2>
               <div className="flex space-x-4 mb-8">
-                <SocialButton icon={<Twitter className="w-6 h-6" />} />
-                <SocialButton icon={<Discord className="w-6 h-6" />} />
-                <SocialButton icon={<Github className="w-6 h-6" />} />
-              </div>
+                <div className="flex space-x-4 mb-8">
+                  <SocialButton
+                    icon={<Twitter className="w-6 h-6" />}
+                    link="https://twitter.com/SoulBoardFdn"
+                    label="Twitter"
+                  />
+                
+                  <SocialButton
+                    icon={<Github className="w-6 h-6" />}
+                    link="https://github.com/soulboard"
+                    label="GitHub"
+                  />
+                </div>              </div>
               <div className="bg-white dark:bg-[#FF6B97] text-black dark:text-white inline-block px-6 py-3 rounded-xl border-[4px] border-[#0055FF] dark:border-black font-bold transform -rotate-2 dark:dark-glow">
                 Built on Solana
               </div>
@@ -267,15 +276,14 @@ function AnimatedStepCards() {
         <div
           key={index}
           ref={index === 0 ? ref : null}
-          className={`step-card bg-white dark:bg-[#1e1e28] border-[6px] border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:text-white dark:dark-glow transition-colors duration-300 ${
-            isVisible
+          className={`step-card bg-white dark:bg-[#1e1e28] border-[6px] border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] dark:text-white dark:dark-glow transition-colors duration-300 ${isVisible
               ? index % 3 === 0
                 ? "animate-fade-in-up"
                 : index % 3 === 1
-                ? "animate-rotate-in"
-                : "animate-scale-in"
+                  ? "animate-rotate-in"
+                  : "animate-scale-in"
               : "opacity-0"
-          }`}
+            }`}
           style={{
             transform: `rotate(${index % 2 === 0 ? 1 : -1}deg)`,
             animationDelay: `${0.2 * index}s`,
@@ -329,11 +337,25 @@ function StatCard({
   );
 }
 
-function SocialButton({ icon }: { icon: React.ReactNode }) {
+function SocialButton({
+  icon,
+  link,
+  label,
+}: {
+  icon: React.ReactNode;
+  link: string;
+  label?: string;
+}) {
   return (
-    <button className="bg-white dark:bg-[#1e1e28] text-black dark:text-white w-14 h-14 rounded-xl border-[4px] border-[#0055FF] dark:border-[#FF6B97] flex items-center justify-center hover:-translate-y-1 transition-transform dark:dark-glow">
+    <a
+      href={link}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      className="bg-white dark:bg-[#1e1e28] text-black dark:text-white w-14 h-14 rounded-xl border-[4px] border-[#0055FF] dark:border-[#FF6B97] flex items-center justify-center hover:-translate-y-1 transition-transform dark:dark-glow"
+    >
       {icon}
-    </button>
+    </a>
   );
 }
 

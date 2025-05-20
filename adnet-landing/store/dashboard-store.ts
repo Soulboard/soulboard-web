@@ -68,6 +68,7 @@ interface DashboardState {
   registerLocation: (
     opts: {  name: string; description: string  }
   ) => Promise<string>;           
+  bookLocation: ( locationIdx : number , campaignIdx:number ) => Promise<void>; // TODO
   registerAdvertiser :() => Promise<string>  // returns Location PDA
   registerProvider :() => Promise<string>  // returns Location PDA
 }
@@ -323,7 +324,17 @@ export const useDashboardStore = create<DashboardState>()(
             });
           }
           return finalLocations;
-        }
+        },
+
+        bookLocation: async ( locationIdx , campaignIdx ) => {
+          const { client } = get();
+          if (!client) throw new Error('client not initialised');
+
+          await client.bookLocation(locationIdx, campaignIdx);
+
+          // refresh from chain (cheaper: mutate locally)
+          await get().fetchLocations();
+        },
       }),
 
   

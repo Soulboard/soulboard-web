@@ -7,14 +7,20 @@ import { DashboardLayout } from "@/components/dashboard-layout"
 import { PageTransition } from "@/components/page-transition"
 import { useCampaigns, useLocations } from "@/hooks/use-dashboard-data"
 import { useToast } from "@/hooks/use-toast"
+import { useSolanaWallets } from "@privy-io/react-auth"
+import { useSendTransaction } from "@privy-io/react-auth/solana"
+import { PublicKey } from "@solana/web3.js"
 
 export default function BookLocationsPage() {
   const router = useRouter()
+    const { wallets } = useSolanaWallets()
+    const { sendTransaction } = useSendTransaction()
+  
   const searchParams = useSearchParams()
   const campaignId = searchParams.get("campaignId")
   const { toast } = useToast()
 
-  const { campaigns, getCampaignById } = useCampaigns()
+  const { campaigns, getCampaignById , bookLocation , initialise } = useCampaigns()
   const { locations, isLoading } = useLocations()
 
   const [selectedCampaignId, setSelectedCampaignId] = useState(campaignId || "")
@@ -74,7 +80,7 @@ export default function BookLocationsPage() {
   }
 
   // Handle booking submission with toast notification
-  const handleBookingSubmit = () => {
+  const handleBookingSubmit =async () => {
     if (!selectedCampaignId || selectedLocations.length === 0) {
       toast({
         title: "Booking Failed",
@@ -84,24 +90,70 @@ export default function BookLocationsPage() {
       return
     }
 
+    
+    try {
+      await initialise({
+        wallet: wallets[0],
+        publicKey: new PublicKey(wallets[0].address),
+        sendTransaction: sendTransaction,
+      })
+
+      await bookLocation( 0 , 1 )
+
+      // Show success toast
+      toast({
+        title: "Location Booked",
+        variant: "default",
+        duration: 5000,
+        action: (
+          <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+          </div>
+        ),
+      })
+
+      // Redirect after a short delay to allow the toast to be seen
+      setTimeout(() => {
+        router.push("/dashboard/campaigns")
+      }, 1000)
+    } catch (err) {
+      console.log(err)
+
+      // Show error toast
+      toast({
+        title: "Failed to create campaign",
+        description: String(err),
+        variant: "destructive",
+        duration: 7000,
+        action: (
+          <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
+            <AlertCircle className="h-5 w-5 text-red-600" />
+          </div>
+        ),
+      })
+    } finally {
+     
+    }
+
+
     // In a real app, this would make an API call to book the locations
-    console.log("Booking submitted:", {
-      campaignId: selectedCampaignId,
-      locations: selectedLocations,
-    })
+    // console.log("Booking submitted:", {
+    //   campaignId: selectedCampaignId,
+    //   locations: selectedLocations,
+    // })
 
-    // Show success toast
-    toast({
-      title: "Locations Booked Successfully!",
-      description: `${selectedLocations.length} location${selectedLocations.length !== 1 ? "s" : ""} booked for ${selectedCampaign?.name}`,
-      variant: "default",
-      className: "bg-green-500 text-white border-black",
-    })
+    // // Show success toast
+    // toast({
+    //   title: "Locations Booked Successfully!",
+    //   description: `${selectedLocations.length} location${selectedLocations.length !== 1 ? "s" : ""} booked for ${selectedCampaign?.name}`,
+    //   variant: "default",
+    //   className: "bg-green-500 text-white border-black",
+    // })
 
-    // Redirect to campaign details
-    setTimeout(() => {
-      router.push(`/dashboard/campaigns/${selectedCampaignId}`)
-    }, 1500)
+    // // Redirect to campaign details
+    // setTimeout(() => {
+    //   router.push(`/dashboard/campaigns/${selectedCampaignId}`)
+    // }, 1500)
   }
 
   return (

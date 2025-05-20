@@ -34,8 +34,8 @@ const DEFAULT_RPC = 'https://devnet.helius-rpc.com/?api-key=5f1828f6-a7b9-417d-9
 /* ──────────────────────────────────────────────────────────── */
 /*                       IDL IMPORT                            */
 /* ──────────────────────────────────────────────────────────── */
-import { Soulboard } from "../../target/types/soulboard";
-import soulboardIdl  from "../../target/idl/soulboard.json"
+import { Soulboard } from "../target/types/soulboard";
+import soulboardIdl  from "../target/idl/soulboard.json"
 
 
 // We'll use a type assertion for the IDL since we don't have access to the JSON file

@@ -2,23 +2,23 @@
 
 import type React from "react"
 
-import { FormEvent, useState } from "react"
+import { type FormEvent, useState } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { PageTransition } from "@/components/page-transition"
-import { Calendar, DollarSign, MapPin, ArrowLeft, Search, ImageIcon, Upload, Target } from "lucide-react"
+import { Calendar, DollarSign, MapPin, ArrowLeft, ImageIcon, Upload, CheckCircle, AlertCircle } from "lucide-react"
 import { useCampaigns, useLocations } from "@/hooks/use-dashboard-data"
 import { useSolanaWallets } from "@privy-io/react-auth"
 import { useSendTransaction } from "@privy-io/react-auth/solana"
 import { PublicKey } from "@solana/web3.js"
-import { PinataSDK } from "pinata";
-
+import { useToast } from "@/hooks/use-toast"
 
 export default function CreateCampaign() {
   const router = useRouter()
-  const { initialise , createCampaign   } = useCampaigns() ; 
-  const { getActiveLocations  } = useLocations()
-  const {wallets} = useSolanaWallets()
+  const { toast } = useToast()
+  const { initialise, createCampaign } = useCampaigns()
+  const { getActiveLocations } = useLocations()
+  const { wallets } = useSolanaWallets()
   const { sendTransaction } = useSendTransaction()
   const [formData, setFormData] = useState({
     name: "",
@@ -134,7 +134,7 @@ export default function CreateCampaign() {
     })
   }
 
-  const handleSubmit =  async  (e : FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
@@ -146,80 +146,59 @@ export default function CreateCampaign() {
       timeSlots: Object.fromEntries(Object.entries(formData.timeSlots).filter(([_, slots]) => slots.length > 0)),
     }
 
-    try { 
-      await initialise( { 
-        wallet : wallets[0] , 
-        publicKey : new PublicKey(wallets[0].address) , 
-        sendTransaction : sendTransaction
+    try {
+      await initialise({
+        wallet: wallets[0],
+        publicKey: new PublicKey(wallets[0].address),
+        sendTransaction: sendTransaction,
       })
 
-      await createCampaign({ 
-        name : finalFormData.name , 
-        description : finalFormData.description , 
-        budgetSOL : Number(finalFormData.budget) , 
-        imageUrl : finalFormData.creativeFile // to be uploaded to ipfs 
+      await createCampaign({
+        name: finalFormData.name,
+        description: finalFormData.description,
+        budgetSOL: Number(finalFormData.budget),
+        imageUrl: finalFormData.creativeFile, // to be uploaded to ipfs
       })
 
-      
-      
-      router.push("/dashboard/campaigns")
-    } catch(err) { 
-      console.log(err) ; 
-      alert(`Failed to create campaign : ${String(err)} `)
-    }finally { 
+      // Show success toast
+      toast({
+        title: "Campaign created successfully!",
+        description: `Your campaign "${finalFormData.name}" has been created.`,
+        variant: "default",
+        duration: 5000,
+        action: (
+          <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+          </div>
+        ),
+      })
+
+      // Redirect after a short delay to allow the toast to be seen
+      setTimeout(() => {
+        router.push("/dashboard/campaigns")
+      }, 1000)
+    } catch (err) {
+      console.log(err)
+
+      // Show error toast
+      toast({
+        title: "Failed to create campaign",
+        description: String(err),
+        variant: "destructive",
+        duration: 7000,
+        action: (
+          <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center">
+            <AlertCircle className="h-5 w-5 text-red-600" />
+          </div>
+        ),
+      })
+    } finally {
       setIsSubmitting(false)
     }
- 
   }
 
   const nextStep = () => setStep((prev) => prev + 1)
   const prevStep = () => setStep((prev) => prev - 1)
-
-  // Sample locations data
-  // const availableLocations = [
-  //   {
-  //     id: "nyc",
-  //     name: "New York City - Times Square",
-  //     address: "1535 Broadway, New York, NY 10036",
-  //     impressions: "120K",
-  //     price: "$180",
-  //   },
-  //   {
-  //     id: "la",
-  //     name: "Los Angeles - Santa Monica",
-  //     address: "200 Santa Monica Pier, Santa Monica, CA 90401",
-  //     impressions: "95K",
-  //     price: "$150",
-  //   },
-  //   {
-  //     id: "chicago",
-  //     name: "Chicago - Magnificent Mile",
-  //     address: "401 N Michigan Ave, Chicago, IL 60611",
-  //     impressions: "85K",
-  //     price: "$130",
-  //   },
-  //   {
-  //     id: "miami",
-  //     name: "Miami - South Beach",
-  //     address: "1001 Ocean Drive, Miami Beach, FL 33139",
-  //     impressions: "150K",
-  //     price: "$200",
-  //   },
-  //   {
-  //     id: "sf",
-  //     name: "San Francisco - Union Square",
-  //     address: "333 Post St, San Francisco, CA 94108",
-  //     impressions: "75K",
-  //     price: "$120",
-  //   },
-  //   {
-  //     id: "seattle",
-  //     name: "Seattle - Pike Place",
-  //     address: "85 Pike St, Seattle, WA 98101",
-  //     impressions: "65K",
-  //     price: "$110",
-  //   },
-  // ]
 
   const availableLocations = getActiveLocations()
 
@@ -257,7 +236,7 @@ export default function CreateCampaign() {
               style={{ width: step > 1 ? "100%" : "0%" }}
             ></div>
           </div>
-         
+
           <ProgressStep number={2} title="Creative" active={step >= 2} completed={step > 2} />
           <div className="flex-1 h-1 bg-gray-200 dark:bg-gray-700">
             <div
@@ -362,10 +341,7 @@ export default function CreateCampaign() {
               </div>
             )}
 
-            {/* Step 2: Targeting */}
-           
-
-            {/* Step 3: Creative */}
+            {/* Step 2: Creative */}
             {step === 2 && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold dark:text-white">Campaign Creative</h2>
@@ -476,7 +452,7 @@ export default function CreateCampaign() {
               </div>
             )}
 
-            {/* Step 4: Review */}
+            {/* Step 3: Review */}
             {step === 3 && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold dark:text-white">Review Campaign</h2>
@@ -534,8 +510,6 @@ export default function CreateCampaign() {
                       <p className="text-gray-500 dark:text-gray-400">No locations selected</p>
                     )}
                   </div>
-
-                  
 
                   {formData.creativePreview && (
                     <div className="mt-6">

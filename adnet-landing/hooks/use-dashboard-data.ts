@@ -21,6 +21,7 @@ export function useCampaigns() {
     addBudget,
     getCampaignById,
     getAllCampaignLocations,
+    bookLocation,
   } = useDashboardStore();
 
   /* auto-refresh once when the hook first mounts and when user is ready */
@@ -57,6 +58,7 @@ export function useCampaigns() {
     /* mutations */
     createCampaign,
     addBudget,
+    bookLocation,
   };
 }
 
