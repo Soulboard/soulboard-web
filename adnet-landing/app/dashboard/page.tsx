@@ -62,7 +62,7 @@ export default function Dashboard() {
           {role === "advertiser" ? (
             <>
               <StatCard title="Active Campaigns" value={ activeCampaigns.length.toString() } icon={<BarChart3 className="w-6 h-6" />} color="#0055FF" />
-              <StatCard title="Total Impressions" value="1.2M" icon={<Users className="w-6 h-6" />} color="#FFCC00" />
+              <StatCard title="Total Impressions" value="812" icon={<Users className="w-6 h-6" />} color="#FFCC00" />
               <StatCard title="Budget Spent" value={budget.toString()} icon={<DollarSign className="w-6 h-6" />} color="#FF6B97" />
               <StatCard title="ROI" value="+24%" icon={<TrendingUp className="w-6 h-6" />} color="#00C853" />
             </>

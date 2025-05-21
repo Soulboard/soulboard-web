@@ -104,16 +104,16 @@ export default function Analytics() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {role === "advertiser" ? (
             <>
-              <StatCard title="Total Impressions" value="1.2M" change="+12.5%" isPositive={true} />
+              <StatCard title="Total Impressions" value="812" change="+12.5%" isPositive={true} />
               <StatCard title="Click-through Rate" value="3.8%" change="+0.7%" isPositive={true} />
               <StatCard title="Cost per Impression" value="$0.004" change="-0.2%" isPositive={true} />
               <StatCard title="Engagement Rate" value="8.2%" change="+1.5%" isPositive={true} />
               <StatCard title="Conversion Rate" value="2.1%" change="-0.3%" isPositive={false} />
-              <StatCard title="ROI" value="245%" change="+15%" isPositive={true} />
+              <StatCard title="ROI" value="24%" change="+15%" isPositive={true} />
             </>
           ) : (
             <>
-              <StatCard title="Total Impressions" value="850K" change="+8.3%" isPositive={true} />
+              <StatCard title="Total Impressions" value="850" change="+8.3%" isPositive={true} />
               <StatCard title="Active Campaigns" value="12" change="+2" isPositive={true} />
               <StatCard title="Earnings per Display" value="$472.50" change="+$45.80" isPositive={true} />
               <StatCard title="Average Uptime" value="99.2%" change="+0.5%" isPositive={true} />
