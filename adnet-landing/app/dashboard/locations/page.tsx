@@ -112,18 +112,17 @@ export default function Locations() {
                         <Link href={`/dashboard/locations/${location.id}`} className="font-bold hover:underline">
                           {location.name}
                         </Link>
-                        {/* <p className="text-sm text-gray-500 dark:text-gray-400">{location.address}</p> */}
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{location.city || 'Unknown City'}</p>
                       </td>
-                      {/* <td className="px-6 py-4 dark:text-white">{location.}</td> */}
+                      <td className="px-6 py-4 dark:text-white">Digital Display</td>
                       <td className="px-6 py-4">
                         <span
-                          className={`px-3 py-1 rounded-full text-sm font-medium ${
-                            location.status === "Active"
-                              ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                              : location.status === "Maintenance"
-                                ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                                : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
-                          }`}
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${location.status === "Active"
+                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                            : location.status === "Maintenance"
+                              ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                              : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                            }`}
                         >
                           {location.status}
                         </span>
@@ -131,9 +130,10 @@ export default function Locations() {
                       <td className="px-6 py-4 dark:text-white">
                         <div className="flex items-center">
                           <Clock className="w-4 h-4 mr-2 text-gray-500 dark:text-gray-400" />
-                          {location.slotCount || location.slotCount || 0}
+                          {location.slotCount || 0}
                         </div>
                       </td>
+                      <td className="px-6 py-4 dark:text-white">₹{Math.floor(Math.random() * 1000) + 500}</td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center space-x-2">
                           <Link

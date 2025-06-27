@@ -32,12 +32,15 @@ export function useCampaigns() {
   }, [fetchCampaigns, ready, user]);
 
   /* helpers */
-  const getActiveCampaigns   = () => campaigns.filter(c => c.status === "Active");
-  const getEndedCampaigns    = () => campaigns.filter(c => c.status === "Ended");
-  const getPausedCampaigns   = () => campaigns.filter(c => c.status === "Paused");
+  const getActiveCampaigns = () => campaigns.filter(c => c.status === "Active");
+  const getEndedCampaigns = () => campaigns.filter(c => c.status === "Ended");
+  const getPausedCampaigns = () => campaigns.filter(c => c.status === "Paused");
 
-  const getTotalBudgetSOL    = () =>
+  const getTotalBudgetSOL = () =>
     campaigns.reduce((sum, c) => sum + (c.budgetSOL ?? 0), 0);
+
+  const getTotalSpentSOL = () =>
+    campaigns.reduce((sum, c) => sum + (c.spentSOL ?? 0), 0);
 
   return {
     campaigns,
@@ -54,6 +57,7 @@ export function useCampaigns() {
     getPausedCampaigns,
     getCampaignById,
     getTotalBudgetSOL,
+    getTotalSpentSOL,
     getAllCampaignLocations,
     /* mutations */
     createCampaign,
@@ -84,11 +88,11 @@ export function useLocations() {
   }, [fetchLocations, ready, user]);
 
   /* helpers */
-  const getActiveLocations       = () => locations.filter(l => l.status === "Active");
-  const getMaintenanceLocations  = () => locations.filter(l => l.status === "Maintenance");
-  const getInactiveLocations     = () => locations.filter(l => l.status === "Inactive");
+  const getActiveLocations = () => locations.filter(l => l.status === "Active");
+  const getMaintenanceLocations = () => locations.filter(l => l.status === "Maintenance");
+  const getInactiveLocations = () => locations.filter(l => l.status === "Inactive");
 
-  const getTotalSlots            = () =>
+  const getTotalSlots = () =>
     locations.reduce((sum, l) => sum + l.slotCount, 0);
 
   return {

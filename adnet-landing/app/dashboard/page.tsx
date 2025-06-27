@@ -18,11 +18,12 @@ export default function Dashboard() {
   const [role, setRole] = useState<Role>("advertiser")
   const { locations, isLoading } = useLocations()
   const { flourishData } = useFlourishData()
-  const { campaigns , getActiveCampaigns ,getTotalBudgetSOL   } = useCampaigns()
-  const { flourishData : campaignData } = useCampaignFlourish()
+  const { campaigns, getActiveCampaigns, getTotalBudgetSOL, getTotalSpentSOL } = useCampaigns()
+  const { flourishData: campaignData } = useCampaignFlourish()
 
   const activeCampaigns = getActiveCampaigns()
   const budget = getTotalBudgetSOL()
+  const spent = getTotalSpentSOL()
 
   useEffect(() => {
     // Check for saved role preference
@@ -61,18 +62,18 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {role === "advertiser" ? (
             <>
-              <StatCard title="Active Campaigns" value={ activeCampaigns.length.toString() } icon={<BarChart3 className="w-6 h-6" />} color="#0055FF" />
-              <StatCard title="Total Impressions" value="1.2M" icon={<Users className="w-6 h-6" />} color="#FFCC00" />
-              <StatCard title="Budget Spent" value={budget.toString()} icon={<DollarSign className="w-6 h-6" />} color="#FF6B97" />
+              <StatCard title="Active Campaigns" value={activeCampaigns.length.toString()} icon={<BarChart3 className="w-6 h-6" />} color="#0055FF" />
+              <StatCard title="Total Impressions" value="875" icon={<Users className="w-6 h-6" />} color="#FFCC00" />
+              <StatCard title="Budget Spent" value={`${spent.toFixed(4)} SOL`} icon={<DollarSign className="w-6 h-6" />} color="#FF6B97" />
               <StatCard title="ROI" value="+24%" icon={<TrendingUp className="w-6 h-6" />} color="#00C853" />
             </>
           ) : (
             <>
               <StatCard title="Active Displays" value={flourishData.keyMetrics.primary.value} icon={<MapPin className="w-6 h-6" />} color="#FF6B97" />
-              <StatCard title="Total Impressions" value="850K" icon={<Users className="w-6 h-6" />} color="#FFCC00" />
+              <StatCard title="Total Impressions" value="875" icon={<Users className="w-6 h-6" />} color="#FFCC00" />
               <StatCard
                 title="Monthly Earnings"
-                value="$3,780"
+                value="0.0395 SOL"
                 icon={<DollarSign className="w-6 h-6" />}
                 color="#0055FF"
               />
@@ -88,47 +89,47 @@ export default function Dashboard() {
             {role === "advertiser" ? (
               <>
                 <ActivityItem
-                  title="Campaign 'Summer Sale' is live"
-                  time="2 hours ago"
-                  description="Your campaign is now running on 5 displays"
+                  title="Campaign 'New summer menu' is live"
+                  time="1 week ago"
+                  description="Your campaign is running at LNMIIT Campus canteen during vacation period"
                 />
                 <ActivityItem
-                  title="Budget update"
-                  time="Yesterday"
-                  description="Added $1,000 to 'New Product Launch' campaign"
-                />
-                <ActivityItem
-                  title="Campaign ended"
-                  time="3 days ago"
-                  description="'Spring Collection' campaign has ended"
-                />
-                <ActivityItem
-                  title="New analytics available"
+                  title="Low impression alert"
                   time="5 days ago"
-                  description="Weekly performance report for all campaigns is ready"
+                  description="LNMIIT Campus showing reduced traffic due to vacation period"
+                />
+                <ActivityItem
+                  title="Campaign 'New suite collection' performing well"
+                  time="3 days ago"
+                  description="Diwasa stores Jodhpur showing consistent performance"
+                />
+                <ActivityItem
+                  title="Budget optimization suggested"
+                  time="2 days ago"
+                  description="Consider reallocating budget from vacation period locations"
                 />
               </>
             ) : (
               <>
                 <ActivityItem
-                  title="New campaign assigned"
-                  time="1 hour ago"
-                  description="'Summer Sale' campaign assigned to 2 of your displays"
+                  title="New campaign 'New summer menu' assigned"
+                  time="1 week ago"
+                  description="Campaign assigned to LNMIIT Campus canteen during vacation period"
                 />
                 <ActivityItem
                   title="Payment received"
-                  time="Yesterday"
-                  description="Received $420 for April campaigns"
+                  time="10 days ago"
+                  description="Received 0.0387 SOL from Diwasa stores campaigns"
                 />
                 <ActivityItem
-                  title="Display verification"
-                  time="2 days ago"
-                  description="'Times Square North' display verified successfully"
+                  title="Location verification completed"
+                  time="2 weeks ago"
+                  description="LNMIIT Campus canteen verified for May-June period"
                 />
                 <ActivityItem
-                  title="Maintenance scheduled"
-                  time="4 days ago"
-                  description="Maintenance for 'South Beach' display scheduled for next week"
+                  title="Vacation period notice"
+                  time="2 weeks ago"
+                  description="LNMIIT Campus entering low-traffic vacation period"
                 />
               </>
             )}

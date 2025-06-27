@@ -2,57 +2,85 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { PageTransition } from "@/components/page-transition"
 import { ArrowLeft, Edit, MapPin, Calendar, DollarSign, Users, BarChart3, Check, Clock } from "lucide-react"
-import { EditLocationModal } from "@/components/edit-location-modal"
+import { useDashboardStore, Location } from "@/store/dashboard-store"
 
-// Sample location data - in a real app, you would fetch this based on the ID
-const locationData = {
-  id: "1",
-  name: "Times Square North",
-  address: "1535 Broadway, New York, NY 10036",
-  type: "Digital Billboard",
-  size: "Large (50-100 sq ft)",
-  status: "Active",
-  impressions: "120K/day",
-  earnings: "$1,850/month",
-  registrationDate: "Jan 15, 2025",
-  lastMaintenance: "Mar 10, 2025",
-  description: "Premium digital billboard located at the heart of Times Square with high visibility and foot traffic.",
-  campaigns: [
-    { id: "c1", name: "Summer Sale Promotion", status: "Active", impressions: "45K", earnings: "$650" },
-    { id: "c2", name: "New Product Launch", status: "Active", impressions: "38K", earnings: "$520" },
-    { id: "c3", name: "Brand Awareness", status: "Active", impressions: "37K", earnings: "$680" },
-  ],
-  verification: {
-    deviceId: "IOT-12345",
-    lastVerified: "Apr 5, 2025",
-    status: "Verified",
-  },
-  availableSlots: [
-    { id: "slot1", day: "Weekdays", startTime: "09:00", endTime: "17:00", basePrice: "0.25" },
-    { id: "slot2", day: "Weekends", startTime: "10:00", endTime: "22:00", basePrice: "0.45" },
-    { id: "slot3", day: "All Days", startTime: "00:00", endTime: "06:00", basePrice: "0.15" },
-  ],
+interface LocationDetailsProps {
+  params: { id: string }
 }
 
-export default function LocationDetails({ params }) {
+export default function LocationDetails({ params }: LocationDetailsProps) {
   const router = useRouter()
   const { id } = params
-  const [location, setLocation] = useState(locationData)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const { getLocationById } = useDashboardStore()
+  const [location, setLocation] = useState<Location | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  // In a real app, you would fetch the location data based on the ID
+  useEffect(() => {
+    const fetchLocation = async () => {
+      setIsLoading(true)
+      try {
+        const locationData = await getLocationById(id)
+        setLocation(locationData || null)
+      } catch (error) {
+        console.error('Error fetching location:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
 
-  const handleSaveLocation = (updatedLocation) => {
-    setLocation({
-      ...location,
-      ...updatedLocation,
-    })
+    fetchLocation()
+  }, [id, getLocationById])
+
+  const handleSaveLocation = (updatedLocation: any) => {
+    if (location) {
+      setLocation({
+        ...location,
+        ...updatedLocation,
+      })
+    }
     // In a real app, you would make an API call to update the location
+  }
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <PageTransition>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FF6B97] mx-auto mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-300">Loading location details...</p>
+            </div>
+          </div>
+        </PageTransition>
+      </DashboardLayout>
+    )
+  }
+
+  if (!location) {
+    return (
+      <DashboardLayout>
+        <PageTransition>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-gray-600 dark:text-gray-300 text-lg">Location not found</p>
+              <button
+                onClick={() => router.back()}
+                className="mt-4 inline-flex items-center text-[#FF6B97] hover:underline"
+              >
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                Back to locations
+              </button>
+            </div>
+          </div>
+        </PageTransition>
+      </DashboardLayout>
+    )
   }
 
   return (
@@ -72,18 +100,17 @@ export default function LocationDetails({ params }) {
               <div className="flex items-center">
                 <h1 className="text-3xl font-black dark:text-white">{location.name}</h1>
                 <span
-                  className={`ml-4 px-3 py-1 rounded-full text-sm font-medium ${
-                    location.status === "Active"
-                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                      : location.status === "Maintenance"
-                        ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                        : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
-                  }`}
+                  className={`ml-4 px-3 py-1 rounded-full text-sm font-medium ${location.status === "Active"
+                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                    : location.status === "Maintenance"
+                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                      : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+                    }`}
                 >
                   {location.status}
                 </span>
               </div>
-              <p className="text-lg mt-2 dark:text-gray-300">{location.address}</p>
+              <p className="text-lg mt-2 dark:text-gray-300">{location.address || location.description}</p>
             </div>
 
             <button
@@ -100,20 +127,20 @@ export default function LocationDetails({ params }) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
             title="Daily Impressions"
-            value={location.impressions}
+            value={location.impressions || "0/day"}
             icon={<Users className="w-6 h-6" />}
             color="#0055FF"
           />
           <StatCard
             title="Monthly Earnings"
-            value={location.earnings}
+            value={location.earnings || "0 SOL/month"}
             icon={<DollarSign className="w-6 h-6" />}
             color="#FFCC00"
           />
-          <StatCard title="Display Type" value={location.type} icon={<MapPin className="w-6 h-6" />} color="#FF6B97" />
+          <StatCard title="Display Type" value={location.type || "Unknown"} icon={<MapPin className="w-6 h-6" />} color="#FF6B97" />
           <StatCard
             title="Display Size"
-            value={location.size}
+            value={location.size || "Unknown"}
             icon={<BarChart3 className="w-6 h-6" />}
             color="#00C853"
           />
@@ -125,31 +152,47 @@ export default function LocationDetails({ params }) {
           <div className="bg-white dark:bg-[#1e1e28] border-[6px] border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-colors duration-300">
             <h2 className="text-2xl font-bold mb-4 dark:text-white">Description</h2>
             <p className="text-gray-700 dark:text-gray-300">{location.description}</p>
+            {location.registrationDate && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <strong>Registered:</strong> {location.registrationDate}
+                </p>
+                {location.lastMaintenance && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    <strong>Last Maintenance:</strong> {location.lastMaintenance}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Verification Status */}
           <div className="bg-white dark:bg-[#1e1e28] border-[6px] border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-colors duration-300">
             <h2 className="text-2xl font-bold mb-4 dark:text-white">Verification</h2>
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
-                  <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
+            {location.verification ? (
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
+                    <Check className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold dark:text-white">Device ID</h3>
+                    <p className="text-gray-600 dark:text-gray-300">{location.verification.deviceId}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold dark:text-white">Device ID</h3>
-                  <p className="text-gray-600 dark:text-gray-300">{location.verification.deviceId}</p>
+                <div className="flex items-start space-x-3">
+                  <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
+                    <Calendar className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold dark:text-white">Last Verified</h3>
+                    <p className="text-gray-600 dark:text-gray-300">{location.verification.lastVerified}</p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-start space-x-3">
-                <div className="bg-green-100 dark:bg-green-900/30 p-2 rounded-lg">
-                  <Calendar className="w-5 h-5 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <h3 className="font-bold dark:text-white">Last Verified</h3>
-                  <p className="text-gray-600 dark:text-gray-300">{location.verification.lastVerified}</p>
-                </div>
-              </div>
-            </div>
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400">No verification data available</p>
+            )}
           </div>
         </div>
 
@@ -186,47 +229,45 @@ export default function LocationDetails({ params }) {
         {/* Active Campaigns */}
         <div className="bg-white dark:bg-[#1e1e28] border-[6px] border-black rounded-xl p-6 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] transition-colors duration-300">
           <h2 className="text-2xl font-bold mb-6 dark:text-white">Active Campaigns</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-100 dark:bg-[#252530]">
-                  <th className="px-6 py-3 text-left font-bold dark:text-white">Campaign</th>
-                  <th className="px-6 py-3 text-left font-bold dark:text-white">Status</th>
-                  <th className="px-6 py-3 text-left font-bold dark:text-white">Impressions</th>
-                  <th className="px-6 py-3 text-left font-bold dark:text-white">Earnings</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {location.campaigns.map((campaign) => (
-                  <tr key={campaign.id} className="hover:bg-gray-50 dark:hover:bg-[#252530]">
-                    <td className="px-6 py-4 dark:text-white font-medium">{campaign.name}</td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          campaign.status === "Active"
+          {location.campaigns && location.campaigns.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-100 dark:bg-[#252530]">
+                    <th className="px-6 py-3 text-left font-bold dark:text-white">Campaign</th>
+                    <th className="px-6 py-3 text-left font-bold dark:text-white">Status</th>
+                    <th className="px-6 py-3 text-left font-bold dark:text-white">Impressions</th>
+                    <th className="px-6 py-3 text-left font-bold dark:text-white">Earnings</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {location.campaigns.map((campaign) => (
+                    <tr key={campaign.id} className="hover:bg-gray-50 dark:hover:bg-[#252530]">
+                      <td className="px-6 py-4 dark:text-white font-medium">{campaign.name}</td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${campaign.status === "Active"
                             ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                             : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
-                        }`}
-                      >
-                        {campaign.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 dark:text-white">{campaign.impressions}</td>
-                    <td className="px-6 py-4 dark:text-white">{campaign.earnings}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                            }`}
+                        >
+                          {campaign.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 dark:text-white">{campaign.impressions}</td>
+                      <td className="px-6 py-4 dark:text-white">{campaign.earnings}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-500 dark:text-gray-400">No active campaigns are currently running at this location.</p>
+          )}
         </div>
 
-        {/* Edit Location Modal */}
-        <EditLocationModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          location={location}
-          onSave={handleSaveLocation}
-        />
+        {/* Edit Location Modal - Temporarily disabled */}
+        {/* TODO: Add EditLocationModal component */}
       </PageTransition>
     </DashboardLayout>
   )

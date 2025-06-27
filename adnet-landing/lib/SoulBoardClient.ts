@@ -5,17 +5,17 @@ import * as anchor from '@coral-xyz/anchor';
 import {
   AnchorProvider,
   Program,
-  web3 ,
+  web3,
 } from '@coral-xyz/anchor';
-import type { Commitment} from '@solana/web3.js';
+import type { Commitment } from '@solana/web3.js';
 import { PublicKey, SystemProgram, Connection, Transaction, VersionedTransaction } from '@solana/web3.js';
 import BN from 'bn.js';
 import { SendTransactionOptions } from '@solana/wallet-adapter-base';
-import {useSendTransaction} from '@privy-io/react-auth/solana';
+import { useSendTransaction } from '@privy-io/react-auth/solana';
 import { ConnectedSolanaWallet } from '@privy-io/react-auth';
-import { SupportedSolanaTransaction  } from '@privy-io/react-auth/solana';
-import { SendTransactionModalUIOptions  } from '@privy-io/react-auth';
-import { SolanaFundingConfig , SolanaTransactionReceipt } from '@privy-io/react-auth';
+import { SupportedSolanaTransaction } from '@privy-io/react-auth/solana';
+import { SendTransactionModalUIOptions } from '@privy-io/react-auth';
+import { SolanaFundingConfig, SolanaTransactionReceipt } from '@privy-io/react-auth';
 
 
 /* ──────────────────────────────────────────────────────────── */
@@ -35,7 +35,7 @@ const DEFAULT_RPC = 'https://devnet.helius-rpc.com/?api-key=5f1828f6-a7b9-417d-9
 /*                       IDL IMPORT                            */
 /* ──────────────────────────────────────────────────────────── */
 import { Soulboard } from "../target/types/soulboard";
-import soulboardIdl  from "../target/idl/soulboard.json"
+import soulboardIdl from "../target/idl/soulboard.json"
 
 
 // We'll use a type assertion for the IDL since we don't have access to the JSON file
@@ -74,7 +74,7 @@ export interface TimeSlotInput {
 /* ──────────────────────────────────────────────────────────── */
 
 export interface PrivyWallet {
-  wallet : ConnectedSolanaWallet
+  wallet: ConnectedSolanaWallet
   publicKey: PublicKey;
   sendTransaction: (input: {
     transaction: SupportedSolanaTransaction;
@@ -84,7 +84,7 @@ export interface PrivyWallet {
     fundWalletConfig?: SolanaFundingConfig;
     address?: string;
   }) => Promise<SolanaTransactionReceipt>
-} 
+}
 
 export class SoulboardClient {
   readonly connection: Connection;
@@ -125,13 +125,13 @@ export class SoulboardClient {
       },
       { commitment },
     );
-    
+
     this.provider = provider;
 
     this.program = new Program(
-  soulboardIdl as Soulboard,
-  this.provider // <- important: use full AnchorProvider
-);
+      soulboardIdl as Soulboard,
+      this.provider // <- important: use full AnchorProvider
+    );
 
     anchor.setProvider(provider);
   }
@@ -206,8 +206,8 @@ export class SoulboardClient {
       .accounts({ authority: this.wallet.publicKey })
       .transaction();
 
-      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-      tx.feePayer = this.wallet.publicKey;
+    tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+    tx.feePayer = this.wallet.publicKey;
 
 
     const txSig = await this.wallet.sendTransaction({
@@ -219,41 +219,41 @@ export class SoulboardClient {
 
   /** Creates a campaign and returns its PDA (already cached on-chain). */
   async createCampaign(
-  metadata: CampaignMetadata,
-  budgetLamports: BN,
-) {
-  const advertiserPda = this.getAdvertiserPda()[0];
+    metadata: CampaignMetadata,
+    budgetLamports: BN,
+  ) {
+    const advertiserPda = this.getAdvertiserPda()[0];
 
-  const tx = await this.program.methods
-    .createCampaign(
-      metadata.campaignName,
-      metadata.campaignDescription,
-      "example.com",
-      budgetLamports,
-    )
-    .accounts({
-      advertiser: advertiserPda,
-      authority: this.wallet.publicKey,
-      systemProgram: SystemProgram.programId,
-    })
-    .transaction();
+    const tx = await this.program.methods
+      .createCampaign(
+        metadata.campaignName,
+        metadata.campaignDescription,
+        "example.com",
+        budgetLamports,
+      )
+      .accounts({
+        advertiser: advertiserPda,
+        authority: this.wallet.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .transaction();
 
-  tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-  tx.feePayer = this.wallet.publicKey;
+    tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+    tx.feePayer = this.wallet.publicKey;
 
-  const txSig = await this.wallet.sendTransaction({
-    transaction: tx,
-    connection: this.connection
-  });
+    const txSig = await this.wallet.sendTransaction({
+      transaction: tx,
+      connection: this.connection
+    });
 
-  // Re-fetch to get the latest campaign index
-  const advertiser = await this.program.account.advertiser.fetch(advertiserPda);
-  const campaignIdx = advertiser.lastCampaignId - 1;
+    // Re-fetch to get the latest campaign index
+    const advertiser = await this.program.account.advertiser.fetch(advertiserPda);
+    const campaignIdx = advertiser.lastCampaignId - 1;
 
-  const campaignPda = this.getCampaignPda(this.wallet.publicKey, campaignIdx)[0];
+    const campaignPda = this.getCampaignPda(this.wallet.publicKey, campaignIdx)[0];
 
-  return { txSig, campaignPda, campaignIdx };
-}
+    return { txSig, campaignPda, campaignIdx };
+  }
   /** Tops up campaign escrow */
   async addBudget(
     campaignIdx: number,
@@ -275,8 +275,8 @@ export class SoulboardClient {
       })
       .transaction();
 
-      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-      tx.feePayer = this.wallet.publicKey;
+    tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+    tx.feePayer = this.wallet.publicKey;
 
 
     return this.wallet.sendTransaction({
@@ -304,8 +304,8 @@ export class SoulboardClient {
       })
       .transaction();
 
-      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-      tx.feePayer = this.wallet.publicKey;
+    tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+    tx.feePayer = this.wallet.publicKey;
 
 
     return this.wallet.sendTransaction({
@@ -322,8 +322,8 @@ export class SoulboardClient {
       .accounts({ authority: this.wallet.publicKey })
       .transaction();
 
-      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-      tx.feePayer = this.wallet.publicKey;
+    tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+    tx.feePayer = this.wallet.publicKey;
 
 
     const txSig = await this.wallet.sendTransaction({
@@ -333,46 +333,46 @@ export class SoulboardClient {
     const providerPda = this.getProviderPda()[0];
     return { txSig, providerPda };
   }
-async registerLocation(
-  name: string,
-  description: string,
-) {
-  const providerPda = this.getProviderPda()[0];
-  const provider = await this.program.account.provider.fetch(providerPda);
+  async registerLocation(
+    name: string,
+    description: string,
+  ) {
+    const providerPda = this.getProviderPda()[0];
+    const provider = await this.program.account.provider.fetch(providerPda);
 
-  const locationIdx = provider.lastLocationId;
-  const [locationPda] = this.getLocationPda(this.wallet.publicKey, locationIdx);
+    const locationIdx = provider.lastLocationId;
+    const [locationPda] = this.getLocationPda(this.wallet.publicKey, locationIdx);
 
-  console.log('locationPda', locationPda.toBase58());
-  console.log('providerPda', providerPda.toBase58());
-  console.log('provider', provider);
-  console.log('provider.lastLocationId', provider.lastLocationId);
-  console.log('provider.lastLocationId - 1', provider.lastLocationId - 1);
+    console.log('locationPda', locationPda.toBase58());
+    console.log('providerPda', providerPda.toBase58());
+    console.log('provider', provider);
+    console.log('provider.lastLocationId', provider.lastLocationId);
+    console.log('provider.lastLocationId - 1', provider.lastLocationId - 1);
 
-  const tx = await this.program.methods
-    .registerLocation(name, description)
-    .accounts({
-      authority: this.wallet.publicKey,
-      provider: providerPda,
-      location: locationPda,
-      systemProgram: SystemProgram.programId,
-    })
-    .transaction();
+    const tx = await this.program.methods
+      .registerLocation(name, description)
+      .accounts({
+        authority: this.wallet.publicKey,
+        provider: providerPda,
+        location: locationPda,
+        systemProgram: SystemProgram.programId,
+      })
+      .transaction();
 
-  tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-  tx.feePayer = this.wallet.publicKey;
+    tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+    tx.feePayer = this.wallet.publicKey;
 
-  const txSig = await this.wallet.sendTransaction({
-    transaction: tx,
-    connection: this.connection,
-  });
+    const txSig = await this.wallet.sendTransaction({
+      transaction: tx,
+      connection: this.connection,
+    });
 
-  return { txSig, locationPda, locationIdx };
-}
+    return { txSig, locationPda, locationIdx };
+  }
   async bookLocation(
     locationIdx: number,
     campaignIdx: number,
-   
+
   ) {
     const locationPda = this.getLocationPda(
       this.wallet.publicKey,
@@ -394,8 +394,8 @@ async registerLocation(
       } as any)
       .transaction();
 
-      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-      tx.feePayer = this.wallet.publicKey;
+    tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+    tx.feePayer = this.wallet.publicKey;
 
 
     return this.wallet.sendTransaction({
@@ -430,8 +430,8 @@ async registerLocation(
       .transaction();
 
 
-      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-      tx.feePayer = this.wallet.publicKey;
+    tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+    tx.feePayer = this.wallet.publicKey;
 
 
     return this.wallet.sendTransaction({
@@ -458,8 +458,8 @@ async registerLocation(
       })
       .transaction();
 
-      tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
-      tx.feePayer = this.wallet.publicKey;
+    tx.recentBlockhash = (await this.connection.getLatestBlockhash()).blockhash;
+    tx.feePayer = this.wallet.publicKey;
 
 
     return this.wallet.sendTransaction({
@@ -475,8 +475,8 @@ async registerLocation(
     return this.program.account.campaign.all();
   }
 
-  async getAllCampaignLocations( id : PublicKey ) {
-   const camapign = await this.program.account.campaign.fetch(id);
+  async getAllCampaignLocations(id: PublicKey) {
+    const camapign = await this.program.account.campaign.fetch(id);
     return camapign.bookedLocations
   }
 
@@ -494,19 +494,19 @@ async registerLocation(
     return this.program.account.provider.fetch(pda);
   }
 
-  async getCampaignLocations( pda: PublicKey ) { 
-    const  campaign = await   this.program.account.campaign.fetch(pda);
+  async getCampaignLocations(pda: PublicKey) {
+    const campaign = await this.program.account.campaign.fetch(pda);
 
-   return campaign.bookedLocations    
+    return campaign.bookedLocations
   }
 
-  async getCampaignById( pda : PublicKey ) { 
+  async getCampaignById(pda: PublicKey) {
     const campaign = await this.program.account.campaign.fetch(pda);
     return campaign;
 
   }
 
-  async getLocationById( pda: PublicKey ) { 
+  async getLocationById(pda: PublicKey) {
     const location = await this.program.account.location.fetch(pda);
     return location;
 
