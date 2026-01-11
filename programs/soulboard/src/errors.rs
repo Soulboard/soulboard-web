@@ -4,64 +4,58 @@ use anchor_lang::prelude::*;
 pub enum SoulboardError {
     #[msg("Invalid authority")]
     InvalidAuthority,
-    
+
+    #[msg("Oracle authority not configured")]
+    OracleNotConfigured,
+
+    #[msg("Invalid oracle authority")]
+    InvalidOracleAuthority,
+
     #[msg("Unauthorized operation")]
     Unauthorized,
-    
-    #[msg("Campaign not found")]
-    CampaignNotFound,
-    
-    #[msg("Campaign already exists")]
-    CampaignAlreadyExists,
-    
+
+    #[msg("Campaign is not active")]
+    CampaignNotActive,
+
+    #[msg("Campaign has active bookings")]
+    CampaignHasActiveBookings,
+
     #[msg("Insufficient campaign budget")]
     InsufficientBudget,
-    
-    #[msg("Location not found")]
-    LocationNotFound,
-    
-    #[msg("Location already exists")]
-    LocationAlreadyExists,
-    
-    #[msg("Slot not found")]
-    SlotNotFound,
-    
-    #[msg("Slot already booked")]
-    SlotAlreadyBooked,
-    
-    #[msg("Slot already exists")]
-    SlotAlreadyExists,
-    
-    #[msg("Slot is unavailable")]
-    SlotUnavailable,
-    
-    #[msg("Invalid slot status")]
-    InvalidSlotStatus,
-    
-    #[msg("Maximum number of slots reached")]
-    MaxSlotsReached,
-    
-    #[msg("Booking not found")]
-    BookingNotFound,
-    
-    #[msg("Invalid booking")]
-    InvalidBooking,
-    
-    #[msg("Transfer failed")]
-    TransferFailed,
-    
-    #[msg("Arithmetic overflow")]
-    ArithmeticOverflow,
-    
-    #[msg("Arithmetic underflow")]
-    ArithmeticUnderflow,
-    
+
+    #[msg("Location is unavailable")]
+    LocationUnavailable,
+
+    #[msg("Location is inactive")]
+    LocationInactive,
+
+    #[msg("Location already booked")]
+    LocationAlreadyBooked,
+
+    #[msg("Booking already exists")]
+    BookingAlreadyExists,
+
+    #[msg("Booking not active")]
+    BookingNotActive,
+
+    #[msg("Settlement amount exceeds escrow")]
+    SettlementTooHigh,
+
     #[msg("Invalid parameters")]
     InvalidParameters,
 
-    #[msg("Slot not booked")]
-    SlotNotBooked,
+    #[msg("Invalid string length")]
+    InvalidStringLength,
+
+    #[msg("Insufficient rent-exempt balance")]
+    InsufficientRent,
 
     #[msg("Insufficient earnings")]
     InsufficientEarnings,
+
+    #[msg("Arithmetic overflow")]
+    ArithmeticOverflow,
+
+    #[msg("Arithmetic underflow")]
+    ArithmeticUnderflow,
 }

@@ -6,8 +6,8 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-SoulBoardOracle = "9hpXQKdSM4gJLa37Lb259dNJ5J2d6wA2sy2sAzni5nNF"
-soulboard = "61yLHnb8vjRGzkKUPGjN4zviBfsy7wHmwwnZpNP8SfcQ"
+SoulBoardOracle = "2TKyWdqvRxTB3zhzJ7fFsH9RWtcXk9hoBpGV29XSuvcD"
+soulboard = "AiQgeLV5m6kdQsU8A4wFh2zBpzd6D21seseR2SUgQDKB"
 
 
 [registry]

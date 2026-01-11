@@ -19,16 +19,13 @@ pub struct CreateAdvertiser<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction()]
 pub struct CreateCampaign<'info> { 
-    #[
-        account(
-            mut,
-            seeds = [ADVERTISER_KEY ,authority.key().as_ref() ],
-            bump,
-            has_one = authority,
-        )
-    ]
+    #[account(
+        mut,
+        seeds = [ADVERTISER_KEY ,authority.key().as_ref() ],
+        bump,
+        has_one = authority,
+    )]
     pub advertiser: Account<'info, Advertiser>,
 
 
@@ -48,12 +45,9 @@ pub struct CreateCampaign<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(campaign_idx: u8)]
+#[instruction(campaign_idx: u64)]
 pub struct AddBudget<'info> {
-    #[account(mut,seeds = [ADVERTISER_KEY , authority.key().as_ref() ],bump,has_one = authority)]
-    pub advertiser: Account<'info, Advertiser>,
-
-    #[account(mut,seeds = [CAMPAIGN_KEY, authority.key().as_ref() , &campaign_idx.to_le_bytes()],bump)]
+    #[account(mut,has_one = authority,seeds = [CAMPAIGN_KEY, authority.key().as_ref() , &campaign_idx.to_le_bytes()],bump)]
     pub campaign: Account<'info, Campaign>,
 
     #[account(mut)]
@@ -65,11 +59,8 @@ pub struct AddBudget<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(campaign_idx: u8)]
+#[instruction(campaign_idx: u64)]
 pub struct WithdrawBudget<'info> {
-
-    #[account(mut,seeds = [ADVERTISER_KEY , authority.key().as_ref() ],bump,has_one = authority)]
-    pub advertiser: Account<'info, Advertiser>,
 
     #[account(mut,has_one = authority,seeds = [CAMPAIGN_KEY, authority.key().as_ref() , &campaign_idx.to_le_bytes()],bump)]
     pub campaign: Account<'info, Campaign>,
@@ -77,13 +68,10 @@ pub struct WithdrawBudget<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
 
-    pub system_program: Program<'info, System>,
-
-
 }
 
 #[derive(Accounts)]
-#[instruction(campaign_idx: u8)]
+#[instruction(campaign_idx: u64)]
 pub struct CloseCampaign<'info> {
     #[account(mut,seeds = [ADVERTISER_KEY , authority.key().as_ref() ],bump,has_one = authority)]
 
@@ -94,8 +82,6 @@ pub struct CloseCampaign<'info> {
    
     #[account(mut)]
     pub authority: Signer<'info>,
-
-    pub system_program: Program<'info, System>,
 
 }
 
@@ -141,57 +127,114 @@ pub struct RegisterLocation<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(location_idx: u8, campaign_idx: u8)]
-
-pub struct BookLocation<'info> {
-    #[account(mut, seeds = [LOCATION_KEY , ad_provider.authority.key().as_ref() , &location_idx.to_le_bytes()],bump)]
-    pub location: Account<'info, Location>,
-
-    #[account(mut, has_one = authority, seeds = [CAMPAIGN_KEY , authority.key().as_ref() , &campaign_idx.to_le_bytes()],bump)]
+#[instruction(campaign_idx: u64)]
+pub struct UpdateCampaign<'info> {
+    #[account(mut, has_one = authority, seeds = [CAMPAIGN_KEY, authority.key().as_ref(), &campaign_idx.to_le_bytes()], bump)]
     pub campaign: Account<'info, Campaign>,
 
-    #[account(mut)]
     pub authority: Signer<'info>,
-
-
-    #[account(mut)]
-    ad_provider: Account<'info, Provider>,
-
-    pub system_program: Program<'info, System>,
 }
 
-
 #[derive(Accounts)]
-#[instruction(campaign_idx: u8, location_idx: u8, slot_id: u64)]
-pub struct CancelBooking<'info> {
-    #[account(mut, seeds = [LOCATION_KEY , ad_provider.authority.key().as_ref() , &location_idx.to_le_bytes()],bump)]
+#[instruction(location_idx: u64)]
+pub struct UpdateLocationDetails<'info> {
+    #[account(seeds = [PROVIDER_KEY, authority.key().as_ref() ], bump, has_one = authority)]
+    pub provider: Account<'info, Provider>,
+
+    #[account(mut, seeds = [LOCATION_KEY, authority.key().as_ref(), &location_idx.to_le_bytes()], bump)]
     pub location: Account<'info, Location>,
 
-    #[account(mut, has_one = authority, seeds = [CAMPAIGN_KEY , authority.key().as_ref() , &campaign_idx.to_le_bytes()],bump)]
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+#[instruction(location_idx: u64)]
+pub struct UpdateLocationPrice<'info> {
+    #[account(seeds = [PROVIDER_KEY, authority.key().as_ref() ], bump, has_one = authority)]
+    pub provider: Account<'info, Provider>,
+
+    #[account(mut, seeds = [LOCATION_KEY, authority.key().as_ref(), &location_idx.to_le_bytes()], bump)]
+    pub location: Account<'info, Location>,
+
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+#[instruction(location_idx: u64)]
+pub struct SetLocationStatus<'info> {
+    #[account(seeds = [PROVIDER_KEY, authority.key().as_ref() ], bump, has_one = authority)]
+    pub provider: Account<'info, Provider>,
+
+    #[account(mut, seeds = [LOCATION_KEY, authority.key().as_ref(), &location_idx.to_le_bytes()], bump)]
+    pub location: Account<'info, Location>,
+
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+#[instruction(campaign_idx: u64, location_idx: u64)]
+pub struct AddCampaignLocation<'info> {
+    #[account(mut, has_one = authority, seeds = [CAMPAIGN_KEY , authority.key().as_ref() , &campaign_idx.to_le_bytes()], bump)]
     pub campaign: Account<'info, Campaign>,
 
-    #[account(mut)]
-    pub authority: Signer<'info>,
+    #[account(seeds = [PROVIDER_KEY, provider.authority.as_ref()], bump)]
+    pub provider: Account<'info, Provider>,
 
-    #[account(mut)]
-    ad_provider: Account<'info, Provider>,
-    
-    pub system_program: Program<'info, System>,
-    
-}
-
-
-
-
-#[derive(Accounts)]
-#[instruction(location_idx: u8)]
-pub struct WithdrawEarnings<'info> {
-    #[account(mut, seeds = [LOCATION_KEY , authority.key().as_ref() , &location_idx.to_le_bytes()],bump)]
+    #[account(mut, seeds = [LOCATION_KEY , provider.authority.as_ref() , &location_idx.to_le_bytes()], bump)]
     pub location: Account<'info, Location>,
 
+    #[account(
+        init,
+        payer = authority,
+        space = ANCHOR_DISCRIMINATOR_SIZE + CampaignLocation::INIT_SPACE,
+        seeds = [CAMPAIGN_LOCATION_KEY, campaign.key().as_ref(), location.key().as_ref()],
+        bump,
+    )]
+    pub campaign_location: Account<'info, CampaignLocation>,
+
     #[account(mut)]
     pub authority: Signer<'info>,
 
     pub system_program: Program<'info, System>,
 }
 
+#[derive(Accounts)]
+#[instruction(campaign_idx: u64, location_idx: u64)]
+pub struct RemoveCampaignLocation<'info> {
+    #[account(mut, has_one = authority, seeds = [CAMPAIGN_KEY , authority.key().as_ref() , &campaign_idx.to_le_bytes()], bump)]
+    pub campaign: Account<'info, Campaign>,
+
+    #[account(seeds = [PROVIDER_KEY, provider.authority.as_ref()], bump)]
+    pub provider: Account<'info, Provider>,
+
+    #[account(mut, seeds = [LOCATION_KEY , provider.authority.as_ref() , &location_idx.to_le_bytes()], bump)]
+    pub location: Account<'info, Location>,
+
+    #[account(mut, seeds = [CAMPAIGN_LOCATION_KEY, campaign.key().as_ref(), location.key().as_ref()], bump)]
+    pub campaign_location: Account<'info, CampaignLocation>,
+
+    #[account(mut)]
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+#[instruction(campaign_idx: u64, location_idx: u64)]
+pub struct SettleCampaignLocation<'info> {
+    #[account(mut, seeds = [CAMPAIGN_KEY , campaign.authority.as_ref() , &campaign_idx.to_le_bytes()], bump)]
+    pub campaign: Account<'info, Campaign>,
+
+    #[account(seeds = [PROVIDER_KEY, provider.authority.as_ref()], bump)]
+    pub provider: Account<'info, Provider>,
+
+    #[account(mut, seeds = [LOCATION_KEY , provider.authority.as_ref() , &location_idx.to_le_bytes()], bump)]
+    pub location: Account<'info, Location>,
+
+    #[account(mut, seeds = [CAMPAIGN_LOCATION_KEY, campaign.key().as_ref(), location.key().as_ref()], bump)]
+    pub campaign_location: Account<'info, CampaignLocation>,
+
+    /// CHECK: receives settlement funds; validated in instruction
+    #[account(mut)]
+    pub location_authority: AccountInfo<'info>,
+
+    pub oracle_authority: Signer<'info>,
+}

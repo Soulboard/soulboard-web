@@ -1,48 +1,65 @@
 use anchor_lang::prelude::*;
-pub mod errors;
-pub mod states;
 pub mod constants;
 pub mod context;
+pub mod errors;
+pub mod instructions;
+pub mod states;
 
 use context::*;
-use states::*;
-declare_id!("9hpXQKdSM4gJLa37Lb259dNJ5J2d6wA2sy2sAzni5nNF");
+use states::DeviceStatus;
+declare_id!("2TKyWdqvRxTB3zhzJ7fFsH9RWtcXk9hoBpGV29XSuvcD");
 
 #[program]
 pub mod soul_board_oracle {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize> , location : Pubkey) -> Result<()> {
-        let device = &mut ctx.accounts.device;
-        device.authority = ctx.accounts.authority.key();
-        device.device_id = 0;
-        device.device_metrics = DeviceMetrics {
-            device_id: 0,
-            location: location.key()   ,
-            metrics: vec![],
-        };
-        Ok(())
+    pub fn create_device_registry(ctx: Context<CreateDeviceRegistry>) -> Result<()> {
+        crate::instructions::registry::create_device_registry(ctx)
     }
 
-    //updates the device metrics for a location 
-    pub fn update_device_metrics(ctx: Context<UpdateDeviceMetrics>) -> Result<()> {
-        let device = &mut ctx.accounts.device;
-        let device_metrics = &mut device.device_metrics;
-        device_metrics.metrics.push(DeviceMetric {
-            timestamp: Clock::get()?.unix_timestamp,
-            views: 0,
-            impressions: 0,
-        });
-
-        Ok(())
+    pub fn register_device(
+        ctx: Context<RegisterDevice>,
+        location: Pubkey,
+        oracle_authority: Pubkey,
+    ) -> Result<()> {
+        crate::instructions::device::register_device(ctx, location, oracle_authority)
     }
 
-    //adds a device to the location 
-    pub fn add_device(ctx: Context<AddDevice>) -> Result<()> {
-        let device = &mut ctx.accounts.device;
-        device.device_id = device.device_id + 1;
-        Ok(())
+    pub fn update_device_location(
+        ctx: Context<UpdateDeviceLocation>,
+        device_idx: u64,
+        location: Pubkey,
+    ) -> Result<()> {
+        crate::instructions::device::update_device_location(ctx, device_idx, location)
+    }
+
+    pub fn update_device_oracle(
+        ctx: Context<UpdateDeviceOracle>,
+        device_idx: u64,
+        oracle_authority: Pubkey,
+    ) -> Result<()> {
+        crate::instructions::device::update_device_oracle(ctx, device_idx, oracle_authority)
+    }
+
+    pub fn set_device_status(
+        ctx: Context<SetDeviceStatus>,
+        device_idx: u64,
+        status: DeviceStatus,
+    ) -> Result<()> {
+        crate::instructions::device::set_device_status(ctx, device_idx, status)
+    }
+
+    pub fn report_device_metrics(
+        ctx: Context<ReportDeviceMetrics>,
+        device_idx: u64,
+        views: u64,
+        impressions: u64,
+    ) -> Result<()> {
+        crate::instructions::device::report_device_metrics(
+            ctx,
+            device_idx,
+            views,
+            impressions,
+        )
     }
 }
-
-

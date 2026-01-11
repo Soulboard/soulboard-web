@@ -1,40 +1,26 @@
 use anchor_lang::prelude::*;
 pub mod constant;
 pub mod context;
-pub mod states;
 pub mod errors;
+pub mod instructions;
+pub mod states;
+pub mod utils;
 
 use context::*;
-use states::{LocationBooking};
-use constant::CAMPAIGN_KEY;
-use errors::SoulboardError;
-declare_id!("61yLHnb8vjRGzkKUPGjN4zviBfsy7wHmwwnZpNP8SfcQ");
+use states::LocationStatus;
+declare_id!("AiQgeLV5m6kdQsU8A4wFh2zBpzd6D21seseR2SUgQDKB");
 
 #[program]
 pub mod soulboard {
-
-    use anchor_lang::solana_program::{ program::invoke, program_error::ProgramError, system_instruction::transfer};
-
-    use crate::states::LocationStatus;
-    
-    use crate::states::LocationBooking;
     use super::*;
 
     pub fn create_advertiser(ctx: Context<CreateAdvertiser>) -> Result<()> {
-        let advertiser = &mut ctx.accounts.advertiser;
-        advertiser.authority = ctx.accounts.authority.key();
-        advertiser.last_campaign_id = 0;
-        advertiser.campaign_count = 0;
-        Ok(())
+        crate::instructions::advertiser::create_advertiser(ctx)
     }
 
-   pub fn create_provider(ctx: Context<CreateProvider>) -> Result<()> {
-    let provider = &mut ctx.accounts.provider;
-    provider.authority = ctx.accounts.authority.key();
-    provider.last_location_id = 0;
-    provider.location_count = 0;
-    Ok(())
-   }
+    pub fn create_provider(ctx: Context<CreateProvider>) -> Result<()> {
+        crate::instructions::advertiser::create_provider(ctx)
+    }
 
     pub fn create_campaign(
         ctx: Context<CreateCampaign>,
@@ -43,150 +29,120 @@ pub mod soulboard {
         campaign_image_url: String,
         budget: u64,
     ) -> Result<()> {
-        let campaign = &mut ctx.accounts.campaign;
-        let advertiser = &mut ctx.accounts.advertiser;
-
-        campaign.authority = ctx.accounts.authority.key();
-        campaign.campaign_name = campaign_name;
-        campaign.campaign_idx = advertiser.last_campaign_id;
-        campaign.campaign_description = campaign_description;
-        campaign.campaign_image_url = campaign_image_url;
-        campaign.booked_locations = vec![];
-
-        advertiser.last_campaign_id = advertiser.last_campaign_id.checked_add(1)
-            .ok_or(SoulboardError::ArithmeticOverflow)?;
-        advertiser.campaign_count = advertiser.campaign_count.checked_add(1)
-            .ok_or(SoulboardError::ArithmeticOverflow)?;
-
-        if budget > 0 {
-           let ix = transfer(&ctx.accounts.authority.key(), &campaign.key(), budget);
-
-           invoke(&ix, &[ctx.accounts.authority.to_account_info(), ctx.accounts.campaign.to_account_info(), ctx.accounts.system_program.to_account_info()])?;
-        }
-
-        Ok(())
+        crate::instructions::campaign::create_campaign(
+            ctx,
+            campaign_name,
+            campaign_description,
+            campaign_image_url,
+            budget,
+        )
     }
 
-    pub fn add_budget(ctx: Context<AddBudget>, _campaign_idx: u8, budget: u64) -> Result<()> {
-        if budget > 0 {
-            let ix = transfer(&ctx.accounts.authority.key(), &ctx.accounts.campaign.key(), budget);
-
-            invoke(&ix, &[ctx.accounts.authority.to_account_info(), ctx.accounts.campaign.to_account_info(), ctx.accounts.system_program.to_account_info()])?;
-        }
-
-        Ok(())
+    pub fn update_campaign(
+        ctx: Context<UpdateCampaign>,
+        campaign_idx: u64,
+        campaign_name: Option<String>,
+        campaign_description: Option<String>,
+        campaign_image_url: Option<String>,
+    ) -> Result<()> {
+        crate::instructions::campaign::update_campaign(
+            ctx,
+            campaign_idx,
+            campaign_name,
+            campaign_description,
+            campaign_image_url,
+        )
     }
 
-    pub fn withdraw_amount(ctx: Context<WithdrawBudget>, _campaign_idx: u8, amount: u64) -> Result<()> {
-        let campaign_info = ctx.accounts.campaign.to_account_info();
-        let authority_info = ctx.accounts.authority.to_account_info();
-
-        require!(campaign_info.lamports() >= amount, SoulboardError::InsufficientBudget);
-        
-        **authority_info.try_borrow_mut_lamports()? = authority_info.lamports()
-            .checked_add(amount)
-            .ok_or(SoulboardError::ArithmeticOverflow)?;
-        
-        **campaign_info.try_borrow_mut_lamports()? = campaign_info.lamports()
-            .checked_sub(amount)
-            .ok_or(SoulboardError::ArithmeticUnderflow)?;
-
-        Ok(())
+    pub fn add_budget(ctx: Context<AddBudget>, campaign_idx: u64, amount: u64) -> Result<()> {
+        crate::instructions::budget::add_budget(ctx, campaign_idx, amount)
     }
 
-
-    pub fn close_campaign(ctx: Context<CloseCampaign>, _campaign_idx: u8) -> Result<()> {
-        let advertiser = &mut ctx.accounts.advertiser;
-        advertiser.campaign_count = advertiser.campaign_count.checked_sub(1)
-            .ok_or(SoulboardError::ArithmeticUnderflow)?;
-        Ok(())
+    pub fn withdraw_budget(
+        ctx: Context<WithdrawBudget>,
+        campaign_idx: u64,
+        amount: u64,
+    ) -> Result<()> {
+        crate::instructions::budget::withdraw_budget(ctx, campaign_idx, amount)
     }
 
-    //register a location by a provider
-    pub fn register_location(ctx: Context<RegisterLocation> , location_name: String, location_description: String ) -> Result<()> {
-        let provider = &mut ctx.accounts.provider;
-        let location = &mut ctx.accounts.location;
-
-        location.authority = provider.authority.key();
-        location.location_name = location_name;
-        location.location_description = location_description;
-        location.location_idx = provider.last_location_id;
-        provider.last_location_id = provider.last_location_id.checked_add(1).unwrap();
-        provider.location_count = provider.location_count.checked_add(1).unwrap();
-
-       
-
-        Ok(())
+    pub fn close_campaign(ctx: Context<CloseCampaign>, campaign_idx: u64) -> Result<()> {
+        crate::instructions::campaign::close_campaign(ctx, campaign_idx)
     }
 
-    //TODO : add payment logic 
-
-    pub fn book_location(ctx: Context<BookLocation>, _campaign_idx: u8,  location_idx: u8) -> Result<()> {
-        let location = &mut ctx.accounts.location;
-        let campaign = &mut ctx.accounts.campaign;
-        let location_info = location.to_account_info();
-        let campaign_info = campaign.to_account_info();
-
-
-        let price = location.price;
-        require!(campaign_info.lamports() >= price, SoulboardError::InsufficientBudget);
-
-        **campaign_info.try_borrow_mut_lamports()? = campaign_info.lamports()
-            .checked_sub(price)
-            .ok_or(SoulboardError::ArithmeticUnderflow)?;
-        **location_info.try_borrow_mut_lamports()? = location_info.lamports()
-            .checked_add(price)
-            .ok_or(SoulboardError::ArithmeticOverflow)?;
-
-        location.location_status = LocationStatus::Booked { 
-            campaign_id : campaign.key(),
-        };
-        campaign.booked_locations.push(LocationBooking {
-            location: location.key(),
-        });
-
-        Ok(())
+    pub fn register_location(
+        ctx: Context<RegisterLocation>,
+        location_name: String,
+        location_description: String,
+        price: u64,
+        oracle_authority: Pubkey,
+    ) -> Result<()> {
+        crate::instructions::location::register_location(
+            ctx,
+            location_name,
+            location_description,
+            price,
+            oracle_authority,
+        )
     }
 
-
-  
-    pub fn cancel_booking(ctx: Context<CancelBooking>, _campaign_idx: u8, location_idx: u8, slot_id: u64) -> Result<()> {
-        let location = &mut ctx.accounts.location;
-        let campaign = &mut ctx.accounts.campaign;
-        
-       
-        let booked_campaign_id = match location.location_status {
-            LocationStatus::Booked { campaign_id } => campaign_id,
-            _ => return Err(SoulboardError::SlotNotBooked.into()),
-        };
-        require!(booked_campaign_id == campaign.key(), SoulboardError::Unauthorized);
-
-        location.location_status = LocationStatus::Available;
-
-    
-        Ok(())
+    pub fn update_location_details(
+        ctx: Context<UpdateLocationDetails>,
+        location_idx: u64,
+        location_name: Option<String>,
+        location_description: Option<String>,
+    ) -> Result<()> {
+        crate::instructions::location::update_location_details(
+            ctx,
+            location_idx,
+            location_name,
+            location_description,
+        )
     }
 
-   
-
-    pub fn withdraw_earnings(ctx: Context<WithdrawEarnings>, _location_idx: u8, amount: u64) -> Result<()> {
-        let location = &mut ctx.accounts.location;
-        let location_info = location.to_account_info();
-        let authority_info = ctx.accounts.authority.to_account_info();
-
-        require!(location_info.lamports() >= amount, SoulboardError::InsufficientEarnings); 
-
-        **location_info.try_borrow_mut_lamports()? = location_info.lamports()
-            .checked_sub(amount)
-            .ok_or(SoulboardError::ArithmeticUnderflow)?;
-
-        **authority_info.try_borrow_mut_lamports()? = authority_info.lamports()
-            .checked_add(amount)
-            .ok_or(SoulboardError::ArithmeticOverflow)?;
-
-        Ok(())
+    pub fn update_location_price(
+        ctx: Context<UpdateLocationPrice>,
+        location_idx: u64,
+        price: u64,
+    ) -> Result<()> {
+        crate::instructions::location::update_location_price(ctx, location_idx, price)
     }
 
-    
-    
+    pub fn set_location_status(
+        ctx: Context<SetLocationStatus>,
+        location_idx: u64,
+        status: LocationStatus,
+    ) -> Result<()> {
+        crate::instructions::location::set_location_status(ctx, location_idx, status)
+    }
+
+    pub fn add_campaign_location(
+        ctx: Context<AddCampaignLocation>,
+        campaign_idx: u64,
+        location_idx: u64,
+    ) -> Result<()> {
+        crate::instructions::booking::add_campaign_location(ctx, campaign_idx, location_idx)
+    }
+
+    pub fn remove_campaign_location(
+        ctx: Context<RemoveCampaignLocation>,
+        campaign_idx: u64,
+        location_idx: u64,
+    ) -> Result<()> {
+        crate::instructions::booking::remove_campaign_location(ctx, campaign_idx, location_idx)
+    }
+
+    pub fn settle_campaign_location(
+        ctx: Context<SettleCampaignLocation>,
+        campaign_idx: u64,
+        location_idx: u64,
+        settlement_amount: u64,
+    ) -> Result<()> {
+        crate::instructions::booking::settle_campaign_location(
+            ctx,
+            campaign_idx,
+            location_idx,
+            settlement_amount,
+        )
+    }
 }

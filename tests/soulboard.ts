@@ -1,429 +1,934 @@
-  import * as anchor from "@coral-xyz/anchor";
-  import { Program } from "@coral-xyz/anchor";
-  import { Soulboard } from "../target/types/soulboard";
-  import { publicKey } from "@coral-xyz/anchor/dist/cjs/utils";
-  import { expect, use } from "chai";
-  import { PublicKey, SystemProgram } from '@solana/web3.js';
-  import BN from 'bn.js';
-  const web3 = anchor.web3;
+import * as anchor from "@coral-xyz/anchor";
+import { Program } from "@coral-xyz/anchor";
+import { Soulboard } from "../target/types/soulboard";
+import { expect } from "chai";
+import {
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+} from "@solana/web3.js";
+import BN from "bn.js";
 
-  describe("soulboard", () => {
-    // Configure the client to use the local cluster.
+describe("soulboard", () => {
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
 
-    const program = anchor.workspace.soulboard as Program<Soulboard>;
-    
-    const provider = anchor.AnchorProvider.env();
-    
-    anchor.setProvider(provider);
-    const campaignId = new anchor.BN(1);
+  const program = anchor.workspace.soulboard as Program<Soulboard>;
+  const connection = provider.connection;
+  const ZERO_PUBKEY = new PublicKey(Buffer.alloc(32));
 
-    // See https://github.com/coral-xyz/anchor/issues/3122
-    const user = (provider.wallet as anchor.Wallet).payer;
+  const u64 = (value: number | BN) =>
+    new BN(value).toArrayLike(Buffer, "le", 8);
 
-    before(async () => {
-      const balance = await provider.connection.getBalance(user.publicKey);
-      const balanceInSOL = balance / web3.LAMPORTS_PER_SOL;
-      const formattedBalance = new Intl.NumberFormat().format(balanceInSOL);
-      console.log(`Balance: ${formattedBalance} SOL`);
-    });
-
-    it("create Advertiser" , async () =>  { 
-      const tx = await program.methods
-                              .createAdvertiser()
-                              .accounts({
-                                authority : user.publicKey 
-                              })
-                              .rpc()
-
-      const [advertiserPda, _] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("advertiser") , 
-          user.publicKey.toBuffer()
-        ] , 
-        program.programId
-      )
-
-      const advertiser = await program.account.advertiser.fetch(advertiserPda) ;
-     
-
-      console.log(advertiser.authority)
-      console.log(advertiser.campaignCount)
-      console.log(advertiser.lastCampaignId)
-
-    }) ; 
-
-    it("Create a campaign", async () => {
-      // Add your test here.
-      const campaignMetadata = {
-        campaignName: "Test Campaign",
-        campaignDescription: "Test Description",
-        campaignImageUrl: "https://example.com/image.png",
-      };
-      
-      const [advertiserPda, _] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("advertiser") , 
-          user.publicKey.toBuffer()
-        ] , 
-        program.programId
-      )
-
-      const tx = await program.methods
-        .createCampaign(campaignMetadata.campaignName, campaignMetadata.campaignDescription, campaignMetadata.campaignImageUrl , new BN(100000000000000))
-        .accounts({
-          advertiser: advertiserPda,
-          authority: user.publicKey,
-        })
-        .rpc();
-
-      console.log("Your transaction signature", tx);
-      
-      const advertiser = await program.account.advertiser.fetch(advertiserPda);
-      const last_campaign_id = advertiser.lastCampaignId;
-
-      const [campaignPda, campaignBump] = web3.PublicKey.findProgramAddressSync(
-        [Buffer.from('campaign'), user.publicKey.toBuffer(), new BN(last_campaign_id - 1).toArrayLike(Buffer, "le", 1)], 
-        program.programId
-      );
-
-      const campaign = await program.account.campaign.fetch(campaignPda);
-      const lamports = await provider.connection.getBalance(campaignPda);
-      const lamportsInSOL = lamports / web3.LAMPORTS_PER_SOL;
-        const formattedLamports = new Intl.NumberFormat().format(lamportsInSOL);
-      
-
-      console.log("Campaign PDA", campaignPda.toString());
-      console.log("Campaign Bump", campaignBump);
-      console.log("Campaign Name", campaign.campaignName);
-      console.log("Campaign Description", campaign.campaignDescription);
-      console.log("Campaign Image URL", campaign.campaignImageUrl); 
-
-      console.log("Campaign Budget", formattedLamports);
-
-      expect(campaign.campaignName).to.equal(campaignMetadata.campaignName);
-      expect(campaign.campaignDescription).to.equal(campaignMetadata.campaignDescription);
-      expect(campaign.campaignImageUrl).to.equal(campaignMetadata.campaignImageUrl);
-      console.log(advertiser.campaignCount)
-      console.log(advertiser.lastCampaignId)
-    });
-
-  it("add budget" , async () => {
-    const [advertiserPda, _] = PublicKey.findProgramAddressSync(
-      [
-        Buffer.from("advertiser"),
-        user.publicKey.toBuffer()
-      ],
+  const deriveAdvertiserPda = (authority: PublicKey) =>
+    PublicKey.findProgramAddressSync(
+      [Buffer.from("advertiser"), authority.toBuffer()],
       program.programId
-    );
+    )[0];
 
-    const [campaignPda, __] = web3.PublicKey.findProgramAddressSync(
-      [Buffer.from('campaign'), user.publicKey.toBuffer(), new BN(0).toArrayLike(Buffer, "le", 1)], 
+  const deriveProviderPda = (authority: PublicKey) =>
+    PublicKey.findProgramAddressSync(
+      [Buffer.from("provider"), authority.toBuffer()],
       program.programId
-    );
+    )[0];
 
-    const tx = await program.methods
-      .addBudget(0, new BN(1000000000000000))
+  const deriveCampaignPda = (authority: PublicKey, campaignIdx: BN) =>
+    PublicKey.findProgramAddressSync(
+      [Buffer.from("campaign"), authority.toBuffer(), u64(campaignIdx)],
+      program.programId
+    )[0];
+
+  const deriveLocationPda = (authority: PublicKey, locationIdx: BN) =>
+    PublicKey.findProgramAddressSync(
+      [Buffer.from("location"), authority.toBuffer(), u64(locationIdx)],
+      program.programId
+    )[0];
+
+  const deriveCampaignLocationPda = (campaign: PublicKey, location: PublicKey) =>
+    PublicKey.findProgramAddressSync(
+      [Buffer.from("campaign_location"), campaign.toBuffer(), location.toBuffer()],
+      program.programId
+    )[0];
+
+  const airdropTo = async (pubkey: PublicKey, sol = 5) => {
+    const signature = await connection.requestAirdrop(
+      pubkey,
+      sol * LAMPORTS_PER_SOL
+    );
+    const latest = await connection.getLatestBlockhash();
+    await connection.confirmTransaction({ signature, ...latest }, "confirmed");
+  };
+
+  const expectAnchorError = async (
+    promise: Promise<string>,
+    code: string | string[]
+  ) => {
+    try {
+      await promise;
+      expect.fail("Expected error");
+    } catch (error: any) {
+      const anchorError = error?.error ?? error;
+      const actualCode =
+        anchorError?.errorCode?.code ?? anchorError?.error?.errorCode?.code;
+      const expectedCodes = Array.isArray(code) ? code : [code];
+      expect(expectedCodes).to.include(actualCode);
+    }
+  };
+
+  const setupActors = async () => {
+    const advertiser = Keypair.generate();
+    const providerKeypair = Keypair.generate();
+    const oracle = Keypair.generate();
+
+    await airdropTo(advertiser.publicKey);
+    await airdropTo(providerKeypair.publicKey);
+    await airdropTo(oracle.publicKey);
+
+    const advertiserPda = deriveAdvertiserPda(advertiser.publicKey);
+    await program.methods
+      .createAdvertiser()
       .accounts({
+        authority: advertiser.publicKey,
         advertiser: advertiserPda,
-        authority: user.publicKey,
-        campaign: campaignPda,
+        systemProgram: SystemProgram.programId,
       })
+      .signers([advertiser])
       .rpc();
 
-      const lamports = await provider.connection.getBalance(campaignPda);
-      const lamportsInSOL = lamports / web3.LAMPORTS_PER_SOL;
-      const formattedLamports = new Intl.NumberFormat().format(lamportsInSOL);
-    
-      console.log("Campaign Budget", formattedLamports);
+    const providerPda = deriveProviderPda(providerKeypair.publicKey);
+    await program.methods
+      .createProvider()
+      .accounts({
+        authority: providerKeypair.publicKey,
+        provider: providerPda,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([providerKeypair])
+      .rpc();
 
-    console.log("Your transaction signature", tx);
+    return {
+      advertiser,
+      provider: providerKeypair,
+      oracle,
+      advertiserPda,
+      providerPda,
+    };
+  };
 
-  
-    
-  })
+  const getNextCampaignIdx = async (advertiserPda: PublicKey) => {
+    const advertiserAccount = await program.account.advertiser.fetch(
+      advertiserPda
+    );
+    return new BN(advertiserAccount.lastCampaignId.toString());
+  };
 
+  const createCampaign = async (
+    advertiser: Keypair,
+    advertiserPda: PublicKey,
+    budget: BN,
+    campaignIdx?: BN
+  ) => {
+    const nextIdx = campaignIdx ?? (await getNextCampaignIdx(advertiserPda));
+    const campaignPda = deriveCampaignPda(advertiser.publicKey, nextIdx);
 
-    it("withdraw amount", async () => {
-      const [advertiserPda, _] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("advertiser"),
-          user.publicKey.toBuffer()
-        ],
-        program.programId
-      );  
+    await program.methods
+      .createCampaign(
+        "Campaign One",
+        "Test campaign description",
+        "https://example.com/campaign.png",
+        budget
+      )
+      .accounts({
+        advertiser: advertiserPda,
+        campaign: campaignPda,
+        authority: advertiser.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([advertiser])
+      .rpc();
 
-      const [campaignPda, __] = web3.PublicKey.findProgramAddressSync(
-        [Buffer.from('campaign'), user.publicKey.toBuffer(), new BN(0).toArrayLike(Buffer, "le", 1)], 
-        program.programId
-      );
+    return { campaignIdx: nextIdx, campaignPda };
+  };
 
-      const tx = await program.methods
-        .withdrawAmount(0, new BN(1000000))
+  const getNextLocationIdx = async (providerPda: PublicKey) => {
+    const providerAccount = await program.account.provider.fetch(providerPda);
+    return new BN(providerAccount.lastLocationId.toString());
+  };
+
+  const registerLocation = async (
+    provider: Keypair,
+    providerPda: PublicKey,
+    price: BN,
+    oracleAuthority: PublicKey,
+    locationIdx?: BN
+  ) => {
+    const nextIdx = locationIdx ?? (await getNextLocationIdx(providerPda));
+    const locationPda = deriveLocationPda(provider.publicKey, nextIdx);
+
+    await program.methods
+      .registerLocation("Location A", "High traffic area", price, oracleAuthority)
+      .accounts({
+        authority: provider.publicKey,
+        provider: providerPda,
+        location: locationPda,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([provider])
+      .rpc();
+
+    return { locationIdx: nextIdx, locationPda };
+  };
+
+  it("creates advertiser/provider and campaign metadata", async () => {
+    const { advertiser, advertiserPda, provider, providerPda } =
+      await setupActors();
+
+    const advertiserAccount = await program.account.advertiser.fetch(
+      advertiserPda
+    );
+    expect(advertiserAccount.authority.toBase58()).to.equal(
+      advertiser.publicKey.toBase58()
+    );
+    expect(advertiserAccount.campaignCount.toNumber()).to.equal(0);
+
+    const providerAccount = await program.account.provider.fetch(providerPda);
+    expect(providerAccount.authority.toBase58()).to.equal(
+      provider.publicKey.toBase58()
+    );
+    expect(providerAccount.locationCount.toNumber()).to.equal(0);
+
+    const budget = new BN(2 * LAMPORTS_PER_SOL);
+    const { campaignIdx, campaignPda } = await createCampaign(
+      advertiser,
+      advertiserPda,
+      budget
+    );
+
+    const campaign = await program.account.campaign.fetch(campaignPda);
+    expect(campaign.campaignIdx.toString()).to.equal(campaignIdx.toString());
+    expect(campaign.availableBudget.toString()).to.equal(budget.toString());
+    expect(campaign.reservedBudget.toNumber()).to.equal(0);
+    expect(campaign.status).to.have.property("active");
+  });
+
+  it("adds and withdraws budget safely", async () => {
+    const { advertiser, advertiserPda } = await setupActors();
+    const initialBudget = new BN(1 * LAMPORTS_PER_SOL);
+    const { campaignIdx, campaignPda } = await createCampaign(
+      advertiser,
+      advertiserPda,
+      initialBudget
+    );
+
+    const topUp = new BN(500_000_000);
+    await program.methods
+      .addBudget(campaignIdx, topUp)
+      .accounts({
+        authority: advertiser.publicKey,
+        campaign: campaignPda,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([advertiser])
+      .rpc();
+
+    let campaign = await program.account.campaign.fetch(campaignPda);
+    const expectedAvailable = initialBudget.add(topUp);
+    expect(campaign.availableBudget.toString()).to.equal(
+      expectedAvailable.toString()
+    );
+
+    const withdraw = new BN(200_000_000);
+    await program.methods
+      .withdrawBudget(campaignIdx, withdraw)
+      .accounts({
+        authority: advertiser.publicKey,
+        campaign: campaignPda,
+      })
+      .signers([advertiser])
+      .rpc();
+
+    campaign = await program.account.campaign.fetch(campaignPda);
+    const afterWithdraw = expectedAvailable.sub(withdraw);
+    expect(campaign.availableBudget.toString()).to.equal(
+      afterWithdraw.toString()
+    );
+
+    await expectAnchorError(
+      program.methods
+        .withdrawBudget(campaignIdx, afterWithdraw.add(new BN(1)))
         .accounts({
-          advertiser: advertiserPda,
-          authority: user.publicKey,
+          authority: advertiser.publicKey,
           campaign: campaignPda,
         })
-        .rpc();
-      console.log("Your transaction signature", tx);
-    })
+        .signers([advertiser])
+        .rpc(),
+      "InsufficientBudget"
+    );
+  });
 
-    it("get all campaigns", async () => {
-      const [advertiserPda, _] = PublicKey.findProgramAddressSync(
-        [Buffer.from('advertiser'), user.publicKey.toBuffer()],
-        program.programId
-      );  
+  it("registers and updates a location", async () => {
+    const { provider, providerPda, oracle } = await setupActors();
+    const price = new BN(250_000);
+    const { locationIdx, locationPda } = await registerLocation(
+      provider,
+      providerPda,
+      price,
+      oracle.publicKey
+    );
 
-      const campaigns = await program.account.campaign.all();
-      
-      console.log("campaigns", campaigns);
-    })
+    await program.methods
+      .updateLocationDetails(locationIdx, "Location B", null)
+      .accounts({
+        authority: provider.publicKey,
+        provider: providerPda,
+        location: locationPda,
+      })
+      .signers([provider])
+      .rpc();
 
-    it("create provider", async () => {
-      const tx = await program.methods
-        .createProvider()
+    await program.methods
+      .updateLocationPrice(locationIdx, new BN(750_000))
+      .accounts({
+        authority: provider.publicKey,
+        provider: providerPda,
+        location: locationPda,
+      })
+      .signers([provider])
+      .rpc();
+
+    await program.methods
+      .setLocationStatus(locationIdx, { inactive: {} })
+      .accounts({
+        authority: provider.publicKey,
+        provider: providerPda,
+        location: locationPda,
+      })
+      .signers([provider])
+      .rpc();
+
+    const location = await program.account.location.fetch(locationPda);
+    expect(location.locationName).to.equal("Location B");
+    expect(location.price.toString()).to.equal("750000");
+    expect(location.locationStatus).to.have.property("inactive");
+  });
+
+  it("rejects registering a location without an oracle", async () => {
+    const { provider, providerPda } = await setupActors();
+    const price = new BN(120_000);
+    const locationIdx = await getNextLocationIdx(providerPda);
+    const locationPda = deriveLocationPda(provider.publicKey, locationIdx);
+
+    await expectAnchorError(
+      program.methods
+        .registerLocation(
+          "Location Missing Oracle",
+          "No oracle configured",
+          price,
+          ZERO_PUBKEY
+        )
         .accounts({
-          authority: user.publicKey,
+          authority: provider.publicKey,
+          provider: providerPda,
+          location: locationPda,
+          systemProgram: SystemProgram.programId,
         })
-        .rpc();
+        .signers([provider])
+        .rpc(),
+      "OracleNotConfigured"
+    );
+  });
 
-      console.log("Your transaction signature", tx);
+  it("rejects booked status via setLocationStatus", async () => {
+    const { advertiser, advertiserPda, provider, providerPda, oracle } =
+      await setupActors();
+    const price = new BN(150_000);
+    const { locationIdx, locationPda } = await registerLocation(
+      provider,
+      providerPda,
+      price,
+      oracle.publicKey
+    );
+    const { campaignPda } = await createCampaign(
+      advertiser,
+      advertiserPda,
+      new BN(500_000)
+    );
 
-      const [providerPda, providerBump] = PublicKey.findProgramAddressSync(
-        [Buffer.from('provider'), user.publicKey.toBuffer()],
-        program.programId
-      );
-
-      const provider = await program.account.provider.fetch(providerPda);
-      console.log("provider", provider);
-      console.log( "provider.authority", provider.authority)
-      console.log( "user.publicKey", user.publicKey)
-
-      expect(provider.authority.toBase58()).to.equal(user.publicKey.toBase58()  );
-
-    })
-
-
-
-    it("register location", async () => {
-      // Helper function to convert time string to Unix timestamp
-      const timeToTimestamp = (timeString: string, date?: Date): BN => {
-        // Use current date if not specified
-        const baseDate = date || new Date();
-        
-        // Parse time string (format: "1pm", "12pm", etc.)
-        const isPM = timeString.toLowerCase().includes('pm');
-        let hour = parseInt(timeString.replace(/[^0-9]/g, ''));
-        
-        // Convert to 24-hour format if PM
-        if (isPM && hour < 12) hour += 12;
-        if (!isPM && hour === 12) hour = 0;
-        
-        // Set the hours on the base date
-        baseDate.setHours(hour, 0, 0, 0);
-        
-        // Return Unix timestamp (seconds since epoch)
-        return new BN(Math.floor(baseDate.getTime() / 1000));
-      };
-      
-      // Example: Create slots for today at 12pm and 1pm
-      const today = new Date();
-
-      // First, make sure we have a provider account
-      const [providerPda, providerBump] = PublicKey.findProgramAddressSync(
-        [Buffer.from('provider'), user.publicKey.toBuffer()],
-        program.programId
-      );
-      
-      const provider = await program.account.provider.fetch(providerPda);
-      // Use consistent location PDA derivation
-      const locationIdx = 0;
-      const [locationPda, locationBump] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from('location'), 
-          user.publicKey.toBuffer(), 
-          Buffer.from([locationIdx])
-        ],
-        program.programId
-      );
-      
-      const tx = await program.methods
-        .registerLocation("location name", "location description")
+    await expectAnchorError(
+      program.methods
+        .setLocationStatus(locationIdx, { booked: { campaign: campaignPda } })
         .accounts({
-          authority: user.publicKey,
+          authority: provider.publicKey,
           provider: providerPda,
           location: locationPda,
         })
-        .rpc();
-
-      console.log("Your transaction signature", tx);
-
-      const location = await program.account.location.fetch(locationPda);
-      console.log("location", location);
-      console.log("location_idx" , location.locationIdx)
-      console.log("provider.last_count" ,provider.lastLocationId)
-      console.log("location count" , provider.locationCount)
-
-      expect(location.locationName).to.equal("location name");
-      expect(location.locationDescription).to.equal("location description");
-
-    
-    })
-
-    it("book location", async () => {
-      const timeToTimestamp = (timeString: string, date?: Date): BN => {
-        // Use current date if not specified
-        const baseDate = date || new Date();
-        
-        // Parse time string (format: "1pm", "12pm", etc.)
-        const isPM = timeString.toLowerCase().includes('pm');
-        let hour = parseInt(timeString.replace(/[^0-9]/g, ''));
-        
-        // Convert to 24-hour format if PM
-        if (isPM && hour < 12) hour += 12;
-        if (!isPM && hour === 12) hour = 0;
-        
-        // Set the hours on the base date
-        baseDate.setHours(hour, 0, 0, 0);
-        
-        // Return Unix timestamp (seconds since epoch)
-        return new BN(Math.floor(baseDate.getTime() / 1000));
-      };
-      
-      // Example: Create slots for today at 12pm and 1pm
-      const today = new Date();
-      const [advertiserPda, _] = PublicKey.findProgramAddressSync(
-        [Buffer.from('advertiser'), user.publicKey.toBuffer()],
-        program.programId
-      );
-
-      const [campaignPda, __] = web3.PublicKey.findProgramAddressSync(
-        [Buffer.from('campaign'), user.publicKey.toBuffer(), new BN(0).toArrayLike(Buffer, "le", 1)], 
-        program.programId
-      );
-
-      const [locationPda, locationBump] = PublicKey.findProgramAddressSync(
-        [Buffer.from('location'), user.publicKey.toBuffer(), new BN(0).toArrayLike(Buffer, "le", 1)], 
-        program.programId
-      );
-
-      const [providerPda, providerBump] = PublicKey.findProgramAddressSync(
-        [Buffer.from('provider'), user.publicKey.toBuffer()],
-        program.programId
-      );
-
-      const tx = await program.methods
-        .bookLocation(0, 0)
-        .accounts({
-          authority: user.publicKey,
-          adProvider: providerPda,
-          location: locationPda,
-          campaign: campaignPda,
-        })
-        .rpc();
-        
-
-      const location = await program.account.location.fetch(locationPda);
-      console.log("location", location);
-    
-      console.log("Your transaction signature", tx);
-
-      
-    })
-
-    it("cancel booking", async () => {
-      const timeToTimestamp = (timeString: string, date?: Date): BN => {
-        // Use current date if not specified
-        const baseDate = date || new Date();
-        
-        // Parse time string (format: "1pm", "12pm", etc.)
-        const isPM = timeString.toLowerCase().includes('pm');
-        let hour = parseInt(timeString.replace(/[^0-9]/g, ''));
-        
-        // Convert to 24-hour format if PM
-        if (isPM && hour < 12) hour += 12;
-        if (!isPM && hour === 12) hour = 0;
-        
-        // Set the hours on the base date
-        baseDate.setHours(hour, 0, 0, 0);
-        
-        // Return Unix timestamp (seconds since epoch)
-        return new BN(Math.floor(baseDate.getTime() / 1000));
-      };
-
-      const today = new Date();
-      const [advertiserPda, _] = PublicKey.findProgramAddressSync(
-        [Buffer.from('advertiser'), user.publicKey.toBuffer()],
-        program.programId
-      );
-
-      const [campaignPda, __] = web3.PublicKey.findProgramAddressSync(
-        [Buffer.from('campaign'), user.publicKey.toBuffer(), new BN(0).toArrayLike(Buffer, "le", 1)], 
-        program.programId
-      );
-
-      const [locationPda, locationBump] = PublicKey.findProgramAddressSync(
-        [Buffer.from('location'), user.publicKey.toBuffer(), new BN(0).toArrayLike(Buffer, "le", 1)], 
-        program.programId
-      );
-
-      const [providerPda, providerBump] = PublicKey.findProgramAddressSync(
-        [Buffer.from('provider'), user.publicKey.toBuffer()],
-        program.programId
-      );
-      
-      
-      
-      const tx = await program.methods
-        .cancelBooking(0, 0, timeToTimestamp("12pm", today))
-        .accounts({
-          authority: user.publicKey,
-          adProvider: providerPda,
-          location: locationPda,
-          campaign: campaignPda,
-        })
-        .rpc();
-
-      console.log("Your transaction signature", tx);
-
-      const location = await program.account.location.fetch(locationPda);
-      console.log("location", location);
-      
-      console.log("Campaign PDA", campaignPda.toBase58());
-    
-    })
-  
-    
-
-    it("Close a campaign", async () => {
-      const [advertiserPda, _] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("advertiser"),
-          user.publicKey.toBuffer()
-        ],
-        program.programId
-      );
-      
-      const advertiser = await program.account.advertiser.fetch(advertiserPda);
-      const campaign_idx = 0; // Use appropriate campaign index
-      
-      const [campaignPda, __] = web3.PublicKey.findProgramAddressSync(
-        [Buffer.from('campaign'), user.publicKey.toBuffer(), new BN(0).toArrayLike(Buffer, "le", 1)], 
-        program.programId
-      );
-      
-      const tx = await program.methods
-        .closeCampaign(campaign_idx)
-        .accounts({ 
-          advertiser: advertiserPda,
-          authority: user.publicKey,
-          campaign: campaignPda,
-        })
-        .rpc();
-
-      console.log("Your transaction signature", tx);
-    });
-    
+        .signers([provider])
+        .rpc(),
+      "InvalidParameters"
+    );
   });
-    
-    
+
+  it("books and settles a location with escrow", async () => {
+    const { advertiser, advertiserPda, provider, providerPda, oracle } =
+      await setupActors();
+
+    const budget = new BN(1 * LAMPORTS_PER_SOL);
+    const price = new BN(500_000);
+    const { campaignIdx, campaignPda } = await createCampaign(
+      advertiser,
+      advertiserPda,
+      budget
+    );
+    const { locationIdx, locationPda } = await registerLocation(
+      provider,
+      providerPda,
+      price,
+      oracle.publicKey
+    );
+    const campaignLocationPda = deriveCampaignLocationPda(
+      campaignPda,
+      locationPda
+    );
+
+    const balanceBefore = await connection.getBalance(campaignPda);
+
+    await program.methods
+      .addCampaignLocation(campaignIdx, locationIdx)
+      .accounts({
+        authority: advertiser.publicKey,
+        campaign: campaignPda,
+        provider: providerPda,
+        location: locationPda,
+        campaignLocation: campaignLocationPda,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([advertiser])
+      .rpc();
+
+    const campaignAfterBooking = await program.account.campaign.fetch(
+      campaignPda
+    );
+    const locationAfterBooking = await program.account.location.fetch(
+      locationPda
+    );
+    const bookingAccount = await program.account.campaignLocation.fetch(
+      campaignLocationPda
+    );
+    const balanceAfter = await connection.getBalance(campaignPda);
+
+    expect(balanceBefore - balanceAfter).to.equal(price.toNumber());
+    expect(campaignAfterBooking.availableBudget.toString()).to.equal(
+      budget.sub(price).toString()
+    );
+    expect(campaignAfterBooking.reservedBudget.toString()).to.equal(
+      price.toString()
+    );
+    expect(locationAfterBooking.locationStatus).to.have.property("booked");
+    expect(bookingAccount.status).to.have.property("active");
+
+    const settlementAmount = new BN(300_000);
+    await program.methods
+      .settleCampaignLocation(campaignIdx, locationIdx, settlementAmount)
+      .accounts({
+        oracleAuthority: oracle.publicKey,
+        locationAuthority: provider.publicKey,
+        campaign: campaignPda,
+        provider: providerPda,
+        location: locationPda,
+        campaignLocation: campaignLocationPda,
+      })
+      .signers([oracle])
+      .rpc();
+
+    const campaignAfterSettlement = await program.account.campaign.fetch(
+      campaignPda
+    );
+    const locationAfterSettlement = await program.account.location.fetch(
+      locationPda
+    );
+    const bookingAfterSettlement =
+      await program.account.campaignLocation.fetch(campaignLocationPda);
+
+    const refund = price.sub(settlementAmount);
+    expect(campaignAfterSettlement.reservedBudget.toNumber()).to.equal(0);
+    expect(campaignAfterSettlement.availableBudget.toString()).to.equal(
+      budget.sub(settlementAmount).toString()
+    );
+    expect(locationAfterSettlement.locationStatus).to.have.property("available");
+    expect(bookingAfterSettlement.status).to.have.property("settled");
+    expect(bookingAfterSettlement.settledAmount.toString()).to.equal(
+      settlementAmount.toString()
+    );
+  });
+
+  it("rejects settlement above booked price", async () => {
+    const { advertiser, advertiserPda, provider, providerPda, oracle } =
+      await setupActors();
+
+    const budget = new BN(1 * LAMPORTS_PER_SOL);
+    const price = new BN(400_000);
+    const { campaignIdx, campaignPda } = await createCampaign(
+      advertiser,
+      advertiserPda,
+      budget
+    );
+    const { locationIdx, locationPda } = await registerLocation(
+      provider,
+      providerPda,
+      price,
+      oracle.publicKey
+    );
+    const campaignLocationPda = deriveCampaignLocationPda(
+      campaignPda,
+      locationPda
+    );
+
+    await program.methods
+      .addCampaignLocation(campaignIdx, locationIdx)
+      .accounts({
+        authority: advertiser.publicKey,
+        campaign: campaignPda,
+        provider: providerPda,
+        location: locationPda,
+        campaignLocation: campaignLocationPda,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([advertiser])
+      .rpc();
+
+    await expectAnchorError(
+      program.methods
+        .settleCampaignLocation(campaignIdx, locationIdx, price.add(new BN(1)))
+        .accounts({
+          oracleAuthority: oracle.publicKey,
+          locationAuthority: provider.publicKey,
+          campaign: campaignPda,
+          provider: providerPda,
+          location: locationPda,
+          campaignLocation: campaignLocationPda,
+        })
+        .signers([oracle])
+        .rpc(),
+      "SettlementTooHigh"
+    );
+  });
+
+  it("rejects settlement with the wrong oracle", async () => {
+    const { advertiser, advertiserPda, provider, providerPda, oracle } =
+      await setupActors();
+    const budget = new BN(1 * LAMPORTS_PER_SOL);
+    const price = new BN(350_000);
+    const { campaignIdx, campaignPda } = await createCampaign(
+      advertiser,
+      advertiserPda,
+      budget
+    );
+    const { locationIdx, locationPda } = await registerLocation(
+      provider,
+      providerPda,
+      price,
+      oracle.publicKey
+    );
+    const campaignLocationPda = deriveCampaignLocationPda(
+      campaignPda,
+      locationPda
+    );
+
+    await program.methods
+      .addCampaignLocation(campaignIdx, locationIdx)
+      .accounts({
+        authority: advertiser.publicKey,
+        campaign: campaignPda,
+        provider: providerPda,
+        location: locationPda,
+        campaignLocation: campaignLocationPda,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([advertiser])
+      .rpc();
+
+    const wrongOracle = Keypair.generate();
+    await airdropTo(wrongOracle.publicKey);
+
+    await expectAnchorError(
+      program.methods
+        .settleCampaignLocation(campaignIdx, locationIdx, new BN(100_000))
+        .accounts({
+          oracleAuthority: wrongOracle.publicKey,
+          locationAuthority: provider.publicKey,
+          campaign: campaignPda,
+          provider: providerPda,
+          location: locationPda,
+          campaignLocation: campaignLocationPda,
+        })
+        .signers([wrongOracle])
+        .rpc(),
+      "InvalidOracleAuthority"
+    );
+  });
+
+  it("rejects settlement with the wrong location authority", async () => {
+    const { advertiser, advertiserPda, provider, providerPda, oracle } =
+      await setupActors();
+    const budget = new BN(1 * LAMPORTS_PER_SOL);
+    const price = new BN(420_000);
+    const { campaignIdx, campaignPda } = await createCampaign(
+      advertiser,
+      advertiserPda,
+      budget
+    );
+    const { locationIdx, locationPda } = await registerLocation(
+      provider,
+      providerPda,
+      price,
+      oracle.publicKey
+    );
+    const campaignLocationPda = deriveCampaignLocationPda(
+      campaignPda,
+      locationPda
+    );
+
+    await program.methods
+      .addCampaignLocation(campaignIdx, locationIdx)
+      .accounts({
+        authority: advertiser.publicKey,
+        campaign: campaignPda,
+        provider: providerPda,
+        location: locationPda,
+        campaignLocation: campaignLocationPda,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([advertiser])
+      .rpc();
+
+    const wrongRecipient = Keypair.generate();
+    await airdropTo(wrongRecipient.publicKey);
+
+    await expectAnchorError(
+      program.methods
+        .settleCampaignLocation(campaignIdx, locationIdx, new BN(100_000))
+        .accounts({
+          oracleAuthority: oracle.publicKey,
+          locationAuthority: wrongRecipient.publicKey,
+          campaign: campaignPda,
+          provider: providerPda,
+          location: locationPda,
+          campaignLocation: campaignLocationPda,
+        })
+        .signers([oracle])
+        .rpc(),
+      "InvalidAuthority"
+    );
+  });
+
+  it("prevents booking an inactive location", async () => {
+    const { advertiser, advertiserPda, provider, providerPda, oracle } =
+      await setupActors();
+    const budget = new BN(1 * LAMPORTS_PER_SOL);
+    const price = new BN(180_000);
+    const { campaignIdx, campaignPda } = await createCampaign(
+      advertiser,
+      advertiserPda,
+      budget
+    );
+    const { locationIdx, locationPda } = await registerLocation(
+      provider,
+      providerPda,
+      price,
+      oracle.publicKey
+    );
+
+    await program.methods
+      .setLocationStatus(locationIdx, { inactive: {} })
+      .accounts({
+        authority: provider.publicKey,
+        provider: providerPda,
+        location: locationPda,
+      })
+      .signers([provider])
+      .rpc();
+
+    const campaignLocationPda = deriveCampaignLocationPda(
+      campaignPda,
+      locationPda
+    );
+
+    await expectAnchorError(
+      program.methods
+        .addCampaignLocation(campaignIdx, locationIdx)
+        .accounts({
+          authority: advertiser.publicKey,
+          campaign: campaignPda,
+          provider: providerPda,
+          location: locationPda,
+          campaignLocation: campaignLocationPda,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([advertiser])
+        .rpc(),
+      "LocationInactive"
+    );
+  });
+
+  it("prevents booking an already booked location", async () => {
+    const { advertiser, advertiserPda, provider, providerPda, oracle } =
+      await setupActors();
+    const price = new BN(220_000);
+    const budget = new BN(1 * LAMPORTS_PER_SOL);
+    const { campaignIdx: firstCampaignIdx, campaignPda: firstCampaignPda } =
+      await createCampaign(advertiser, advertiserPda, budget);
+    const { campaignIdx: secondCampaignIdx, campaignPda: secondCampaignPda } =
+      await createCampaign(advertiser, advertiserPda, budget);
+    const { locationIdx, locationPda } = await registerLocation(
+      provider,
+      providerPda,
+      price,
+      oracle.publicKey
+    );
+
+    const firstCampaignLocationPda = deriveCampaignLocationPda(
+      firstCampaignPda,
+      locationPda
+    );
+
+    await program.methods
+      .addCampaignLocation(firstCampaignIdx, locationIdx)
+      .accounts({
+        authority: advertiser.publicKey,
+        campaign: firstCampaignPda,
+        provider: providerPda,
+        location: locationPda,
+        campaignLocation: firstCampaignLocationPda,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([advertiser])
+      .rpc();
+
+    const secondCampaignLocationPda = deriveCampaignLocationPda(
+      secondCampaignPda,
+      locationPda
+    );
+
+    await expectAnchorError(
+      program.methods
+        .addCampaignLocation(secondCampaignIdx, locationIdx)
+        .accounts({
+          authority: advertiser.publicKey,
+          campaign: secondCampaignPda,
+          provider: providerPda,
+          location: locationPda,
+          campaignLocation: secondCampaignLocationPda,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([advertiser])
+        .rpc(),
+      "LocationAlreadyBooked"
+    );
+  });
+
+  it("prevents closing with active booking", async () => {
+    const { advertiser, advertiserPda, provider, providerPda, oracle } =
+      await setupActors();
+    const budget = new BN(1 * LAMPORTS_PER_SOL);
+    const price = new BN(200_000);
+    const { campaignIdx, campaignPda } = await createCampaign(
+      advertiser,
+      advertiserPda,
+      budget
+    );
+    const { locationIdx, locationPda } = await registerLocation(
+      provider,
+      providerPda,
+      price,
+      oracle.publicKey
+    );
+    const campaignLocationPda = deriveCampaignLocationPda(
+      campaignPda,
+      locationPda
+    );
+
+    await program.methods
+      .addCampaignLocation(campaignIdx, locationIdx)
+      .accounts({
+        authority: advertiser.publicKey,
+        campaign: campaignPda,
+        provider: providerPda,
+        location: locationPda,
+        campaignLocation: campaignLocationPda,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([advertiser])
+      .rpc();
+
+    await expectAnchorError(
+      program.methods
+        .closeCampaign(campaignIdx)
+        .accounts({
+          authority: advertiser.publicKey,
+          advertiser: advertiserPda,
+          campaign: campaignPda,
+        })
+        .signers([advertiser])
+        .rpc(),
+      "CampaignHasActiveBookings"
+    );
+  });
+
+  it("prevents removing a non-active booking", async () => {
+    const { advertiser, advertiserPda, provider, providerPda, oracle } =
+      await setupActors();
+    const budget = new BN(1 * LAMPORTS_PER_SOL);
+    const price = new BN(260_000);
+    const { campaignIdx, campaignPda } = await createCampaign(
+      advertiser,
+      advertiserPda,
+      budget
+    );
+    const { locationIdx, locationPda } = await registerLocation(
+      provider,
+      providerPda,
+      price,
+      oracle.publicKey
+    );
+    const campaignLocationPda = deriveCampaignLocationPda(
+      campaignPda,
+      locationPda
+    );
+
+    await program.methods
+      .addCampaignLocation(campaignIdx, locationIdx)
+      .accounts({
+        authority: advertiser.publicKey,
+        campaign: campaignPda,
+        provider: providerPda,
+        location: locationPda,
+        campaignLocation: campaignLocationPda,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([advertiser])
+      .rpc();
+
+    await program.methods
+      .settleCampaignLocation(campaignIdx, locationIdx, new BN(200_000))
+      .accounts({
+        oracleAuthority: oracle.publicKey,
+        locationAuthority: provider.publicKey,
+        campaign: campaignPda,
+        provider: providerPda,
+        location: locationPda,
+        campaignLocation: campaignLocationPda,
+      })
+      .signers([oracle])
+      .rpc();
+
+    await expectAnchorError(
+      program.methods
+        .removeCampaignLocation(campaignIdx, locationIdx)
+        .accounts({
+          authority: advertiser.publicKey,
+          campaign: campaignPda,
+          provider: providerPda,
+          location: locationPda,
+          campaignLocation: campaignLocationPda,
+        })
+        .signers([advertiser])
+        .rpc(),
+      "BookingNotActive"
+    );
+  });
+
+  it("cancels a booking and refunds the campaign", async () => {
+    const { advertiser, advertiserPda, provider, providerPda, oracle } =
+      await setupActors();
+    const budget = new BN(1 * LAMPORTS_PER_SOL);
+    const price = new BN(300_000);
+    const { campaignIdx, campaignPda } = await createCampaign(
+      advertiser,
+      advertiserPda,
+      budget
+    );
+    const { locationIdx, locationPda } = await registerLocation(
+      provider,
+      providerPda,
+      price,
+      oracle.publicKey
+    );
+    const campaignLocationPda = deriveCampaignLocationPda(
+      campaignPda,
+      locationPda
+    );
+
+    await program.methods
+      .addCampaignLocation(campaignIdx, locationIdx)
+      .accounts({
+        authority: advertiser.publicKey,
+        campaign: campaignPda,
+        provider: providerPda,
+        location: locationPda,
+        campaignLocation: campaignLocationPda,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([advertiser])
+      .rpc();
+
+    await program.methods
+      .removeCampaignLocation(campaignIdx, locationIdx)
+      .accounts({
+        authority: advertiser.publicKey,
+        campaign: campaignPda,
+        provider: providerPda,
+        location: locationPda,
+        campaignLocation: campaignLocationPda,
+      })
+      .signers([advertiser])
+      .rpc();
+
+    const campaignAfterCancel = await program.account.campaign.fetch(
+      campaignPda
+    );
+    const locationAfterCancel = await program.account.location.fetch(locationPda);
+    const bookingAfterCancel =
+      await program.account.campaignLocation.fetch(campaignLocationPda);
+
+    expect(campaignAfterCancel.availableBudget.toString()).to.equal(
+      budget.toString()
+    );
+    expect(campaignAfterCancel.reservedBudget.toNumber()).to.equal(0);
+    expect(locationAfterCancel.locationStatus).to.have.property("available");
+    expect(bookingAfterCancel.status).to.have.property("cancelled");
+  });
+
+  it("closes a campaign with no active bookings", async () => {
+    const { advertiser, advertiserPda } = await setupActors();
+    const budget = new BN(500_000);
+    const { campaignIdx, campaignPda } = await createCampaign(
+      advertiser,
+      advertiserPda,
+      budget
+    );
+
+    await program.methods
+      .closeCampaign(campaignIdx)
+      .accounts({
+        authority: advertiser.publicKey,
+        advertiser: advertiserPda,
+        campaign: campaignPda,
+      })
+      .signers([advertiser])
+      .rpc();
+
+    const advertiserAccount = await program.account.advertiser.fetch(
+      advertiserPda
+    );
+    expect(advertiserAccount.campaignCount.toNumber()).to.equal(0);
+
+    let fetchError: any = null;
+    try {
+      await program.account.campaign.fetch(campaignPda);
+    } catch (error) {
+      fetchError = error;
+    }
+    expect(fetchError).to.be.ok;
+  });
+});
