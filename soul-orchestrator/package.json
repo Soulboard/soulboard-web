@@ -12,6 +12,7 @@
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
     "@types/bn.js": "^5.2.0",
-    "bn.js": "^5.2.2"
+    "bn.js": "^5.2.2",
+    "soulboard-sdk": "1.0.0"
   }
 }

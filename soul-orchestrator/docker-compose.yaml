@@ -2,12 +2,14 @@ version: '3.8'
 
 services:
   soul-orchestrator:
-    build: .
+    build:
+      context: ..
+      dockerfile: soul-orchestrator/Dockerfile
     container_name: soul-orchestrator
     restart: unless-stopped
     environment:
-      - RPC_URL=${RPC_URL:-http://localhost:8899}
-      - WALLET_PATH=${WALLET_PATH:-/root/.config/solana/id.json}
+      - RPC_URL=${RPC_URL:-https://api.devnet.solana.com}
+      - WALLET_PATH=${WALLET_PATH:-/root/.config/solana/phantom.json}
       - THINGSPEAK_URL=${THINGSPEAK_URL:-https://api.thingspeak.com/channels/2890626/feeds.json?results=11}
       - LOCATION_PUBKEY=${LOCATION_PUBKEY}
       - DEVICE_IDX=${DEVICE_IDX}

@@ -7,6 +7,7 @@
         "@coral-xyz/anchor": "^0.31.1",
         "@types/bn.js": "^5.2.0",
         "bn.js": "^5.2.2",
+        "soulboard-sdk": "1.0.0",
       },
       "devDependencies": {
         "@types/bun": "latest",
@@ -118,6 +119,8 @@
     "rpc-websockets": ["rpc-websockets@9.1.2", "", { "dependencies": { "@swc/helpers": "^0.5.11", "@types/uuid": "^8.3.4", "@types/ws": "^8.2.2", "buffer": "^6.0.3", "eventemitter3": "^5.0.1", "uuid": "^8.3.2", "ws": "^8.5.0" }, "optionalDependencies": { "bufferutil": "^4.0.1", "utf-8-validate": "^5.0.2" } }, "sha512-fvA0JfSqWmJsq0FqLnl51DPRMqPer7hcIqqLwuhgAUOWrLVuJhmNeL+Y4Ds5PdoX/NyUhUWoflL6A7bT93Xfkg=="],
 
     "safe-buffer": ["safe-buffer@5.2.1", "", {}, "sha512-rp3So07KcdmmKbGvgaNxQSJr7bGVSVk5S9Eq1F+ppbRo70+YeaDxkw5Dd8NPN+GD6bjnYm2VuPuCXmpuYvmCXQ=="],
+
+    "soulboard-sdk": ["soulboard-sdk@1.0.0", "", { "dependencies": { "@coral-xyz/anchor": "^0.31.0", "@solana/web3.js": "^1.98.0" } }, "sha512-otR1IKNKljDjeWay3MbrkFwljkg5+tJD1L0ToueQjU4qVR3V15uraHZ2hUvW7X1ujai9nEagqnL4kRvH/IGDbg=="],
 
     "stream-chain": ["stream-chain@2.2.5", "", {}, "sha512-1TJmBx6aSWqZ4tx7aTpBDXK0/e2hhcNSTV8+CbFJtDjbb+I1mZ8lHit0Grw9GRT+6JbIrrDd8esncgBi8aBXGA=="],
 

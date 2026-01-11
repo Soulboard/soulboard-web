@@ -46,12 +46,14 @@ const createRunner = async () => {
 
     logDelta(delta.views, delta.impressions, delta.samples);
 
-    await deviceContext.client.devices.reportMetrics(
+    const signature = await deviceContext.client.devices.reportMetrics(
       deviceContext.deviceAuthority,
       deviceContext.deviceIdx,
       delta.views,
       delta.impressions
     );
+
+    console.log(`📝 Transaction: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
 
     state = {
       lastEntryId: delta.lastEntryId,

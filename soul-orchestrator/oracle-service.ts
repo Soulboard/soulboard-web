@@ -1,9 +1,9 @@
 import { Wallet } from "@coral-xyz/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import fs from "fs/promises";
-import { AccountNotFoundError } from "@soulboard/core/errors";
-import { OracleClient } from "@soulboard/programs/oracle";
-import { DeviceAccount } from "@soulboard/programs/oracle/types";
+import { AccountNotFoundError } from "soulboard-sdk/dist/core/errors";
+import { OracleClient } from "soulboard-sdk/dist/programs/oracle";
+import { DeviceAccount } from "soulboard-sdk/dist/types/soul_board_oracle";
 import { OrchestratorConfig } from "./config";
 import { OracleState } from "./state";
 

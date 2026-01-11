@@ -40,7 +40,7 @@ const parsePublicKey = (value: string | undefined, label: string): PublicKey | u
 export const loadConfig = (): OrchestratorConfig => {
   const rpcUrl = process.env.RPC_URL ?? "https://api.devnet.solana.com";
   const walletPath =
-    process.env.WALLET_PATH ?? `${process.env.HOME}/.config/solana/id.json`;
+    process.env.WALLET_PATH ?? `${process.env.HOME}/.config/solana/phantom.json`;
   const thingspeakUrl =
     process.env.THINGSPEAK_URL ??
     "https://api.thingspeak.com/channels/2890626/feeds.json?results=11";
