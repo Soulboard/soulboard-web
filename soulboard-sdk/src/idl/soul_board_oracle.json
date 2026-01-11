@@ -1,0 +1,236 @@
+{
+  "address": "2TKyWdqvRxTB3zhzJ7fFsH9RWtcXk9hoBpGV29XSuvcD",
+  "metadata": {
+    "name": "soul_board_oracle",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "add_device",
+      "discriminator": [
+        21,
+        27,
+        66,
+        42,
+        18,
+        30,
+        14,
+        18
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "device",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  118,
+                  105,
+                  99,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "device",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  118,
+                  105,
+                  99,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "location",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "update_device_metrics",
+      "discriminator": [
+        148,
+        216,
+        37,
+        250,
+        138,
+        0,
+        189,
+        30
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "device",
+          "writable": true
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Device",
+      "discriminator": [
+        153,
+        248,
+        23,
+        39,
+        83,
+        45,
+        68,
+        128
+      ]
+    }
+  ],
+  "types": [
+    {
+      "name": "Device",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "device_id",
+            "type": "u64"
+          },
+          {
+            "name": "location",
+            "type": "pubkey"
+          },
+          {
+            "name": "location_idx",
+            "type": "u64"
+          },
+          {
+            "name": "device_metrics",
+            "type": {
+              "defined": {
+                "name": "DeviceMetrics"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeviceMetric",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "views",
+            "type": "u64"
+          },
+          {
+            "name": "impressions",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeviceMetrics",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "device_id",
+            "type": "u64"
+          },
+          {
+            "name": "location",
+            "type": "pubkey"
+          },
+          {
+            "name": "metrics",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "DeviceMetric"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

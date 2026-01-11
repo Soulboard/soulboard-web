@@ -1,0 +1,1163 @@
+{
+  "address": "61yLHnb8vjRGzkKUPGjN4zviBfsy7wHmwwnZpNP8SfcQ",
+  "metadata": {
+    "name": "soulboard",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "add_budget",
+      "discriminator": [
+        8,
+        21,
+        47,
+        83,
+        188,
+        233,
+        214,
+        5
+      ],
+      "accounts": [
+        {
+          "name": "advertiser",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  118,
+                  101,
+                  114,
+                  116,
+                  105,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "advertiser"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_campaign_idx",
+          "type": "u8"
+        },
+        {
+          "name": "budget",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "book_location",
+      "discriminator": [
+        55,
+        29,
+        41,
+        10,
+        103,
+        158,
+        172,
+        58
+      ],
+      "accounts": [
+        {
+          "name": "location",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  99,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "ad_provider.authority",
+                "account": "Provider"
+              },
+              {
+                "kind": "arg",
+                "path": "location_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "campaign"
+          ]
+        },
+        {
+          "name": "ad_provider",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_campaign_idx",
+          "type": "u8"
+        },
+        {
+          "name": "location_idx",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "cancel_booking",
+      "discriminator": [
+        139,
+        162,
+        116,
+        202,
+        78,
+        140,
+        139,
+        90
+      ],
+      "accounts": [
+        {
+          "name": "location",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  99,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "ad_provider.authority",
+                "account": "Provider"
+              },
+              {
+                "kind": "arg",
+                "path": "location_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "campaign"
+          ]
+        },
+        {
+          "name": "ad_provider",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_campaign_idx",
+          "type": "u8"
+        },
+        {
+          "name": "location_idx",
+          "type": "u8"
+        },
+        {
+          "name": "slot_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "close_campaign",
+      "discriminator": [
+        65,
+        49,
+        110,
+        7,
+        63,
+        238,
+        206,
+        77
+      ],
+      "accounts": [
+        {
+          "name": "advertiser",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  118,
+                  101,
+                  114,
+                  116,
+                  105,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "advertiser",
+            "campaign"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_campaign_idx",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "create_advertiser",
+      "discriminator": [
+        249,
+        170,
+        60,
+        235,
+        33,
+        219,
+        7,
+        83
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "advertiser",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  118,
+                  101,
+                  114,
+                  116,
+                  105,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "create_campaign",
+      "discriminator": [
+        111,
+        131,
+        187,
+        98,
+        160,
+        193,
+        114,
+        244
+      ],
+      "accounts": [
+        {
+          "name": "advertiser",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  118,
+                  101,
+                  114,
+                  116,
+                  105,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "account",
+                "path": "advertiser.last_campaign_id",
+                "account": "Advertiser"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "advertiser"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "campaign_name",
+          "type": "string"
+        },
+        {
+          "name": "campaign_description",
+          "type": "string"
+        },
+        {
+          "name": "campaign_image_url",
+          "type": "string"
+        },
+        {
+          "name": "budget",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "create_provider",
+      "discriminator": [
+        74,
+        53,
+        211,
+        174,
+        38,
+        168,
+        227,
+        177
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "provider",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "register_location",
+      "discriminator": [
+        6,
+        192,
+        107,
+        95,
+        99,
+        19,
+        126,
+        64
+      ],
+      "accounts": [
+        {
+          "name": "provider",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "provider"
+          ]
+        },
+        {
+          "name": "location",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  99,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "account",
+                "path": "provider.last_location_id",
+                "account": "Provider"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "location_name",
+          "type": "string"
+        },
+        {
+          "name": "location_description",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "withdraw_amount",
+      "discriminator": [
+        174,
+        32,
+        44,
+        71,
+        244,
+        75,
+        235,
+        8
+      ],
+      "accounts": [
+        {
+          "name": "advertiser",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  118,
+                  101,
+                  114,
+                  116,
+                  105,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "advertiser",
+            "campaign"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_campaign_idx",
+          "type": "u8"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "withdraw_earnings",
+      "discriminator": [
+        6,
+        132,
+        233,
+        254,
+        241,
+        87,
+        247,
+        185
+      ],
+      "accounts": [
+        {
+          "name": "location",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  99,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "location_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "_location_idx",
+          "type": "u8"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Advertiser",
+      "discriminator": [
+        224,
+        189,
+        134,
+        74,
+        86,
+        113,
+        216,
+        184
+      ]
+    },
+    {
+      "name": "Campaign",
+      "discriminator": [
+        50,
+        40,
+        49,
+        11,
+        157,
+        220,
+        229,
+        192
+      ]
+    },
+    {
+      "name": "Location",
+      "discriminator": [
+        73,
+        140,
+        105,
+        78,
+        215,
+        159,
+        92,
+        234
+      ]
+    },
+    {
+      "name": "Provider",
+      "discriminator": [
+        164,
+        180,
+        71,
+        17,
+        75,
+        216,
+        80,
+        195
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidAuthority",
+      "msg": "Invalid authority"
+    },
+    {
+      "code": 6001,
+      "name": "Unauthorized",
+      "msg": "Unauthorized operation"
+    },
+    {
+      "code": 6002,
+      "name": "CampaignNotFound",
+      "msg": "Campaign not found"
+    },
+    {
+      "code": 6003,
+      "name": "CampaignAlreadyExists",
+      "msg": "Campaign already exists"
+    },
+    {
+      "code": 6004,
+      "name": "InsufficientBudget",
+      "msg": "Insufficient campaign budget"
+    },
+    {
+      "code": 6005,
+      "name": "LocationNotFound",
+      "msg": "Location not found"
+    },
+    {
+      "code": 6006,
+      "name": "LocationAlreadyExists",
+      "msg": "Location already exists"
+    },
+    {
+      "code": 6007,
+      "name": "SlotNotFound",
+      "msg": "Slot not found"
+    },
+    {
+      "code": 6008,
+      "name": "SlotAlreadyBooked",
+      "msg": "Slot already booked"
+    },
+    {
+      "code": 6009,
+      "name": "SlotAlreadyExists",
+      "msg": "Slot already exists"
+    },
+    {
+      "code": 6010,
+      "name": "SlotUnavailable",
+      "msg": "Slot is unavailable"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidSlotStatus",
+      "msg": "Invalid slot status"
+    },
+    {
+      "code": 6012,
+      "name": "MaxSlotsReached",
+      "msg": "Maximum number of slots reached"
+    },
+    {
+      "code": 6013,
+      "name": "BookingNotFound",
+      "msg": "Booking not found"
+    },
+    {
+      "code": 6014,
+      "name": "InvalidBooking",
+      "msg": "Invalid booking"
+    },
+    {
+      "code": 6015,
+      "name": "TransferFailed",
+      "msg": "Transfer failed"
+    },
+    {
+      "code": 6016,
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6017,
+      "name": "ArithmeticUnderflow",
+      "msg": "Arithmetic underflow"
+    },
+    {
+      "code": 6018,
+      "name": "InvalidParameters",
+      "msg": "Invalid parameters"
+    },
+    {
+      "code": 6019,
+      "name": "SlotNotBooked",
+      "msg": "Slot not booked"
+    },
+    {
+      "code": 6020,
+      "name": "InsufficientEarnings",
+      "msg": "Insufficient earnings"
+    }
+  ],
+  "types": [
+    {
+      "name": "Advertiser",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "last_campaign_id",
+            "type": "u8"
+          },
+          {
+            "name": "campaign_count",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Campaign",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "campaign_idx",
+            "type": "u8"
+          },
+          {
+            "name": "campaign_name",
+            "type": "string"
+          },
+          {
+            "name": "campaign_description",
+            "type": "string"
+          },
+          {
+            "name": "campaign_image_url",
+            "type": "string"
+          },
+          {
+            "name": "booked_locations",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "LocationBooking"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Location",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "location_idx",
+            "type": "u8"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "location_name",
+            "type": "string"
+          },
+          {
+            "name": "location_description",
+            "type": "string"
+          },
+          {
+            "name": "location_status",
+            "type": {
+              "defined": {
+                "name": "LocationStatus"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "LocationBooking",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "location",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LocationStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Available"
+          },
+          {
+            "name": "Booked",
+            "fields": [
+              {
+                "name": "campaign_id",
+                "type": "pubkey"
+              }
+            ]
+          },
+          {
+            "name": "Unavailable"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Provider",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "last_location_id",
+            "type": "u8"
+          },
+          {
+            "name": "location_count",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}
