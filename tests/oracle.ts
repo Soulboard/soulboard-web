@@ -95,12 +95,25 @@ describe("soul_board_oracle", () => {
       .signers([authority])
       .rpc();
 
-    return { authority, oracleAuthority, registryPda, deviceIdx, devicePda, location };
+    return {
+      authority,
+      oracleAuthority,
+      registryPda,
+      deviceIdx,
+      devicePda,
+      location,
+    };
   };
 
   it("registers a device and reports metrics", async () => {
-    const { authority, oracleAuthority, registryPda, deviceIdx, devicePda, location } =
-      await setupDevice();
+    const {
+      authority,
+      oracleAuthority,
+      registryPda,
+      deviceIdx,
+      devicePda,
+      location,
+    } = await setupDevice();
 
     await program.methods
       .reportDeviceMetrics(deviceIdx, new BN(100), new BN(250))

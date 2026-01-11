@@ -1,4 +1,10 @@
-import { AccountInfo, Commitment, Connection, Logs, PublicKey } from "@solana/web3.js";
+import {
+  AccountInfo,
+  Commitment,
+  Connection,
+  Logs,
+  PublicKey,
+} from "@solana/web3.js";
 
 export type AccountChangeHandler = (accountInfo: AccountInfo<Buffer>) => void;
 export type LogHandler = (logs: Logs) => void;
@@ -12,8 +18,15 @@ export class EventSubscriptionManager {
     private readonly commitment: Commitment = "confirmed"
   ) {}
 
-  async subscribeToAccount(address: PublicKey, handler: AccountChangeHandler): Promise<() => Promise<void>> {
-    const id = await this.connection.onAccountChange(address, handler, this.commitment);
+  async subscribeToAccount(
+    address: PublicKey,
+    handler: AccountChangeHandler
+  ): Promise<() => Promise<void>> {
+    const id = await this.connection.onAccountChange(
+      address,
+      handler,
+      this.commitment
+    );
     this.accountSubscriptions.set(id, address);
 
     return async () => {
@@ -22,8 +35,15 @@ export class EventSubscriptionManager {
     };
   }
 
-  async subscribeToProgramLogs(programId: PublicKey, handler: LogHandler): Promise<() => Promise<void>> {
-    const id = await this.connection.onLogs(programId, handler, this.commitment);
+  async subscribeToProgramLogs(
+    programId: PublicKey,
+    handler: LogHandler
+  ): Promise<() => Promise<void>> {
+    const id = await this.connection.onLogs(
+      programId,
+      handler,
+      this.commitment
+    );
     this.logSubscriptions.set(id, programId);
 
     return async () => {

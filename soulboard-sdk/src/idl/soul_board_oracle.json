@@ -1,5 +1,5 @@
 {
-  "address": "2TKyWdqvRxTB3zhzJ7fFsH9RWtcXk9hoBpGV29XSuvcD",
+  "address": "HbjHJmYYCSjfyiJWCRvaYWo1vKsgRurFDkrxNnNusVFX",
   "metadata": {
     "name": "soul_board_oracle",
     "version": "0.1.0",
@@ -8,16 +8,16 @@
   },
   "instructions": [
     {
-      "name": "add_device",
+      "name": "create_device_registry",
       "discriminator": [
-        21,
+        131,
+        80,
+        204,
         27,
-        66,
-        42,
-        18,
-        30,
-        14,
-        18
+        54,
+        238,
+        200,
+        41
       ],
       "accounts": [
         {
@@ -26,11 +26,7 @@
           "signer": true
         },
         {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "device",
+          "name": "registry",
           "writable": true,
           "pda": {
             "seeds": [
@@ -42,7 +38,16 @@
                   118,
                   105,
                   99,
-                  101
+                  101,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
                 ]
               },
               {
@@ -51,31 +56,58 @@
               }
             ]
           }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": []
     },
     {
-      "name": "initialize",
+      "name": "register_device",
       "discriminator": [
-        175,
-        175,
-        109,
-        31,
-        13,
-        152,
-        155,
-        237
+        210,
+        151,
+        56,
+        68,
+        22,
+        158,
+        90,
+        193
       ],
       "accounts": [
         {
-          "name": "authority",
+          "name": "registry",
           "writable": true,
-          "signer": true
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  118,
+                  105,
+                  99,
+                  101,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
         },
         {
           "name": "device",
@@ -96,12 +128,218 @@
               {
                 "kind": "account",
                 "path": "authority"
+              },
+              {
+                "kind": "account",
+                "path": "registry.last_device_id",
+                "account": "DeviceRegistry"
               }
             ]
           }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "registry"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
+        {
+          "name": "location",
+          "type": "pubkey"
+        },
+        {
+          "name": "oracle_authority",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "report_device_metrics",
+      "discriminator": [
+        167,
+        111,
+        216,
+        158,
+        228,
+        237,
+        202,
+        110
+      ],
+      "accounts": [
+        {
+          "name": "device",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  118,
+                  105,
+                  99,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "device_authority"
+              },
+              {
+                "kind": "arg",
+                "path": "device_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "device_authority"
+        },
+        {
+          "name": "oracle_authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "device_idx",
+          "type": "u64"
+        },
+        {
+          "name": "views",
+          "type": "u64"
+        },
+        {
+          "name": "impressions",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "set_device_status",
+      "discriminator": [
+        151,
+        78,
+        75,
+        125,
+        26,
+        121,
+        118,
+        57
+      ],
+      "accounts": [
+        {
+          "name": "device",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  118,
+                  105,
+                  99,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "device_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "device"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "device_idx",
+          "type": "u64"
+        },
+        {
+          "name": "status",
+          "type": {
+            "defined": {
+              "name": "DeviceStatus"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "update_device_location",
+      "discriminator": [
+        73,
+        91,
+        38,
+        107,
+        101,
+        244,
+        49,
+        252
+      ],
+      "accounts": [
+        {
+          "name": "device",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  118,
+                  105,
+                  99,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "device_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "device"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "device_idx",
+          "type": "u64"
+        },
         {
           "name": "location",
           "type": "pubkey"
@@ -109,33 +347,63 @@
       ]
     },
     {
-      "name": "update_device_metrics",
+      "name": "update_device_oracle",
       "discriminator": [
-        148,
-        216,
-        37,
-        250,
-        138,
-        0,
-        189,
-        30
+        119,
+        208,
+        173,
+        7,
+        221,
+        44,
+        220,
+        201
       ],
       "accounts": [
         {
-          "name": "authority",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
           "name": "device",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  118,
+                  105,
+                  99,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "device_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "device"
+          ]
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "device_idx",
+          "type": "u64"
+        },
+        {
+          "name": "oracle_authority",
+          "type": "pubkey"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -151,6 +419,136 @@
         68,
         128
       ]
+    },
+    {
+      "name": "DeviceRegistry",
+      "discriminator": [
+        103,
+        245,
+        70,
+        187,
+        154,
+        60,
+        208,
+        216
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "DeviceLocationUpdated",
+      "discriminator": [
+        23,
+        18,
+        155,
+        48,
+        81,
+        51,
+        186,
+        75
+      ]
+    },
+    {
+      "name": "DeviceMetricsReported",
+      "discriminator": [
+        83,
+        54,
+        173,
+        236,
+        81,
+        5,
+        102,
+        13
+      ]
+    },
+    {
+      "name": "DeviceOracleUpdated",
+      "discriminator": [
+        163,
+        101,
+        119,
+        241,
+        250,
+        143,
+        147,
+        150
+      ]
+    },
+    {
+      "name": "DeviceRegistered",
+      "discriminator": [
+        221,
+        90,
+        2,
+        153,
+        72,
+        98,
+        71,
+        181
+      ]
+    },
+    {
+      "name": "DeviceRegistryCreated",
+      "discriminator": [
+        22,
+        99,
+        185,
+        119,
+        249,
+        100,
+        36,
+        68
+      ]
+    },
+    {
+      "name": "DeviceStatusUpdated",
+      "discriminator": [
+        32,
+        242,
+        77,
+        41,
+        85,
+        110,
+        123,
+        182
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "InvalidAuthority",
+      "msg": "Invalid authority"
+    },
+    {
+      "code": 6001,
+      "name": "Unauthorized",
+      "msg": "Unauthorized operation"
+    },
+    {
+      "code": 6002,
+      "name": "DeviceInactive",
+      "msg": "Device is inactive"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidParameters",
+      "msg": "Invalid parameters"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidOracleAuthority",
+      "msg": "Invalid oracle authority"
+    },
+    {
+      "code": 6005,
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6006,
+      "name": "ArithmeticUnderflow",
+      "msg": "Arithmetic underflow"
     }
   ],
   "types": [
@@ -164,7 +562,7 @@
             "type": "pubkey"
           },
           {
-            "name": "device_id",
+            "name": "device_idx",
             "type": "u64"
           },
           {
@@ -172,11 +570,19 @@
             "type": "pubkey"
           },
           {
-            "name": "location_idx",
-            "type": "u64"
+            "name": "oracle_authority",
+            "type": "pubkey"
           },
           {
-            "name": "device_metrics",
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "DeviceStatus"
+              }
+            }
+          },
+          {
+            "name": "metrics",
             "type": {
               "defined": {
                 "name": "DeviceMetrics"
@@ -187,21 +593,17 @@
       }
     },
     {
-      "name": "DeviceMetric",
+      "name": "DeviceLocationUpdated",
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "timestamp",
-            "type": "i64"
+            "name": "device",
+            "type": "pubkey"
           },
           {
-            "name": "views",
-            "type": "u64"
-          },
-          {
-            "name": "impressions",
-            "type": "u64"
+            "name": "location",
+            "type": "pubkey"
           }
         ]
       }
@@ -212,7 +614,83 @@
         "kind": "struct",
         "fields": [
           {
-            "name": "device_id",
+            "name": "total_views",
+            "type": "u64"
+          },
+          {
+            "name": "total_impressions",
+            "type": "u64"
+          },
+          {
+            "name": "last_reported_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeviceMetricsReported",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "device",
+            "type": "pubkey"
+          },
+          {
+            "name": "views",
+            "type": "u64"
+          },
+          {
+            "name": "impressions",
+            "type": "u64"
+          },
+          {
+            "name": "total_views",
+            "type": "u64"
+          },
+          {
+            "name": "total_impressions",
+            "type": "u64"
+          },
+          {
+            "name": "reported_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeviceOracleUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "device",
+            "type": "pubkey"
+          },
+          {
+            "name": "oracle_authority",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeviceRegistered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "device",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "device_idx",
             "type": "u64"
           },
           {
@@ -220,12 +698,76 @@
             "type": "pubkey"
           },
           {
-            "name": "metrics",
+            "name": "oracle_authority",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeviceRegistry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "last_device_id",
+            "type": "u64"
+          },
+          {
+            "name": "device_count",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeviceRegistryCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "registry",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeviceStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Inactive"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeviceStatusUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "device",
+            "type": "pubkey"
+          },
+          {
+            "name": "status",
             "type": {
-              "vec": {
-                "defined": {
-                  "name": "DeviceMetric"
-                }
+              "defined": {
+                "name": "DeviceStatus"
               }
             }
           }

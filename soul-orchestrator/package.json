@@ -1,0 +1,17 @@
+{
+  "name": "soul-orchestrator",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@types/bn.js": "^5.2.0",
+    "bn.js": "^5.2.2"
+  }
+}

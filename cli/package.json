@@ -1,0 +1,27 @@
+{
+  "name": "soulboard-cli",
+  "version": "1.0.0",
+  "description": "CLI tool for testing Soulboard SDK and programs",
+  "bin": {
+    "soulboard": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js",
+    "prepare": "cd ../soulboard-sdk && npm run build"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.0",
+    "@solana/web3.js": "^1.98.0",
+    "commander": "^12.0.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.1",
+    "inquirer": "^9.2.12",
+    "soulboard-sdk": "file:../soulboard-sdk"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.4",
+    "typescript": "^5.7.3"
+  }
+}

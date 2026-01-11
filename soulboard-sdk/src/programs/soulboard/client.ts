@@ -1,5 +1,9 @@
 import { PublicKey } from "@solana/web3.js";
-import { SoulboardContext, SoulboardContextConfig, createSoulboardContext } from "@soulboard/programs/soulboard/context";
+import {
+  SoulboardContext,
+  SoulboardContextConfig,
+  createSoulboardContext,
+} from "@soulboard/programs/soulboard/context";
 import { AdvertiserService } from "@soulboard/programs/soulboard/services/advertiser-service";
 import { CampaignService } from "@soulboard/programs/soulboard/services/campaign-service";
 import { ProviderService } from "@soulboard/programs/soulboard/services/provider-service";
@@ -38,7 +42,9 @@ export class SoulboardClient {
     return this.context.events;
   }
 
-  async onProgramLogs(handler: Parameters<SoulboardContext["events"]["subscribeToProgramLogs"]>[1]) {
+  async onProgramLogs(
+    handler: Parameters<SoulboardContext["events"]["subscribeToProgramLogs"]>[1]
+  ) {
     return this.context.events.subscribeToProgramLogs(this.programId, handler);
   }
 

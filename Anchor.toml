@@ -6,21 +6,19 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-SoulBoardOracle = "2TKyWdqvRxTB3zhzJ7fFsH9RWtcXk9hoBpGV29XSuvcD"
-soulboard = "AiQgeLV5m6kdQsU8A4wFh2zBpzd6D21seseR2SUgQDKB"
+SoulBoardOracle = "HbjHJmYYCSjfyiJWCRvaYWo1vKsgRurFDkrxNnNusVFX"
+soulboard = "915wZsHsUJ7Pdei1XUY8jtdfia7D8t4r9XkhGD3TvrDV"
 
+[programs.devnet]
+SoulBoardOracle = "HbjHJmYYCSjfyiJWCRvaYWo1vKsgRurFDkrxNnNusVFX"
+soulboard = "915wZsHsUJ7Pdei1XUY8jtdfia7D8t4r9XkhGD3TvrDV"
 
 [registry]
 url = "https://api.apr.dev"
 
-# [provider]
-# cluster = "devnet"
-# wallet = "~/.config/solana/id.json"
-
 [provider]
-cluster = "localnet"
-wallet = "~/.config/solana/id.json"
-
+cluster = "devnet"
+wallet = "~/.config/solana/phantom.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

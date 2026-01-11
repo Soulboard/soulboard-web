@@ -7,7 +7,7 @@ pub mod states;
 
 use context::*;
 use states::DeviceStatus;
-declare_id!("2TKyWdqvRxTB3zhzJ7fFsH9RWtcXk9hoBpGV29XSuvcD");
+declare_id!("HbjHJmYYCSjfyiJWCRvaYWo1vKsgRurFDkrxNnNusVFX");
 
 #[program]
 pub mod soul_board_oracle {

@@ -22,16 +22,18 @@ export interface OracleContext {
   executor: TransactionExecutor;
 }
 
-export const createOracleContext = (config: OracleContextConfig): OracleContext => {
+export const createOracleContext = (
+  config: OracleContextConfig
+): OracleContext => {
   const provider = resolveProvider(config.provider);
   const programId = config.programId ?? SOULBOARD_ORACLE_PROGRAM_ID;
-  
-  // Create program with IDL and provider
-  const program = new Program(
-    oracleIdl as SoulBoardOracle,
-    provider
-  );
-  
+
+  const idl = {
+    ...(oracleIdl as SoulBoardOracle),
+    address: programId.toBase58(),
+  };
+  const program = new Program(idl, provider) as any as Program<SoulBoardOracle>;
+
   const commitment =
     config.commitment ??
     provider.connection.commitment ??

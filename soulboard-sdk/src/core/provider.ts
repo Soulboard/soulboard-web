@@ -1,5 +1,10 @@
 import { AnchorProvider, Wallet } from "@coral-xyz/anchor";
-import { Commitment, ConfirmOptions, Connection, PublicKey } from "@solana/web3.js";
+import {
+  Commitment,
+  ConfirmOptions,
+  Connection,
+  PublicKey,
+} from "@solana/web3.js";
 import { MissingWalletError } from "@soulboard/core/errors";
 
 export interface ProviderConfig {

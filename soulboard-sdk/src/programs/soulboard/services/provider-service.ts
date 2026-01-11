@@ -1,14 +1,22 @@
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { fetchAccountOrThrow } from "@soulboard/core/accounts";
-import { AccountWithAddress, ProviderAccount } from "@soulboard/programs/soulboard/types";
+import {
+  AccountWithAddress,
+  ProviderAccount,
+} from "@soulboard/programs/soulboard/types";
 import { SoulboardContext } from "@soulboard/programs/soulboard/context";
 import { findProviderPda } from "@soulboard/programs/soulboard/pdas";
-import { decodeAccount, resolveAuthority } from "@soulboard/programs/soulboard/utils";
+import {
+  decodeAccount,
+  resolveAuthority,
+} from "@soulboard/programs/soulboard/utils";
 
 export class ProviderService {
   constructor(private readonly context: SoulboardContext) {}
 
-  async create(authority?: PublicKey): Promise<AccountWithAddress<ProviderAccount>> {
+  async create(
+    authority?: PublicKey
+  ): Promise<AccountWithAddress<ProviderAccount>> {
     const signer = resolveAuthority(this.context, authority);
     const [provider] = findProviderPda(signer, this.context.programId);
 
@@ -17,8 +25,6 @@ export class ProviderService {
         .createProvider()
         .accounts({
           authority: signer,
-          provider,
-          systemProgram: SystemProgram.programId,
         })
         .rpc()
     );
@@ -27,7 +33,9 @@ export class ProviderService {
     return { address: provider, data };
   }
 
-  async fetch(authority: PublicKey): Promise<AccountWithAddress<ProviderAccount>> {
+  async fetch(
+    authority: PublicKey
+  ): Promise<AccountWithAddress<ProviderAccount>> {
     const [provider] = findProviderPda(authority, this.context.programId);
     const data = await this.fetchByAddress(provider);
     return { address: provider, data };

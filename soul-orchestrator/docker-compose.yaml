@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  soul-orchestrator:
+    build: .
+    container_name: soul-orchestrator
+    restart: unless-stopped
+    environment:
+      - RPC_URL=${RPC_URL:-http://localhost:8899}
+      - WALLET_PATH=${WALLET_PATH:-/root/.config/solana/id.json}
+      - THINGSPEAK_URL=${THINGSPEAK_URL:-https://api.thingspeak.com/channels/2890626/feeds.json?results=11}
+      - LOCATION_PUBKEY=${LOCATION_PUBKEY}
+      - DEVICE_IDX=${DEVICE_IDX}
+      - DEVICE_AUTHORITY=${DEVICE_AUTHORITY}
+      - ALLOW_REGISTER=${ALLOW_REGISTER:-true}
+      - POLL_INTERVAL_MS=${POLL_INTERVAL_MS:-120000}
+      - STATE_PATH=${STATE_PATH:-/data/oracle-state.json}
+    volumes:
+      # Mount wallet file if it exists locally
+      - ${HOME}/.config/solana:/root/.config/solana:ro
+      - ./oracle-state.json:/data/oracle-state.json
+    network_mode: host
+    # Alternative network configuration if not using host mode:
+    # ports:
+    #   - "3000:3000"
+    # networks:
+    #   - soul-orchestrator-network
+
+# networks:
+#   soul-orchestrator-network:
+#     driver: bridge 

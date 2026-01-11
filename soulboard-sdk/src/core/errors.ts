@@ -30,7 +30,11 @@ export class InvalidArgumentError extends SdkError {
 }
 
 export class TransactionFailedError extends SdkError {
-  constructor(message: string, public readonly logs?: string[], cause?: unknown) {
+  constructor(
+    message: string,
+    public readonly logs?: string[],
+    cause?: unknown
+  ) {
     super(message, cause);
     this.name = "TransactionFailedError";
   }
@@ -56,7 +60,9 @@ export const mapToSdkError = (error: unknown, context?: string): SdkError => {
   }
 
   if (error instanceof Error) {
-    const message = context ? `${context} failed: ${error.message}` : error.message;
+    const message = context
+      ? `${context} failed: ${error.message}`
+      : error.message;
     return new SdkError(message, error);
   }
 

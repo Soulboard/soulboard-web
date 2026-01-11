@@ -1,4 +1,8 @@
-import { OracleContext, OracleContextConfig, createOracleContext } from "@soulboard/programs/oracle/context";
+import {
+  OracleContext,
+  OracleContextConfig,
+  createOracleContext,
+} from "@soulboard/programs/oracle/context";
 import { DeviceService } from "@soulboard/programs/oracle/services/device-service";
 
 export type OracleClientConfig = OracleContextConfig;
@@ -28,7 +32,9 @@ export class OracleClient {
     return this.context.events;
   }
 
-  async onProgramLogs(handler: Parameters<OracleContext["events"]["subscribeToProgramLogs"]>[1]) {
+  async onProgramLogs(
+    handler: Parameters<OracleContext["events"]["subscribeToProgramLogs"]>[1]
+  ) {
     return this.context.events.subscribeToProgramLogs(this.programId, handler);
   }
 

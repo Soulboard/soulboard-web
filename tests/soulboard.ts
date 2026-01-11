@@ -45,9 +45,16 @@ describe("soulboard", () => {
       program.programId
     )[0];
 
-  const deriveCampaignLocationPda = (campaign: PublicKey, location: PublicKey) =>
+  const deriveCampaignLocationPda = (
+    campaign: PublicKey,
+    location: PublicKey
+  ) =>
     PublicKey.findProgramAddressSync(
-      [Buffer.from("campaign_location"), campaign.toBuffer(), location.toBuffer()],
+      [
+        Buffer.from("campaign_location"),
+        campaign.toBuffer(),
+        location.toBuffer(),
+      ],
       program.programId
     )[0];
 
@@ -167,7 +174,12 @@ describe("soulboard", () => {
     const locationPda = deriveLocationPda(provider.publicKey, nextIdx);
 
     await program.methods
-      .registerLocation("Location A", "High traffic area", price, oracleAuthority)
+      .registerLocation(
+        "Location A",
+        "High traffic area",
+        price,
+        oracleAuthority
+      )
       .accounts({
         authority: provider.publicKey,
         provider: providerPda,
@@ -447,15 +459,18 @@ describe("soulboard", () => {
     const locationAfterSettlement = await program.account.location.fetch(
       locationPda
     );
-    const bookingAfterSettlement =
-      await program.account.campaignLocation.fetch(campaignLocationPda);
+    const bookingAfterSettlement = await program.account.campaignLocation.fetch(
+      campaignLocationPda
+    );
 
     const refund = price.sub(settlementAmount);
     expect(campaignAfterSettlement.reservedBudget.toNumber()).to.equal(0);
     expect(campaignAfterSettlement.availableBudget.toString()).to.equal(
       budget.sub(settlementAmount).toString()
     );
-    expect(locationAfterSettlement.locationStatus).to.have.property("available");
+    expect(locationAfterSettlement.locationStatus).to.have.property(
+      "available"
+    );
     expect(bookingAfterSettlement.status).to.have.property("settled");
     expect(bookingAfterSettlement.settledAmount.toString()).to.equal(
       settlementAmount.toString()
@@ -887,9 +902,12 @@ describe("soulboard", () => {
     const campaignAfterCancel = await program.account.campaign.fetch(
       campaignPda
     );
-    const locationAfterCancel = await program.account.location.fetch(locationPda);
-    const bookingAfterCancel =
-      await program.account.campaignLocation.fetch(campaignLocationPda);
+    const locationAfterCancel = await program.account.location.fetch(
+      locationPda
+    );
+    const bookingAfterCancel = await program.account.campaignLocation.fetch(
+      campaignLocationPda
+    );
 
     expect(campaignAfterCancel.availableBudget.toString()).to.equal(
       budget.toString()

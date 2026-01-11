@@ -22,16 +22,18 @@ export interface SoulboardContext {
   executor: TransactionExecutor;
 }
 
-export const createSoulboardContext = (config: SoulboardContextConfig): SoulboardContext => {
+export const createSoulboardContext = (
+  config: SoulboardContextConfig
+): SoulboardContext => {
   const provider = resolveProvider(config.provider);
   const programId = config.programId ?? SOULBOARD_PROGRAM_ID;
-  
-  // Create program with IDL and provider
-  const program = new Program(
-    soulboardIdl as Soulboard,
-    provider
-  );
-  
+
+  const idl = {
+    ...(soulboardIdl as Soulboard),
+    address: programId.toBase58(),
+  };
+  const program = new Program(idl, provider) as any as Program<Soulboard>;
+
   const commitment =
     config.commitment ??
     provider.connection.commitment ??

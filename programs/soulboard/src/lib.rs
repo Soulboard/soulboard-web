@@ -8,7 +8,7 @@ pub mod utils;
 
 use context::*;
 use states::LocationStatus;
-declare_id!("AiQgeLV5m6kdQsU8A4wFh2zBpzd6D21seseR2SUgQDKB");
+declare_id!("915wZsHsUJ7Pdei1XUY8jtdfia7D8t4r9XkhGD3TvrDV");
 
 #[program]
 pub mod soulboard {
