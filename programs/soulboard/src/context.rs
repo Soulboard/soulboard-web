@@ -218,18 +218,23 @@ pub struct RemoveCampaignLocation<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(campaign_idx: u64, location_idx: u64)]
+#[instruction(campaign_idx: u64, location_idx: u64, campaign_authority: Pubkey, provider_authority: Pubkey)]
 pub struct SettleCampaignLocation<'info> {
-    #[account(mut, seeds = [CAMPAIGN_KEY , campaign.authority.as_ref() , &campaign_idx.to_le_bytes()], bump)]
+    #[account(mut, seeds = [CAMPAIGN_KEY , campaign_authority.as_ref() , &campaign_idx.to_le_bytes()], bump)]
     pub campaign: Account<'info, Campaign>,
 
-    #[account(seeds = [PROVIDER_KEY, provider.authority.as_ref()], bump)]
+    #[account(seeds = [PROVIDER_KEY, provider_authority.as_ref()], bump)]
     pub provider: Account<'info, Provider>,
 
-    #[account(mut, seeds = [LOCATION_KEY , provider.authority.as_ref() , &location_idx.to_le_bytes()], bump)]
+    #[account(mut, seeds = [LOCATION_KEY , provider_authority.as_ref() , &location_idx.to_le_bytes()], bump)]
     pub location: Account<'info, Location>,
 
-    #[account(mut, seeds = [CAMPAIGN_LOCATION_KEY, campaign.key().as_ref(), location.key().as_ref()], bump)]
+    #[account(
+        mut,
+        seeds = [CAMPAIGN_LOCATION_KEY, campaign.key().as_ref(), location.key().as_ref()],
+        bump,
+        close = campaign
+    )]
     pub campaign_location: Account<'info, CampaignLocation>,
 
     /// CHECK: receives settlement funds; validated in instruction
