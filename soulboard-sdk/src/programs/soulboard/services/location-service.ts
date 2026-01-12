@@ -259,13 +259,12 @@ export class LocationService {
     locationAuthority?: PublicKey
   ): Promise<AccountWithAddress<CampaignLocationAccount>> {
     const oracleSigner = resolveAuthority(this.context, oracleAuthority);
+    const recipient = locationAuthority ?? providerAuthority;
+
+    // Derive PDAs for reference
     const [campaign] = findCampaignPda(
       campaignAuthority,
       campaignIdx,
-      this.context.programId
-    );
-    const [provider] = findProviderPda(
-      providerAuthority,
       this.context.programId
     );
     const [location] = findLocationPda(
@@ -278,18 +277,19 @@ export class LocationService {
       location,
       this.context.programId
     );
-    const recipient = locationAuthority ?? providerAuthority;
 
     await this.context.executor.run("settleCampaignLocation", () =>
       this.context.program.methods
         .settleCampaignLocation(
           toBN(campaignIdx),
           toBN(locationIdx),
+          campaignAuthority,
+          providerAuthority,
           toBN(settlementAmount)
         )
         .accounts({
-          oracleAuthority: oracleSigner,
           locationAuthority: recipient,
+          oracleAuthority: oracleSigner,
         })
         .rpc()
     );

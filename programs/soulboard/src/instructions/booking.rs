@@ -142,6 +142,8 @@ pub fn settle_campaign_location(
     ctx: Context<SettleCampaignLocation>,
     _campaign_idx: u64,
     _location_idx: u64,
+    _campaign_authority: Pubkey,
+    _provider_authority: Pubkey,
     settlement_amount: u64,
 ) -> Result<()> {
     let campaign = &mut ctx.accounts.campaign;

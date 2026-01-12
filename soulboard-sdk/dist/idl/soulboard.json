@@ -898,9 +898,8 @@
                                 ]
                             },
                             {
-                                "kind": "account",
-                                "path": "campaign.authority",
-                                "account": "Campaign"
+                                "kind": "arg",
+                                "path": "campaign_authority"
                             },
                             {
                                 "kind": "arg",
@@ -927,9 +926,8 @@
                                 ]
                             },
                             {
-                                "kind": "account",
-                                "path": "provider.authority",
-                                "account": "Provider"
+                                "kind": "arg",
+                                "path": "provider_authority"
                             }
                         ]
                     }
@@ -953,9 +951,8 @@
                                 ]
                             },
                             {
-                                "kind": "account",
-                                "path": "provider.authority",
-                                "account": "Provider"
+                                "kind": "arg",
+                                "path": "provider_authority"
                             },
                             {
                                 "kind": "arg",
@@ -1019,6 +1016,14 @@
                 {
                     "name": "location_idx",
                     "type": "u64"
+                },
+                {
+                    "name": "campaign_authority",
+                    "type": "pubkey"
+                },
+                {
+                    "name": "provider_authority",
+                    "type": "pubkey"
                 },
                 {
                     "name": "settlement_amount",

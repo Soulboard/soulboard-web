@@ -904,9 +904,8 @@ export type Soulboard = {
                                 ];
                             },
                             {
-                                "kind": "account";
-                                "path": "campaign.authority";
-                                "account": "campaign";
+                                "kind": "arg";
+                                "path": "campaignAuthority";
                             },
                             {
                                 "kind": "arg";
@@ -933,9 +932,8 @@ export type Soulboard = {
                                 ];
                             },
                             {
-                                "kind": "account";
-                                "path": "provider.authority";
-                                "account": "provider";
+                                "kind": "arg";
+                                "path": "providerAuthority";
                             }
                         ];
                     };
@@ -959,9 +957,8 @@ export type Soulboard = {
                                 ];
                             },
                             {
-                                "kind": "account";
-                                "path": "provider.authority";
-                                "account": "provider";
+                                "kind": "arg";
+                                "path": "providerAuthority";
                             },
                             {
                                 "kind": "arg";
@@ -1025,6 +1022,14 @@ export type Soulboard = {
                 {
                     "name": "locationIdx";
                     "type": "u64";
+                },
+                {
+                    "name": "campaignAuthority";
+                    "type": "pubkey";
+                },
+                {
+                    "name": "providerAuthority";
+                    "type": "pubkey";
                 },
                 {
                     "name": "settlementAmount";

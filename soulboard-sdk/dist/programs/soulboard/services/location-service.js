@@ -114,16 +114,16 @@ class LocationService {
     }
     async settleCampaignLocation(campaignIdx, locationIdx, settlementAmount, providerAuthority, campaignAuthority, oracleAuthority, locationAuthority) {
         const oracleSigner = (0, utils_1.resolveAuthority)(this.context, oracleAuthority);
+        const recipient = locationAuthority ?? providerAuthority;
+        // Derive PDAs for reference
         const [campaign] = (0, pdas_1.findCampaignPda)(campaignAuthority, campaignIdx, this.context.programId);
-        const [provider] = (0, pdas_1.findProviderPda)(providerAuthority, this.context.programId);
         const [location] = (0, pdas_1.findLocationPda)(providerAuthority, locationIdx, this.context.programId);
         const [campaignLocation] = (0, pdas_1.findCampaignLocationPda)(campaign, location, this.context.programId);
-        const recipient = locationAuthority ?? providerAuthority;
         await this.context.executor.run("settleCampaignLocation", () => this.context.program.methods
-            .settleCampaignLocation((0, utils_1.toBN)(campaignIdx), (0, utils_1.toBN)(locationIdx), (0, utils_1.toBN)(settlementAmount))
+            .settleCampaignLocation((0, utils_1.toBN)(campaignIdx), (0, utils_1.toBN)(locationIdx), campaignAuthority, providerAuthority, (0, utils_1.toBN)(settlementAmount))
             .accounts({
-            oracleAuthority: oracleSigner,
             locationAuthority: recipient,
+            oracleAuthority: oracleSigner,
         })
             .rpc());
         const data = await this.fetchCampaignLocationByAddress(campaignLocation);

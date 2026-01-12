@@ -136,12 +136,16 @@ pub mod soulboard {
         ctx: Context<SettleCampaignLocation>,
         campaign_idx: u64,
         location_idx: u64,
+        campaign_authority: Pubkey,
+        provider_authority: Pubkey,
         settlement_amount: u64,
     ) -> Result<()> {
         crate::instructions::booking::settle_campaign_location(
             ctx,
             campaign_idx,
             location_idx,
+            campaign_authority,
+            provider_authority,
             settlement_amount,
         )
     }
