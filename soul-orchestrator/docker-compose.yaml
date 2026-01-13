@@ -22,6 +22,38 @@ services:
       - ${HOME}/.config/solana:/root/.config/solana:ro
       - ./oracle-state.json:/data/oracle-state.json
     network_mode: host
+
+  soul-orchestrator-device0:
+    build:
+      context: ..
+      dockerfile: soul-orchestrator/Dockerfile
+    container_name: soul-orchestrator-device0
+    restart: unless-stopped
+    env_file:
+      - .env.device0
+    environment:
+      - STATE_PATH=/data/oracle-state-device0.json
+    volumes:
+      # Mount wallet file if it exists locally
+      - ${HOME}/.config/solana:/root/.config/solana:ro
+      - ./oracle-state-device0.json:/data/oracle-state-device0.json
+    network_mode: host
+
+  soul-orchestrator-device1:
+    build:
+      context: ..
+      dockerfile: soul-orchestrator/Dockerfile
+    container_name: soul-orchestrator-device1
+    restart: unless-stopped
+    env_file:
+      - .env.device1
+    environment:
+      - STATE_PATH=/data/oracle-state-device1.json
+    volumes:
+      # Mount wallet file if it exists locally
+      - ${HOME}/.config/solana:/root/.config/solana:ro
+      - ./oracle-state-device1.json:/data/oracle-state-device1.json
+    network_mode: host
     # Alternative network configuration if not using host mode:
     # ports:
     #   - "3000:3000"
