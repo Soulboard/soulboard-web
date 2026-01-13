@@ -6,6 +6,7 @@ const accounts_1 = require("@soulboard/core/accounts");
 const fees_1 = require("@soulboard/programs/soulboard/fees");
 const pdas_1 = require("@soulboard/programs/soulboard/pdas");
 const utils_1 = require("@soulboard/programs/soulboard/utils");
+const pdas_2 = require("@soulboard/programs/oracle/pdas");
 class LocationService {
     constructor(context) {
         this.context = context;
@@ -72,6 +73,41 @@ class LocationService {
         const data = await this.fetchByAddress(location);
         return { address: location, data };
     }
+    async createLocationSchedule(locationIdx, maxSlots, authority) {
+        const signer = (0, utils_1.resolveAuthority)(this.context, authority);
+        const [provider] = (0, pdas_1.findProviderPda)(signer, this.context.programId);
+        const [location] = (0, pdas_1.findLocationPda)(signer, locationIdx, this.context.programId);
+        const [schedule] = (0, pdas_1.findLocationSchedulePda)(location, this.context.programId);
+        await this.context.executor.run("createLocationSchedule", () => this.context.program.methods
+            .createLocationSchedule((0, utils_1.toBN)(locationIdx), maxSlots)
+            .accounts({
+            authority: signer,
+            provider,
+            location,
+            schedule,
+            systemProgram: web3_js_1.SystemProgram.programId,
+        })
+            .rpc());
+        const data = await this.fetchLocationScheduleByAddress(schedule);
+        return { address: schedule, data };
+    }
+    async addLocationSlot(locationIdx, startTs, endTs, priceLamports, authority) {
+        const signer = (0, utils_1.resolveAuthority)(this.context, authority);
+        const [provider] = (0, pdas_1.findProviderPda)(signer, this.context.programId);
+        const [location] = (0, pdas_1.findLocationPda)(signer, locationIdx, this.context.programId);
+        const [schedule] = (0, pdas_1.findLocationSchedulePda)(location, this.context.programId);
+        await this.context.executor.run("addLocationSlot", () => this.context.program.methods
+            .addLocationSlot((0, utils_1.toBN)(locationIdx), (0, utils_1.toBN)(startTs), (0, utils_1.toBN)(endTs), (0, utils_1.toBN)(priceLamports))
+            .accounts({
+            authority: signer,
+            provider,
+            location,
+            schedule,
+        })
+            .rpc());
+        const data = await this.fetchLocationScheduleByAddress(schedule);
+        return { address: schedule, data };
+    }
     async addCampaignLocation(campaignIdx, locationIdx, providerAuthority, campaignAuthority) {
         const signer = (0, utils_1.resolveAuthority)(this.context, campaignAuthority);
         const [campaign] = (0, pdas_1.findCampaignPda)(signer, campaignIdx, this.context.programId);
@@ -83,10 +119,87 @@ class LocationService {
             .accounts({
             authority: signer,
             provider,
+            campaign,
+            location,
+            campaignLocation,
+            systemProgram: web3_js_1.SystemProgram.programId,
         })
             .rpc());
         const data = await this.fetchCampaignLocationByAddress(campaignLocation);
         return { address: campaignLocation, data };
+    }
+    async bookLocationRange(campaignIdx, locationIdx, rangeStartTs, rangeEndTs, deviceIdx, pricingModel, providerAuthority, deviceAuthority, campaignAuthority) {
+        const signer = (0, utils_1.resolveAuthority)(this.context, campaignAuthority);
+        const [campaign] = (0, pdas_1.findCampaignPda)(signer, campaignIdx, this.context.programId);
+        const [provider] = (0, pdas_1.findProviderPda)(providerAuthority, this.context.programId);
+        const [location] = (0, pdas_1.findLocationPda)(providerAuthority, locationIdx, this.context.programId);
+        const [schedule] = (0, pdas_1.findLocationSchedulePda)(location, this.context.programId);
+        const [booking] = (0, pdas_1.findCampaignBookingPda)(campaign, location, rangeStartTs, rangeEndTs, this.context.programId);
+        const [oracleDevice] = (0, pdas_2.findDevicePda)(deviceAuthority, deviceIdx);
+        await this.context.executor.run("bookLocationRange", () => this.context.program.methods
+            .bookLocationRange((0, utils_1.toBN)(campaignIdx), (0, utils_1.toBN)(locationIdx), (0, utils_1.toBN)(rangeStartTs), (0, utils_1.toBN)(rangeEndTs), (0, utils_1.toBN)(deviceIdx), pricingModel)
+            .accountsPartial({
+            authority: signer,
+            campaign,
+            provider,
+            location,
+            schedule,
+            booking,
+            oracleDevice,
+            deviceAuthority,
+            systemProgram: web3_js_1.SystemProgram.programId,
+        })
+            .rpc());
+        const data = await this.fetchCampaignBookingByAddress(booking);
+        return { address: booking, data };
+    }
+    async cancelLocationBooking(campaignIdx, locationIdx, rangeStartTs, rangeEndTs, providerAuthority, campaignAuthority) {
+        const signer = (0, utils_1.resolveAuthority)(this.context, campaignAuthority);
+        const [campaign] = (0, pdas_1.findCampaignPda)(signer, campaignIdx, this.context.programId);
+        const [provider] = (0, pdas_1.findProviderPda)(providerAuthority, this.context.programId);
+        const [location] = (0, pdas_1.findLocationPda)(providerAuthority, locationIdx, this.context.programId);
+        const [schedule] = (0, pdas_1.findLocationSchedulePda)(location, this.context.programId);
+        const [booking] = (0, pdas_1.findCampaignBookingPda)(campaign, location, rangeStartTs, rangeEndTs, this.context.programId);
+        await this.context.executor.run("cancelLocationBooking", () => this.context.program.methods
+            .cancelLocationBooking((0, utils_1.toBN)(campaignIdx), (0, utils_1.toBN)(locationIdx), (0, utils_1.toBN)(rangeStartTs), (0, utils_1.toBN)(rangeEndTs))
+            .accounts({
+            authority: signer,
+            campaign,
+            provider,
+            location,
+            schedule,
+            booking,
+        })
+            .rpc());
+    }
+    async settleLocationBooking(campaignIdx, locationIdx, rangeStartTs, rangeEndTs, providerAuthority, campaignAuthority, oracleAuthority, locationAuthority) {
+        const oracleSigner = (0, utils_1.resolveAuthority)(this.context, oracleAuthority);
+        const recipient = locationAuthority ?? providerAuthority;
+        const [campaign] = (0, pdas_1.findCampaignPda)(campaignAuthority, campaignIdx, this.context.programId);
+        const [provider] = (0, pdas_1.findProviderPda)(providerAuthority, this.context.programId);
+        const [location] = (0, pdas_1.findLocationPda)(providerAuthority, locationIdx, this.context.programId);
+        const [schedule] = (0, pdas_1.findLocationSchedulePda)(location, this.context.programId);
+        const [booking] = (0, pdas_1.findCampaignBookingPda)(campaign, location, rangeStartTs, rangeEndTs, this.context.programId);
+        const [config] = (0, pdas_1.findSoulboardConfigPda)(this.context.programId);
+        const bookingData = await this.fetchCampaignBookingByAddress(booking);
+        const [oracleDevice] = (0, pdas_2.findDevicePda)(bookingData.deviceAuthority, bookingData.deviceIdx);
+        const configData = await (0, accounts_1.fetchAccountOrThrow)("fetchSoulboardConfig", config, () => this.context.program.account.soulboardConfig.fetch(config));
+        await this.context.executor.run("settleLocationBooking", () => this.context.program.methods
+            .settleLocationBooking((0, utils_1.toBN)(campaignIdx), (0, utils_1.toBN)(locationIdx), (0, utils_1.toBN)(rangeStartTs), (0, utils_1.toBN)(rangeEndTs), campaignAuthority, providerAuthority)
+            .accountsPartial({
+            campaign,
+            provider,
+            location,
+            schedule,
+            booking,
+            config,
+            oracleDevice,
+            deviceAuthority: bookingData.deviceAuthority,
+            locationAuthority: recipient,
+            treasury: configData.treasury,
+            oracleAuthority: oracleSigner,
+        })
+            .rpc());
     }
     async removeCampaignLocation(campaignIdx, locationIdx, providerAuthority, campaignAuthority) {
         const signer = (0, utils_1.resolveAuthority)(this.context, campaignAuthority);
@@ -109,16 +222,16 @@ class LocationService {
     }
     async settleCampaignLocation(campaignIdx, locationIdx, settlementAmount, providerAuthority, campaignAuthority, oracleAuthority, locationAuthority) {
         const oracleSigner = (0, utils_1.resolveAuthority)(this.context, oracleAuthority);
+        const recipient = locationAuthority ?? providerAuthority;
+        // Derive PDAs for reference
         const [campaign] = (0, pdas_1.findCampaignPda)(campaignAuthority, campaignIdx, this.context.programId);
-        const [provider] = (0, pdas_1.findProviderPda)(providerAuthority, this.context.programId);
         const [location] = (0, pdas_1.findLocationPda)(providerAuthority, locationIdx, this.context.programId);
         const [campaignLocation] = (0, pdas_1.findCampaignLocationPda)(campaign, location, this.context.programId);
-        const recipient = locationAuthority ?? providerAuthority;
         await this.context.executor.run("settleCampaignLocation", () => this.context.program.methods
-            .settleCampaignLocation((0, utils_1.toBN)(campaignIdx), (0, utils_1.toBN)(locationIdx), (0, utils_1.toBN)(settlementAmount))
+            .settleCampaignLocation((0, utils_1.toBN)(campaignIdx), (0, utils_1.toBN)(locationIdx), campaignAuthority, providerAuthority, (0, utils_1.toBN)(settlementAmount))
             .accounts({
-            oracleAuthority: oracleSigner,
             locationAuthority: recipient,
+            oracleAuthority: oracleSigner,
         })
             .rpc());
         const data = await this.fetchCampaignLocationByAddress(campaignLocation);
@@ -161,6 +274,25 @@ class LocationService {
     }
     async fetchCampaignLocationByAddress(address) {
         return (0, accounts_1.fetchAccountOrThrow)("fetchCampaignLocation", address, () => this.context.program.account.campaignLocation.fetch(address));
+    }
+    async fetchLocationSchedule(providerAuthority, locationIdx) {
+        const [location] = (0, pdas_1.findLocationPda)(providerAuthority, locationIdx, this.context.programId);
+        const [schedule] = (0, pdas_1.findLocationSchedulePda)(location, this.context.programId);
+        const data = await this.fetchLocationScheduleByAddress(schedule);
+        return { address: schedule, data };
+    }
+    async fetchLocationScheduleByAddress(address) {
+        return (0, accounts_1.fetchAccountOrThrow)("fetchLocationSchedule", address, () => this.context.program.account.locationSchedule.fetch(address));
+    }
+    async fetchCampaignBooking(campaignAuthority, campaignIdx, providerAuthority, locationIdx, rangeStartTs, rangeEndTs) {
+        const [campaign] = (0, pdas_1.findCampaignPda)(campaignAuthority, campaignIdx, this.context.programId);
+        const [location] = (0, pdas_1.findLocationPda)(providerAuthority, locationIdx, this.context.programId);
+        const [booking] = (0, pdas_1.findCampaignBookingPda)(campaign, location, rangeStartTs, rangeEndTs, this.context.programId);
+        const data = await this.fetchCampaignBookingByAddress(booking);
+        return { address: booking, data };
+    }
+    async fetchCampaignBookingByAddress(address) {
+        return (0, accounts_1.fetchAccountOrThrow)("fetchCampaignBooking", address, () => this.context.program.account.campaignBooking.fetch(address));
     }
     async list() {
         try {

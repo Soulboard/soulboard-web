@@ -7,7 +7,7 @@ pub mod states;
 pub mod utils;
 
 use context::*;
-use states::LocationStatus;
+use states::{LocationStatus, PricingModel};
 declare_id!("915wZsHsUJ7Pdei1XUY8jtdfia7D8t4r9XkhGD3TvrDV");
 
 #[program]
@@ -16,6 +16,10 @@ pub mod soulboard {
 
     pub fn create_advertiser(ctx: Context<CreateAdvertiser>) -> Result<()> {
         crate::instructions::advertiser::create_advertiser(ctx)
+    }
+
+    pub fn initialize_config(ctx: Context<InitializeConfig>, treasury: Pubkey) -> Result<()> {
+        crate::instructions::slot::initialize_config(ctx, treasury)
     }
 
     pub fn create_provider(ctx: Context<CreateProvider>) -> Result<()> {
@@ -83,6 +87,80 @@ pub mod soulboard {
             location_description,
             price,
             oracle_authority,
+        )
+    }
+
+    pub fn create_location_schedule(
+        ctx: Context<CreateLocationSchedule>,
+        location_idx: u64,
+        max_slots: u32,
+    ) -> Result<()> {
+        crate::instructions::slot::create_location_schedule(ctx, location_idx, max_slots)
+    }
+
+    pub fn add_location_slot(
+        ctx: Context<AddLocationSlot>,
+        location_idx: u64,
+        start_ts: i64,
+        end_ts: i64,
+        price: u64,
+    ) -> Result<()> {
+        crate::instructions::slot::add_location_slot(ctx, location_idx, start_ts, end_ts, price)
+    }
+
+    pub fn book_location_range(
+        ctx: Context<BookLocationRange>,
+        campaign_idx: u64,
+        location_idx: u64,
+        range_start_ts: i64,
+        range_end_ts: i64,
+        device_idx: u64,
+        pricing_model: PricingModel,
+    ) -> Result<()> {
+        crate::instructions::slot::book_location_range(
+            ctx,
+            campaign_idx,
+            location_idx,
+            range_start_ts,
+            range_end_ts,
+            device_idx,
+            pricing_model,
+        )
+    }
+
+    pub fn cancel_location_booking(
+        ctx: Context<CancelLocationBooking>,
+        campaign_idx: u64,
+        location_idx: u64,
+        range_start_ts: i64,
+        range_end_ts: i64,
+    ) -> Result<()> {
+        crate::instructions::slot::cancel_location_booking(
+            ctx,
+            campaign_idx,
+            location_idx,
+            range_start_ts,
+            range_end_ts,
+        )
+    }
+
+    pub fn settle_location_booking(
+        ctx: Context<SettleLocationBooking>,
+        campaign_idx: u64,
+        location_idx: u64,
+        range_start_ts: i64,
+        range_end_ts: i64,
+        campaign_authority: Pubkey,
+        provider_authority: Pubkey,
+    ) -> Result<()> {
+        crate::instructions::slot::settle_location_booking(
+            ctx,
+            campaign_idx,
+            location_idx,
+            range_start_ts,
+            range_end_ts,
+            campaign_authority,
+            provider_authority,
         )
     }
 

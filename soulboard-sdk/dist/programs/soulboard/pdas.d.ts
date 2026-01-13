@@ -6,4 +6,7 @@ export declare const findCampaignPda: (authority: PublicKey, campaignIdx: BN | n
 export declare const findProviderPda: (authority: PublicKey, programId?: PublicKey) => [PublicKey, number];
 export declare const findLocationPda: (authority: PublicKey, locationIdx: BN | number | bigint, programId?: PublicKey) => [PublicKey, number];
 export declare const findCampaignLocationPda: (campaign: PublicKey, location: PublicKey, programId?: PublicKey) => [PublicKey, number];
+export declare const findLocationSchedulePda: (location: PublicKey, programId?: PublicKey) => [PublicKey, number];
+export declare const findCampaignBookingPda: (campaign: PublicKey, location: PublicKey, rangeStartTs: BN | number | bigint, rangeEndTs: BN | number | bigint, programId?: PublicKey) => [PublicKey, number];
+export declare const findSoulboardConfigPda: (programId?: PublicKey) => [PublicKey, number];
 //# sourceMappingURL=pdas.d.ts.map

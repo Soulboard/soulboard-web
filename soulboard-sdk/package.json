@@ -1,6 +1,6 @@
 {
   "name": "soulboard-sdk",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Soulboard SDK for Solana",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

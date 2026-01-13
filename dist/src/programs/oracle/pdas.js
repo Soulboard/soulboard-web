@@ -7,7 +7,7 @@ exports.findDevicePda = exports.findRegistryPda = exports.SOULBOARD_ORACLE_PROGR
 const web3_js_1 = require("@solana/web3.js");
 const bn_js_1 = __importDefault(require("bn.js"));
 const errors_1 = require("@soulboard/core/errors");
-exports.SOULBOARD_ORACLE_PROGRAM_ID = new web3_js_1.PublicKey("2TKyWdqvRxTB3zhzJ7fFsH9RWtcXk9hoBpGV29XSuvcD");
+exports.SOULBOARD_ORACLE_PROGRAM_ID = new web3_js_1.PublicKey("HbjHJmYYCSjfyiJWCRvaYWo1vKsgRurFDkrxNnNusVFX");
 const DEVICE_REGISTRY_SEED = Buffer.from("device_registry");
 const DEVICE_SEED = Buffer.from("device");
 const toU64Buffer = (value) => {

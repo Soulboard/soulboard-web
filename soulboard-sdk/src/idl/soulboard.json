@@ -233,6 +233,563 @@
       ]
     },
     {
+      "name": "add_location_slot",
+      "discriminator": [
+        152,
+        207,
+        169,
+        246,
+        114,
+        240,
+        21,
+        43
+      ],
+      "accounts": [
+        {
+          "name": "provider",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "location",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  99,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "location_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "schedule",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  99,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  115,
+                  99,
+                  104,
+                  101,
+                  100,
+                  117,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "location"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "provider"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "location_idx",
+          "type": "u64"
+        },
+        {
+          "name": "start_ts",
+          "type": "i64"
+        },
+        {
+          "name": "end_ts",
+          "type": "i64"
+        },
+        {
+          "name": "price",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "book_location_range",
+      "discriminator": [
+        97,
+        124,
+        5,
+        92,
+        243,
+        92,
+        78,
+        178
+      ],
+      "accounts": [
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "provider",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "provider.authority",
+                "account": "Provider"
+              }
+            ]
+          }
+        },
+        {
+          "name": "location",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  99,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "provider.authority",
+                "account": "Provider"
+              },
+              {
+                "kind": "arg",
+                "path": "location_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "schedule",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  99,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  115,
+                  99,
+                  104,
+                  101,
+                  100,
+                  117,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "location"
+              }
+            ]
+          }
+        },
+        {
+          "name": "booking",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110,
+                  95,
+                  98,
+                  111,
+                  111,
+                  107,
+                  105,
+                  110,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              },
+              {
+                "kind": "account",
+                "path": "location"
+              },
+              {
+                "kind": "arg",
+                "path": "range_start_ts"
+              },
+              {
+                "kind": "arg",
+                "path": "range_end_ts"
+              }
+            ]
+          }
+        },
+        {
+          "name": "oracle_device"
+        },
+        {
+          "name": "device_authority"
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "campaign"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "campaign_idx",
+          "type": "u64"
+        },
+        {
+          "name": "location_idx",
+          "type": "u64"
+        },
+        {
+          "name": "range_start_ts",
+          "type": "i64"
+        },
+        {
+          "name": "range_end_ts",
+          "type": "i64"
+        },
+        {
+          "name": "device_idx",
+          "type": "u64"
+        },
+        {
+          "name": "pricing_model",
+          "type": {
+            "defined": {
+              "name": "PricingModel"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "cancel_location_booking",
+      "discriminator": [
+        215,
+        200,
+        17,
+        35,
+        30,
+        63,
+        130,
+        21
+      ],
+      "accounts": [
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "provider",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "provider.authority",
+                "account": "Provider"
+              }
+            ]
+          }
+        },
+        {
+          "name": "location",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  99,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "provider.authority",
+                "account": "Provider"
+              },
+              {
+                "kind": "arg",
+                "path": "location_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "schedule",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  99,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  115,
+                  99,
+                  104,
+                  101,
+                  100,
+                  117,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "location"
+              }
+            ]
+          }
+        },
+        {
+          "name": "booking",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110,
+                  95,
+                  98,
+                  111,
+                  111,
+                  107,
+                  105,
+                  110,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              },
+              {
+                "kind": "account",
+                "path": "location"
+              },
+              {
+                "kind": "arg",
+                "path": "range_start_ts"
+              },
+              {
+                "kind": "arg",
+                "path": "range_end_ts"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "campaign"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "campaign_idx",
+          "type": "u64"
+        },
+        {
+          "name": "location_idx",
+          "type": "u64"
+        },
+        {
+          "name": "range_start_ts",
+          "type": "i64"
+        },
+        {
+          "name": "range_end_ts",
+          "type": "i64"
+        }
+      ]
+    },
+    {
       "name": "close_campaign",
       "discriminator": [
         65,
@@ -473,6 +1030,130 @@
       ]
     },
     {
+      "name": "create_location_schedule",
+      "discriminator": [
+        238,
+        232,
+        88,
+        169,
+        115,
+        51,
+        198,
+        4
+      ],
+      "accounts": [
+        {
+          "name": "provider",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "location",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  99,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "authority"
+              },
+              {
+                "kind": "arg",
+                "path": "location_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "schedule",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  99,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  115,
+                  99,
+                  104,
+                  101,
+                  100,
+                  117,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "location"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "provider"
+          ]
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "location_idx",
+          "type": "u64"
+        },
+        {
+          "name": "max_slots",
+          "type": "u32"
+        }
+      ]
+    },
+    {
       "name": "create_provider",
       "discriminator": [
         74,
@@ -521,6 +1202,65 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "initialize_config",
+      "discriminator": [
+        208,
+        127,
+        21,
+        1,
+        194,
+        190,
+        196,
+        70
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  117,
+                  108,
+                  98,
+                  111,
+                  97,
+                  114,
+                  100,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "treasury",
+          "type": "pubkey"
+        }
+      ]
     },
     {
       "name": "register_location",
@@ -1032,6 +1772,255 @@
       ]
     },
     {
+      "name": "settle_location_booking",
+      "discriminator": [
+        237,
+        63,
+        48,
+        237,
+        136,
+        119,
+        54,
+        165
+      ],
+      "accounts": [
+        {
+          "name": "campaign",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_authority"
+              },
+              {
+                "kind": "arg",
+                "path": "campaign_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "provider",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  114,
+                  111,
+                  118,
+                  105,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "provider_authority"
+              }
+            ]
+          }
+        },
+        {
+          "name": "location",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  99,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "provider_authority"
+              },
+              {
+                "kind": "arg",
+                "path": "location_idx"
+              }
+            ]
+          }
+        },
+        {
+          "name": "schedule",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  111,
+                  99,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  115,
+                  99,
+                  104,
+                  101,
+                  100,
+                  117,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "location"
+              }
+            ]
+          }
+        },
+        {
+          "name": "booking",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  97,
+                  109,
+                  112,
+                  97,
+                  105,
+                  103,
+                  110,
+                  95,
+                  98,
+                  111,
+                  111,
+                  107,
+                  105,
+                  110,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "campaign"
+              },
+              {
+                "kind": "account",
+                "path": "location"
+              },
+              {
+                "kind": "arg",
+                "path": "range_start_ts"
+              },
+              {
+                "kind": "arg",
+                "path": "range_end_ts"
+              }
+            ]
+          }
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  111,
+                  117,
+                  108,
+                  98,
+                  111,
+                  97,
+                  114,
+                  100,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "oracle_device"
+        },
+        {
+          "name": "device_authority"
+        },
+        {
+          "name": "location_authority",
+          "writable": true
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
+          "name": "oracle_authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "campaign_idx",
+          "type": "u64"
+        },
+        {
+          "name": "location_idx",
+          "type": "u64"
+        },
+        {
+          "name": "range_start_ts",
+          "type": "i64"
+        },
+        {
+          "name": "range_end_ts",
+          "type": "i64"
+        },
+        {
+          "name": "campaign_authority",
+          "type": "pubkey"
+        },
+        {
+          "name": "provider_authority",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
       "name": "update_campaign",
       "discriminator": [
         235,
@@ -1375,6 +2364,19 @@
       ]
     },
     {
+      "name": "CampaignBooking",
+      "discriminator": [
+        123,
+        35,
+        142,
+        240,
+        224,
+        160,
+        21,
+        136
+      ]
+    },
+    {
       "name": "CampaignLocation",
       "discriminator": [
         140,
@@ -1401,6 +2403,19 @@
       ]
     },
     {
+      "name": "LocationSchedule",
+      "discriminator": [
+        2,
+        61,
+        136,
+        21,
+        217,
+        191,
+        136,
+        245
+      ]
+    },
+    {
       "name": "Provider",
       "discriminator": [
         164,
@@ -1411,6 +2426,19 @@
         216,
         80,
         195
+      ]
+    },
+    {
+      "name": "SoulboardConfig",
+      "discriminator": [
+        42,
+        100,
+        60,
+        171,
+        110,
+        84,
+        31,
+        70
       ]
     }
   ],
@@ -1439,6 +2467,45 @@
         3,
         32,
         122
+      ]
+    },
+    {
+      "name": "CampaignBookingCancelled",
+      "discriminator": [
+        73,
+        78,
+        112,
+        142,
+        142,
+        226,
+        209,
+        230
+      ]
+    },
+    {
+      "name": "CampaignBookingCreated",
+      "discriminator": [
+        149,
+        15,
+        230,
+        191,
+        125,
+        86,
+        148,
+        209
+      ]
+    },
+    {
+      "name": "CampaignBookingSettled",
+      "discriminator": [
+        110,
+        93,
+        193,
+        12,
+        45,
+        249,
+        68,
+        29
       ]
     },
     {
@@ -1533,6 +2600,32 @@
       ]
     },
     {
+      "name": "LocationScheduleCreated",
+      "discriminator": [
+        65,
+        246,
+        199,
+        100,
+        199,
+        250,
+        46,
+        15
+      ]
+    },
+    {
+      "name": "LocationSlotAdded",
+      "discriminator": [
+        1,
+        157,
+        169,
+        220,
+        176,
+        31,
+        39,
+        191
+      ]
+    },
+    {
       "name": "LocationUpdated",
       "discriminator": [
         161,
@@ -1543,6 +2636,19 @@
         198,
         31,
         67
+      ]
+    },
+    {
+      "name": "SoulboardConfigInitialized",
+      "discriminator": [
+        196,
+        254,
+        15,
+        131,
+        243,
+        166,
+        87,
+        33
       ]
     }
   ],
@@ -1599,46 +2705,86 @@
     },
     {
       "code": 6010,
+      "name": "InvalidTimeRange",
+      "msg": "Invalid time range"
+    },
+    {
+      "code": 6011,
+      "name": "SlotOverlap",
+      "msg": "Slot overlaps with existing slot"
+    },
+    {
+      "code": 6012,
+      "name": "SlotUnavailable",
+      "msg": "Slot is unavailable"
+    },
+    {
+      "code": 6013,
+      "name": "SlotNotFound",
+      "msg": "No slots found in range"
+    },
+    {
+      "code": 6014,
+      "name": "SlotInPast",
+      "msg": "Slot time is in the past"
+    },
+    {
+      "code": 6015,
+      "name": "ScheduleFull",
+      "msg": "Schedule has reached maximum slots"
+    },
+    {
+      "code": 6016,
+      "name": "InvalidOracleDevice",
+      "msg": "Invalid oracle device"
+    },
+    {
+      "code": 6017,
+      "name": "OracleDeviceInactive",
+      "msg": "Oracle device inactive"
+    },
+    {
+      "code": 6018,
       "name": "BookingAlreadyExists",
       "msg": "Booking already exists"
     },
     {
-      "code": 6011,
+      "code": 6019,
       "name": "BookingNotActive",
       "msg": "Booking not active"
     },
     {
-      "code": 6012,
+      "code": 6020,
       "name": "SettlementTooHigh",
       "msg": "Settlement amount exceeds escrow"
     },
     {
-      "code": 6013,
+      "code": 6021,
       "name": "InvalidParameters",
       "msg": "Invalid parameters"
     },
     {
-      "code": 6014,
+      "code": 6022,
       "name": "InvalidStringLength",
       "msg": "Invalid string length"
     },
     {
-      "code": 6015,
+      "code": 6023,
       "name": "InsufficientRent",
       "msg": "Insufficient rent-exempt balance"
     },
     {
-      "code": 6016,
+      "code": 6024,
       "name": "InsufficientEarnings",
       "msg": "Insufficient earnings"
     },
     {
-      "code": 6017,
+      "code": 6025,
       "name": "ArithmeticOverflow",
       "msg": "Arithmetic overflow"
     },
     {
-      "code": 6018,
+      "code": 6026,
       "name": "ArithmeticUnderflow",
       "msg": "Arithmetic underflow"
     }
@@ -1660,6 +2806,23 @@
           {
             "name": "campaign_count",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BookingStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Cancelled"
+          },
+          {
+            "name": "Settled"
           }
         ]
       }
@@ -1743,6 +2906,190 @@
           },
           {
             "name": "reserved_budget",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CampaignBooking",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "campaign",
+            "type": "pubkey"
+          },
+          {
+            "name": "location",
+            "type": "pubkey"
+          },
+          {
+            "name": "advertiser",
+            "type": "pubkey"
+          },
+          {
+            "name": "provider",
+            "type": "pubkey"
+          },
+          {
+            "name": "oracle_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "device",
+            "type": "pubkey"
+          },
+          {
+            "name": "device_authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "device_idx",
+            "type": "u64"
+          },
+          {
+            "name": "range_start_ts",
+            "type": "i64"
+          },
+          {
+            "name": "range_end_ts",
+            "type": "i64"
+          },
+          {
+            "name": "slot_count",
+            "type": "u32"
+          },
+          {
+            "name": "total_price",
+            "type": "u64"
+          },
+          {
+            "name": "pricing_model",
+            "type": {
+              "defined": {
+                "name": "PricingModel"
+              }
+            }
+          },
+          {
+            "name": "start_impressions",
+            "type": "u64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "BookingStatus"
+              }
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "updated_at",
+            "type": "i64"
+          },
+          {
+            "name": "impressions",
+            "type": "u64"
+          },
+          {
+            "name": "settled_amount",
+            "type": "u64"
+          },
+          {
+            "name": "fee_amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CampaignBookingCancelled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "booking",
+            "type": "pubkey"
+          },
+          {
+            "name": "campaign",
+            "type": "pubkey"
+          },
+          {
+            "name": "location",
+            "type": "pubkey"
+          },
+          {
+            "name": "refunded_amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CampaignBookingCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "booking",
+            "type": "pubkey"
+          },
+          {
+            "name": "campaign",
+            "type": "pubkey"
+          },
+          {
+            "name": "location",
+            "type": "pubkey"
+          },
+          {
+            "name": "slot_count",
+            "type": "u32"
+          },
+          {
+            "name": "total_price",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CampaignBookingSettled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "booking",
+            "type": "pubkey"
+          },
+          {
+            "name": "campaign",
+            "type": "pubkey"
+          },
+          {
+            "name": "location",
+            "type": "pubkey"
+          },
+          {
+            "name": "impressions",
+            "type": "u64"
+          },
+          {
+            "name": "settled_amount",
+            "type": "u64"
+          },
+          {
+            "name": "fee_amount",
+            "type": "u64"
+          },
+          {
+            "name": "refunded_amount",
             "type": "u64"
           }
         ]
@@ -2004,6 +3351,120 @@
       }
     },
     {
+      "name": "LocationSchedule",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "location",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "max_slots",
+            "type": "u32"
+          },
+          {
+            "name": "slot_count",
+            "type": "u32"
+          },
+          {
+            "name": "slots",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "LocationSlot"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "LocationScheduleCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "schedule",
+            "type": "pubkey"
+          },
+          {
+            "name": "location",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "max_slots",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LocationSlot",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "start_ts",
+            "type": "i64"
+          },
+          {
+            "name": "end_ts",
+            "type": "i64"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "SlotStatus"
+              }
+            }
+          },
+          {
+            "name": "booking",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "LocationSlotAdded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "schedule",
+            "type": "pubkey"
+          },
+          {
+            "name": "start_ts",
+            "type": "i64"
+          },
+          {
+            "name": "end_ts",
+            "type": "i64"
+          },
+          {
+            "name": "price",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
       "name": "LocationStatus",
       "type": {
         "kind": "enum",
@@ -2039,6 +3500,35 @@
       }
     },
     {
+      "name": "PricingModel",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "TimeSlot"
+          },
+          {
+            "name": "PerImpression",
+            "fields": [
+              {
+                "name": "price",
+                "type": "u64"
+              }
+            ]
+          },
+          {
+            "name": "Cpm",
+            "fields": [
+              {
+                "name": "price",
+                "type": "u64"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "name": "Provider",
       "type": {
         "kind": "struct",
@@ -2054,6 +3544,70 @@
           {
             "name": "location_count",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SlotStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Available"
+          },
+          {
+            "name": "Booked"
+          },
+          {
+            "name": "Cancelled"
+          },
+          {
+            "name": "Settled"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SoulboardConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_bps",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SoulboardConfigInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "config",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_bps",
+            "type": "u16"
           }
         ]
       }

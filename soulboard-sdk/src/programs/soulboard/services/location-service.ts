@@ -4,8 +4,12 @@ import { fetchAccountOrThrow } from "@soulboard/core/accounts";
 import {
   AccountWithAddress,
   CampaignLocationAccount,
+  CampaignBookingAccount,
   LocationAccount,
+  LocationScheduleAccount,
   LocationStatus,
+  OnchainPricingModel,
+  SoulboardConfigAccount,
 } from "@soulboard/programs/soulboard/types";
 import {
   calculateSettlementQuote,
@@ -17,15 +21,19 @@ import {
 import { SoulboardContext } from "@soulboard/programs/soulboard/context";
 import {
   findCampaignLocationPda,
+  findCampaignBookingPda,
   findCampaignPda,
   findLocationPda,
+  findLocationSchedulePda,
   findProviderPda,
+  findSoulboardConfigPda,
 } from "@soulboard/programs/soulboard/pdas";
 import {
   decodeAccount,
   resolveAuthority,
   toBN,
 } from "@soulboard/programs/soulboard/utils";
+import { findDevicePda } from "@soulboard/programs/oracle/pdas";
 
 export class LocationService {
   constructor(private readonly context: SoulboardContext) {}
@@ -160,6 +168,80 @@ export class LocationService {
     return { address: location, data };
   }
 
+  async createLocationSchedule(
+    locationIdx: BN | number | bigint,
+    maxSlots: number,
+    authority?: PublicKey
+  ): Promise<AccountWithAddress<LocationScheduleAccount>> {
+    const signer = resolveAuthority(this.context, authority);
+    const [provider] = findProviderPda(signer, this.context.programId);
+    const [location] = findLocationPda(
+      signer,
+      locationIdx,
+      this.context.programId
+    );
+    const [schedule] = findLocationSchedulePda(
+      location,
+      this.context.programId
+    );
+
+    await this.context.executor.run("createLocationSchedule", () =>
+      this.context.program.methods
+        .createLocationSchedule(toBN(locationIdx), maxSlots)
+        .accounts({
+          authority: signer,
+          provider,
+          location,
+          schedule,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc()
+    );
+
+    const data = await this.fetchLocationScheduleByAddress(schedule);
+    return { address: schedule, data };
+  }
+
+  async addLocationSlot(
+    locationIdx: BN | number | bigint,
+    startTs: BN | number | bigint,
+    endTs: BN | number | bigint,
+    priceLamports: BN | number | bigint,
+    authority?: PublicKey
+  ): Promise<AccountWithAddress<LocationScheduleAccount>> {
+    const signer = resolveAuthority(this.context, authority);
+    const [provider] = findProviderPda(signer, this.context.programId);
+    const [location] = findLocationPda(
+      signer,
+      locationIdx,
+      this.context.programId
+    );
+    const [schedule] = findLocationSchedulePda(
+      location,
+      this.context.programId
+    );
+
+    await this.context.executor.run("addLocationSlot", () =>
+      this.context.program.methods
+        .addLocationSlot(
+          toBN(locationIdx),
+          toBN(startTs),
+          toBN(endTs),
+          toBN(priceLamports)
+        )
+        .accounts({
+          authority: signer,
+          provider,
+          location,
+          schedule,
+        })
+        .rpc()
+    );
+
+    const data = await this.fetchLocationScheduleByAddress(schedule);
+    return { address: schedule, data };
+  }
+
   async addCampaignLocation(
     campaignIdx: BN | number | bigint,
     locationIdx: BN | number | bigint,
@@ -203,6 +285,204 @@ export class LocationService {
 
     const data = await this.fetchCampaignLocationByAddress(campaignLocation);
     return { address: campaignLocation, data };
+  }
+
+  async bookLocationRange(
+    campaignIdx: BN | number | bigint,
+    locationIdx: BN | number | bigint,
+    rangeStartTs: BN | number | bigint,
+    rangeEndTs: BN | number | bigint,
+    deviceIdx: BN | number | bigint,
+    pricingModel: OnchainPricingModel,
+    providerAuthority: PublicKey,
+    deviceAuthority: PublicKey,
+    campaignAuthority?: PublicKey
+  ): Promise<AccountWithAddress<CampaignBookingAccount>> {
+    const signer = resolveAuthority(this.context, campaignAuthority);
+    const [campaign] = findCampaignPda(
+      signer,
+      campaignIdx,
+      this.context.programId
+    );
+    const [provider] = findProviderPda(
+      providerAuthority,
+      this.context.programId
+    );
+    const [location] = findLocationPda(
+      providerAuthority,
+      locationIdx,
+      this.context.programId
+    );
+    const [schedule] = findLocationSchedulePda(
+      location,
+      this.context.programId
+    );
+    const [booking] = findCampaignBookingPda(
+      campaign,
+      location,
+      rangeStartTs,
+      rangeEndTs,
+      this.context.programId
+    );
+    const [oracleDevice] = findDevicePda(deviceAuthority, deviceIdx);
+
+    await this.context.executor.run("bookLocationRange", () =>
+      this.context.program.methods
+        .bookLocationRange(
+          toBN(campaignIdx),
+          toBN(locationIdx),
+          toBN(rangeStartTs),
+          toBN(rangeEndTs),
+          toBN(deviceIdx),
+          pricingModel
+        )
+        .accountsPartial({
+          authority: signer,
+          campaign,
+          provider,
+          location,
+          schedule,
+          booking,
+          oracleDevice,
+          deviceAuthority,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc()
+    );
+
+    const data = await this.fetchCampaignBookingByAddress(booking);
+    return { address: booking, data };
+  }
+
+  async cancelLocationBooking(
+    campaignIdx: BN | number | bigint,
+    locationIdx: BN | number | bigint,
+    rangeStartTs: BN | number | bigint,
+    rangeEndTs: BN | number | bigint,
+    providerAuthority: PublicKey,
+    campaignAuthority?: PublicKey
+  ): Promise<void> {
+    const signer = resolveAuthority(this.context, campaignAuthority);
+    const [campaign] = findCampaignPda(
+      signer,
+      campaignIdx,
+      this.context.programId
+    );
+    const [provider] = findProviderPda(
+      providerAuthority,
+      this.context.programId
+    );
+    const [location] = findLocationPda(
+      providerAuthority,
+      locationIdx,
+      this.context.programId
+    );
+    const [schedule] = findLocationSchedulePda(
+      location,
+      this.context.programId
+    );
+    const [booking] = findCampaignBookingPda(
+      campaign,
+      location,
+      rangeStartTs,
+      rangeEndTs,
+      this.context.programId
+    );
+
+    await this.context.executor.run("cancelLocationBooking", () =>
+      this.context.program.methods
+        .cancelLocationBooking(
+          toBN(campaignIdx),
+          toBN(locationIdx),
+          toBN(rangeStartTs),
+          toBN(rangeEndTs)
+        )
+        .accounts({
+          authority: signer,
+          campaign,
+          provider,
+          location,
+          schedule,
+          booking,
+        })
+        .rpc()
+    );
+  }
+
+  async settleLocationBooking(
+    campaignIdx: BN | number | bigint,
+    locationIdx: BN | number | bigint,
+    rangeStartTs: BN | number | bigint,
+    rangeEndTs: BN | number | bigint,
+    providerAuthority: PublicKey,
+    campaignAuthority: PublicKey,
+    oracleAuthority?: PublicKey,
+    locationAuthority?: PublicKey
+  ): Promise<void> {
+    const oracleSigner = resolveAuthority(this.context, oracleAuthority);
+    const recipient = locationAuthority ?? providerAuthority;
+    const [campaign] = findCampaignPda(
+      campaignAuthority,
+      campaignIdx,
+      this.context.programId
+    );
+    const [provider] = findProviderPda(
+      providerAuthority,
+      this.context.programId
+    );
+    const [location] = findLocationPda(
+      providerAuthority,
+      locationIdx,
+      this.context.programId
+    );
+    const [schedule] = findLocationSchedulePda(
+      location,
+      this.context.programId
+    );
+    const [booking] = findCampaignBookingPda(
+      campaign,
+      location,
+      rangeStartTs,
+      rangeEndTs,
+      this.context.programId
+    );
+    const [config] = findSoulboardConfigPda(this.context.programId);
+    const bookingData = await this.fetchCampaignBookingByAddress(booking);
+    const [oracleDevice] = findDevicePda(
+      bookingData.deviceAuthority,
+      bookingData.deviceIdx
+    );
+    const configData = await fetchAccountOrThrow<SoulboardConfigAccount>(
+      "fetchSoulboardConfig",
+      config,
+      () => this.context.program.account.soulboardConfig.fetch(config)
+    );
+
+    await this.context.executor.run("settleLocationBooking", () =>
+      this.context.program.methods
+        .settleLocationBooking(
+          toBN(campaignIdx),
+          toBN(locationIdx),
+          toBN(rangeStartTs),
+          toBN(rangeEndTs),
+          campaignAuthority,
+          providerAuthority
+        )
+        .accountsPartial({
+          campaign,
+          provider,
+          location,
+          schedule,
+          booking,
+          config,
+          oracleDevice,
+          deviceAuthority: bookingData.deviceAuthority,
+          locationAuthority: recipient,
+          treasury: configData.treasury,
+          oracleAuthority: oracleSigner,
+        })
+        .rpc()
+    );
   }
 
   async removeCampaignLocation(
@@ -427,6 +707,68 @@ export class LocationService {
   ): Promise<CampaignLocationAccount> {
     return fetchAccountOrThrow("fetchCampaignLocation", address, () =>
       this.context.program.account.campaignLocation.fetch(address)
+    );
+  }
+
+  async fetchLocationSchedule(
+    providerAuthority: PublicKey,
+    locationIdx: BN | number | bigint
+  ): Promise<AccountWithAddress<LocationScheduleAccount>> {
+    const [location] = findLocationPda(
+      providerAuthority,
+      locationIdx,
+      this.context.programId
+    );
+    const [schedule] = findLocationSchedulePda(
+      location,
+      this.context.programId
+    );
+    const data = await this.fetchLocationScheduleByAddress(schedule);
+    return { address: schedule, data };
+  }
+
+  async fetchLocationScheduleByAddress(
+    address: PublicKey
+  ): Promise<LocationScheduleAccount> {
+    return fetchAccountOrThrow("fetchLocationSchedule", address, () =>
+      this.context.program.account.locationSchedule.fetch(address)
+    );
+  }
+
+  async fetchCampaignBooking(
+    campaignAuthority: PublicKey,
+    campaignIdx: BN | number | bigint,
+    providerAuthority: PublicKey,
+    locationIdx: BN | number | bigint,
+    rangeStartTs: BN | number | bigint,
+    rangeEndTs: BN | number | bigint
+  ): Promise<AccountWithAddress<CampaignBookingAccount>> {
+    const [campaign] = findCampaignPda(
+      campaignAuthority,
+      campaignIdx,
+      this.context.programId
+    );
+    const [location] = findLocationPda(
+      providerAuthority,
+      locationIdx,
+      this.context.programId
+    );
+    const [booking] = findCampaignBookingPda(
+      campaign,
+      location,
+      rangeStartTs,
+      rangeEndTs,
+      this.context.programId
+    );
+    const data = await this.fetchCampaignBookingByAddress(booking);
+    return { address: booking, data };
+  }
+
+  async fetchCampaignBookingByAddress(
+    address: PublicKey
+  ): Promise<CampaignBookingAccount> {
+    return fetchAccountOrThrow("fetchCampaignBooking", address, () =>
+      this.context.program.account.campaignBooking.fetch(address)
     );
   }
 

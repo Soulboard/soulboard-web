@@ -19,6 +19,23 @@ pub struct CreateAdvertiser<'info> {
 }
 
 #[derive(Accounts)]
+pub struct InitializeConfig<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    #[account(
+        init,
+        payer = authority,
+        space = ANCHOR_DISCRIMINATOR_SIZE + SoulboardConfig::INIT_SPACE,
+        seeds = [SOULBOARD_CONFIG_KEY],
+        bump,
+    )]
+    pub config: Account<'info, SoulboardConfig>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
 pub struct CreateCampaign<'info> { 
     #[account(
         mut,
@@ -240,6 +257,182 @@ pub struct SettleCampaignLocation<'info> {
     /// CHECK: receives settlement funds; validated in instruction
     #[account(mut)]
     pub location_authority: AccountInfo<'info>,
+
+    pub oracle_authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+#[instruction(location_idx: u64, max_slots: u32)]
+pub struct CreateLocationSchedule<'info> {
+    #[account(seeds = [PROVIDER_KEY, authority.key().as_ref()], bump, has_one = authority)]
+    pub provider: Account<'info, Provider>,
+
+    #[account(mut, seeds = [LOCATION_KEY, authority.key().as_ref(), &location_idx.to_le_bytes()], bump)]
+    pub location: Account<'info, Location>,
+
+    #[account(
+        init,
+        payer = authority,
+        space = LocationSchedule::space(max_slots as usize),
+        seeds = [LOCATION_SCHEDULE_KEY, location.key().as_ref()],
+        bump,
+    )]
+    pub schedule: Account<'info, LocationSchedule>,
+
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(location_idx: u64)]
+pub struct AddLocationSlot<'info> {
+    #[account(seeds = [PROVIDER_KEY, authority.key().as_ref()], bump, has_one = authority)]
+    pub provider: Account<'info, Provider>,
+
+    #[account(mut, seeds = [LOCATION_KEY, authority.key().as_ref(), &location_idx.to_le_bytes()], bump)]
+    pub location: Account<'info, Location>,
+
+    #[account(mut, seeds = [LOCATION_SCHEDULE_KEY, location.key().as_ref()], bump)]
+    pub schedule: Account<'info, LocationSchedule>,
+
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+#[instruction(
+    campaign_idx: u64,
+    location_idx: u64,
+    range_start_ts: i64,
+    range_end_ts: i64,
+    device_idx: u64
+)]
+pub struct BookLocationRange<'info> {
+    #[account(mut, has_one = authority, seeds = [CAMPAIGN_KEY, authority.key().as_ref(), &campaign_idx.to_le_bytes()], bump)]
+    pub campaign: Account<'info, Campaign>,
+
+    #[account(seeds = [PROVIDER_KEY, provider.authority.as_ref()], bump)]
+    pub provider: Account<'info, Provider>,
+
+    #[account(mut, seeds = [LOCATION_KEY, provider.authority.as_ref(), &location_idx.to_le_bytes()], bump)]
+    pub location: Account<'info, Location>,
+
+    #[account(mut, seeds = [LOCATION_SCHEDULE_KEY, location.key().as_ref()], bump)]
+    pub schedule: Account<'info, LocationSchedule>,
+
+    #[account(
+        init,
+        payer = authority,
+        space = ANCHOR_DISCRIMINATOR_SIZE + CampaignBooking::INIT_SPACE,
+        seeds = [
+            CAMPAIGN_BOOKING_KEY,
+            campaign.key().as_ref(),
+            location.key().as_ref(),
+            &range_start_ts.to_le_bytes(),
+            &range_end_ts.to_le_bytes()
+        ],
+        bump,
+    )]
+    pub booking: Account<'info, CampaignBooking>,
+
+    /// CHECK: validated via PDA derivation and owner check
+    pub oracle_device: AccountInfo<'info>,
+
+    /// CHECK: used for PDA derivation and device authority validation
+    pub device_authority: AccountInfo<'info>,
+
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(campaign_idx: u64, location_idx: u64, range_start_ts: i64, range_end_ts: i64)]
+pub struct CancelLocationBooking<'info> {
+    #[account(mut, has_one = authority, seeds = [CAMPAIGN_KEY, authority.key().as_ref(), &campaign_idx.to_le_bytes()], bump)]
+    pub campaign: Account<'info, Campaign>,
+
+    #[account(seeds = [PROVIDER_KEY, provider.authority.as_ref()], bump)]
+    pub provider: Account<'info, Provider>,
+
+    #[account(mut, seeds = [LOCATION_KEY, provider.authority.as_ref(), &location_idx.to_le_bytes()], bump)]
+    pub location: Account<'info, Location>,
+
+    #[account(mut, seeds = [LOCATION_SCHEDULE_KEY, location.key().as_ref()], bump)]
+    pub schedule: Account<'info, LocationSchedule>,
+
+    #[account(
+        mut,
+        seeds = [
+            CAMPAIGN_BOOKING_KEY,
+            campaign.key().as_ref(),
+            location.key().as_ref(),
+            &range_start_ts.to_le_bytes(),
+            &range_end_ts.to_le_bytes()
+        ],
+        bump,
+        close = campaign
+    )]
+    pub booking: Account<'info, CampaignBooking>,
+
+    #[account(mut)]
+    pub authority: Signer<'info>,
+}
+
+#[derive(Accounts)]
+#[instruction(
+    campaign_idx: u64,
+    location_idx: u64,
+    range_start_ts: i64,
+    range_end_ts: i64,
+    campaign_authority: Pubkey,
+    provider_authority: Pubkey
+)]
+pub struct SettleLocationBooking<'info> {
+    #[account(mut, seeds = [CAMPAIGN_KEY, campaign_authority.as_ref(), &campaign_idx.to_le_bytes()], bump)]
+    pub campaign: Account<'info, Campaign>,
+
+    #[account(seeds = [PROVIDER_KEY, provider_authority.as_ref()], bump)]
+    pub provider: Account<'info, Provider>,
+
+    #[account(mut, seeds = [LOCATION_KEY, provider_authority.as_ref(), &location_idx.to_le_bytes()], bump)]
+    pub location: Account<'info, Location>,
+
+    #[account(mut, seeds = [LOCATION_SCHEDULE_KEY, location.key().as_ref()], bump)]
+    pub schedule: Account<'info, LocationSchedule>,
+
+    #[account(
+        mut,
+        seeds = [
+            CAMPAIGN_BOOKING_KEY,
+            campaign.key().as_ref(),
+            location.key().as_ref(),
+            &range_start_ts.to_le_bytes(),
+            &range_end_ts.to_le_bytes()
+        ],
+        bump,
+        close = campaign
+    )]
+    pub booking: Account<'info, CampaignBooking>,
+
+    #[account(mut, seeds = [SOULBOARD_CONFIG_KEY], bump)]
+    pub config: Account<'info, SoulboardConfig>,
+
+    /// CHECK: validated via PDA derivation and owner check
+    pub oracle_device: AccountInfo<'info>,
+
+    /// CHECK: used for PDA derivation and device authority validation
+    pub device_authority: AccountInfo<'info>,
+
+    /// CHECK: receives settlement funds; validated in instruction
+    #[account(mut)]
+    pub location_authority: AccountInfo<'info>,
+
+    /// CHECK: receives platform fee; validated in instruction
+    #[account(mut)]
+    pub treasury: AccountInfo<'info>,
 
     pub oracle_authority: Signer<'info>,
 }

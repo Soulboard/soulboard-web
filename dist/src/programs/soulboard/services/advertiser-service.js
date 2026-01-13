@@ -11,7 +11,7 @@ class AdvertiserService {
     async create(authority) {
         const signer = (0, utils_1.resolveAuthority)(this.context, authority);
         const [advertiser] = (0, pdas_1.findAdvertiserPda)(signer, this.context.programId);
-        await this.context.executor.run("createAdvertiser", () => this.context.program.methods
+        const signature = await this.context.executor.run("createAdvertiser", () => this.context.program.methods
             .createAdvertiser()
             .accounts({
             authority: signer,

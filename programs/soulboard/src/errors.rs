@@ -32,6 +32,30 @@ pub enum SoulboardError {
     #[msg("Location already booked")]
     LocationAlreadyBooked,
 
+    #[msg("Invalid time range")]
+    InvalidTimeRange,
+
+    #[msg("Slot overlaps with existing slot")]
+    SlotOverlap,
+
+    #[msg("Slot is unavailable")]
+    SlotUnavailable,
+
+    #[msg("No slots found in range")]
+    SlotNotFound,
+
+    #[msg("Slot time is in the past")]
+    SlotInPast,
+
+    #[msg("Schedule has reached maximum slots")]
+    ScheduleFull,
+
+    #[msg("Invalid oracle device")]
+    InvalidOracleDevice,
+
+    #[msg("Oracle device inactive")]
+    OracleDeviceInactive,
+
     #[msg("Booking already exists")]
     BookingAlreadyExists,
 

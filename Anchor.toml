@@ -17,7 +17,7 @@ soulboard = "915wZsHsUJ7Pdei1XUY8jtdfia7D8t4r9XkhGD3TvrDV"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/phantom.json"
 
 [scripts]

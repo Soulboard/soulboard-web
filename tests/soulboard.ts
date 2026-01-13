@@ -1,6 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { Soulboard } from "../target/types/soulboard";
+import { SoulBoardOracle } from "../target/types/soul_board_oracle";
 import { expect } from "chai";
 import {
   Keypair,
@@ -15,10 +16,13 @@ describe("soulboard", () => {
   anchor.setProvider(provider);
 
   const program = anchor.workspace.soulboard as Program<Soulboard>;
+  const oracleProgram = anchor.workspace.SoulBoardOracle as Program<SoulBoardOracle>;
   const connection = provider.connection;
   const ZERO_PUBKEY = new PublicKey(Buffer.alloc(32));
 
   const u64 = (value: number | BN) =>
+    new BN(value).toArrayLike(Buffer, "le", 8);
+  const i64 = (value: number | BN) =>
     new BN(value).toArrayLike(Buffer, "le", 8);
 
   const deriveAdvertiserPda = (authority: PublicKey) =>
@@ -56,6 +60,47 @@ describe("soulboard", () => {
         location.toBuffer(),
       ],
       program.programId
+    )[0];
+
+  const deriveLocationSchedulePda = (location: PublicKey) =>
+    PublicKey.findProgramAddressSync(
+      [Buffer.from("location_schedule"), location.toBuffer()],
+      program.programId
+    )[0];
+
+  const deriveCampaignBookingPda = (
+    campaign: PublicKey,
+    location: PublicKey,
+    rangeStart: BN,
+    rangeEnd: BN
+  ) =>
+    PublicKey.findProgramAddressSync(
+      [
+        Buffer.from("campaign_booking"),
+        campaign.toBuffer(),
+        location.toBuffer(),
+        i64(rangeStart),
+        i64(rangeEnd),
+      ],
+      program.programId
+    )[0];
+
+  const deriveConfigPda = () =>
+    PublicKey.findProgramAddressSync(
+      [Buffer.from("soulboard_config")],
+      program.programId
+    )[0];
+
+  const deriveDeviceRegistryPda = (authority: PublicKey) =>
+    PublicKey.findProgramAddressSync(
+      [Buffer.from("device_registry"), authority.toBuffer()],
+      oracleProgram.programId
+    )[0];
+
+  const deriveOracleDevicePda = (authority: PublicKey, deviceIdx: BN) =>
+    PublicKey.findProgramAddressSync(
+      [Buffer.from("device"), authority.toBuffer(), u64(deviceIdx)],
+      oracleProgram.programId
     )[0];
 
   const airdropTo = async (pubkey: PublicKey, sol = 5) => {
@@ -190,6 +235,92 @@ describe("soulboard", () => {
       .rpc();
 
     return { locationIdx: nextIdx, locationPda };
+  };
+
+  const ensureConfig = async (authority: Keypair) => {
+    const configPda = deriveConfigPda();
+    try {
+      const configAccount = await program.account.soulboardConfig.fetch(
+        configPda
+      );
+      await airdropTo(configAccount.treasury, 1);
+      return { configPda, treasury: configAccount.treasury };
+    } catch (error) {
+      const treasury = Keypair.generate();
+      await airdropTo(treasury.publicKey, 1);
+      await program.methods
+        .initializeConfig(treasury.publicKey)
+        .accounts({
+          authority: authority.publicKey,
+          config: configPda,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([authority])
+        .rpc();
+      return { configPda, treasury: treasury.publicKey };
+    }
+  };
+
+  const createOracleDevice = async (
+    authority: Keypair,
+    oracleAuthority: PublicKey,
+    location: PublicKey
+  ) => {
+    const registryPda = deriveDeviceRegistryPda(authority.publicKey);
+    let registryAccount: any = null;
+    try {
+      registryAccount = await oracleProgram.account.deviceRegistry.fetch(
+        registryPda
+      );
+    } catch (error) {
+      await oracleProgram.methods
+        .createDeviceRegistry()
+        .accounts({
+          authority: authority.publicKey,
+          registry: registryPda,
+          systemProgram: SystemProgram.programId,
+        })
+        .signers([authority])
+        .rpc();
+      registryAccount = await oracleProgram.account.deviceRegistry.fetch(
+        registryPda
+      );
+    }
+
+    const deviceIdx = new BN(registryAccount.lastDeviceId.toString());
+    const devicePda = deriveOracleDevicePda(authority.publicKey, deviceIdx);
+
+    await oracleProgram.methods
+      .registerDevice(location, oracleAuthority)
+      .accounts({
+        authority: authority.publicKey,
+        registry: registryPda,
+        device: devicePda,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([authority])
+      .rpc();
+
+    return { deviceIdx, devicePda, registryPda };
+  };
+
+  const reportOracleMetrics = async (
+    devicePda: PublicKey,
+    deviceAuthority: PublicKey,
+    oracle: Keypair,
+    views: BN,
+    impressions: BN,
+    deviceIdx: BN
+  ) => {
+    await oracleProgram.methods
+      .reportDeviceMetrics(deviceIdx, views, impressions)
+      .accounts({
+        device: devicePda,
+        deviceAuthority,
+        oracleAuthority: oracle.publicKey,
+      })
+      .signers([oracle])
+      .rpc();
   };
 
   it("creates advertiser/provider and campaign metadata", async () => {
@@ -441,7 +572,13 @@ describe("soulboard", () => {
 
     const settlementAmount = new BN(300_000);
     await program.methods
-      .settleCampaignLocation(campaignIdx, locationIdx, settlementAmount)
+      .settleCampaignLocation(
+        campaignIdx,
+        locationIdx,
+        advertiser.publicKey,
+        provider.publicKey,
+        settlementAmount
+      )
       .accounts({
         oracleAuthority: oracle.publicKey,
         locationAuthority: provider.publicKey,
@@ -459,9 +596,12 @@ describe("soulboard", () => {
     const locationAfterSettlement = await program.account.location.fetch(
       locationPda
     );
-    const bookingAfterSettlement = await program.account.campaignLocation.fetch(
-      campaignLocationPda
-    );
+    let bookingAfterSettlementError: any = null;
+    try {
+      await program.account.campaignLocation.fetch(campaignLocationPda);
+    } catch (error) {
+      bookingAfterSettlementError = error;
+    }
 
     const refund = price.sub(settlementAmount);
     expect(campaignAfterSettlement.reservedBudget.toNumber()).to.equal(0);
@@ -471,10 +611,7 @@ describe("soulboard", () => {
     expect(locationAfterSettlement.locationStatus).to.have.property(
       "available"
     );
-    expect(bookingAfterSettlement.status).to.have.property("settled");
-    expect(bookingAfterSettlement.settledAmount.toString()).to.equal(
-      settlementAmount.toString()
-    );
+    expect(bookingAfterSettlementError).to.be.ok;
   });
 
   it("rejects settlement above booked price", async () => {
@@ -514,7 +651,13 @@ describe("soulboard", () => {
 
     await expectAnchorError(
       program.methods
-        .settleCampaignLocation(campaignIdx, locationIdx, price.add(new BN(1)))
+        .settleCampaignLocation(
+          campaignIdx,
+          locationIdx,
+          advertiser.publicKey,
+          provider.publicKey,
+          price.add(new BN(1))
+        )
         .accounts({
           oracleAuthority: oracle.publicKey,
           locationAuthority: provider.publicKey,
@@ -568,7 +711,13 @@ describe("soulboard", () => {
 
     await expectAnchorError(
       program.methods
-        .settleCampaignLocation(campaignIdx, locationIdx, new BN(100_000))
+        .settleCampaignLocation(
+          campaignIdx,
+          locationIdx,
+          advertiser.publicKey,
+          provider.publicKey,
+          new BN(100_000)
+        )
         .accounts({
           oracleAuthority: wrongOracle.publicKey,
           locationAuthority: provider.publicKey,
@@ -622,7 +771,13 @@ describe("soulboard", () => {
 
     await expectAnchorError(
       program.methods
-        .settleCampaignLocation(campaignIdx, locationIdx, new BN(100_000))
+        .settleCampaignLocation(
+          campaignIdx,
+          locationIdx,
+          advertiser.publicKey,
+          provider.publicKey,
+          new BN(100_000)
+        )
         .accounts({
           oracleAuthority: oracle.publicKey,
           locationAuthority: wrongRecipient.publicKey,
@@ -825,7 +980,13 @@ describe("soulboard", () => {
       .rpc();
 
     await program.methods
-      .settleCampaignLocation(campaignIdx, locationIdx, new BN(200_000))
+      .settleCampaignLocation(
+        campaignIdx,
+        locationIdx,
+        advertiser.publicKey,
+        provider.publicKey,
+        new BN(200_000)
+      )
       .accounts({
         oracleAuthority: oracle.publicKey,
         locationAuthority: provider.publicKey,
@@ -849,7 +1010,7 @@ describe("soulboard", () => {
         })
         .signers([advertiser])
         .rpc(),
-      "BookingNotActive"
+      ["BookingNotActive", "AccountNotInitialized"]
     );
   });
 
@@ -948,5 +1109,388 @@ describe("soulboard", () => {
       fetchError = error;
     }
     expect(fetchError).to.be.ok;
+  });
+
+  it("rejects overlapping slots in a schedule", async () => {
+    const { provider, providerPda, oracle } = await setupActors();
+    const price = new BN(100_000);
+    const { locationIdx, locationPda } = await registerLocation(
+      provider,
+      providerPda,
+      price,
+      oracle.publicKey
+    );
+
+    const schedulePda = deriveLocationSchedulePda(locationPda);
+    await program.methods
+      .createLocationSchedule(locationIdx, 5)
+      .accounts({
+        authority: provider.publicKey,
+        provider: providerPda,
+        location: locationPda,
+        schedule: schedulePda,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([provider])
+      .rpc();
+
+    const now = Math.floor(Date.now() / 1000);
+    const start = new BN(now + 3600);
+    const end = new BN(now + 7200);
+
+    await program.methods
+      .addLocationSlot(locationIdx, start, end, price)
+      .accounts({
+        authority: provider.publicKey,
+        provider: providerPda,
+        location: locationPda,
+        schedule: schedulePda,
+      })
+      .signers([provider])
+      .rpc();
+
+    await expectAnchorError(
+      program.methods
+        .addLocationSlot(
+          locationIdx,
+          new BN(now + 4000),
+          new BN(now + 8000),
+          price
+        )
+        .accounts({
+          authority: provider.publicKey,
+          provider: providerPda,
+          location: locationPda,
+          schedule: schedulePda,
+        })
+        .signers([provider])
+        .rpc(),
+      "SlotOverlap"
+    );
+  });
+
+  it("books a range and settles with per-impression pricing", async () => {
+    const { advertiser, advertiserPda, provider, providerPda, oracle } =
+      await setupActors();
+    const { configPda, treasury } = await ensureConfig(provider);
+    const budget = new BN(2 * LAMPORTS_PER_SOL);
+    const { campaignIdx, campaignPda } = await createCampaign(
+      advertiser,
+      advertiserPda,
+      budget
+    );
+
+    const slotPrice = new BN(200_000);
+    const { locationIdx, locationPda } = await registerLocation(
+      provider,
+      providerPda,
+      slotPrice,
+      oracle.publicKey
+    );
+
+    const schedulePda = deriveLocationSchedulePda(locationPda);
+    await program.methods
+      .createLocationSchedule(locationIdx, 10)
+      .accounts({
+        authority: provider.publicKey,
+        provider: providerPda,
+        location: locationPda,
+        schedule: schedulePda,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([provider])
+      .rpc();
+
+    const now = Math.floor(Date.now() / 1000);
+    const slotOneStart = new BN(now + 3600);
+    const slotOneEnd = new BN(now + 5400);
+    const slotTwoStart = new BN(now + 7200);
+    const slotTwoEnd = new BN(now + 9000);
+
+    await program.methods
+      .addLocationSlot(locationIdx, slotOneStart, slotOneEnd, slotPrice)
+      .accounts({
+        authority: provider.publicKey,
+        provider: providerPda,
+        location: locationPda,
+        schedule: schedulePda,
+      })
+      .signers([provider])
+      .rpc();
+
+    await program.methods
+      .addLocationSlot(locationIdx, slotTwoStart, slotTwoEnd, slotPrice)
+      .accounts({
+        authority: provider.publicKey,
+        provider: providerPda,
+        location: locationPda,
+        schedule: schedulePda,
+      })
+      .signers([provider])
+      .rpc();
+
+    const { deviceIdx, devicePda } = await createOracleDevice(
+      provider,
+      oracle.publicKey,
+      locationPda
+    );
+
+    const rangeStart = slotOneStart;
+    const rangeEnd = slotTwoEnd;
+    const bookingPda = deriveCampaignBookingPda(
+      campaignPda,
+      locationPda,
+      rangeStart,
+      rangeEnd
+    );
+
+    const pricePerImpression = new BN(200);
+    await program.methods
+      .bookLocationRange(
+        campaignIdx,
+        locationIdx,
+        rangeStart,
+        rangeEnd,
+        deviceIdx,
+        { perImpression: { price: pricePerImpression } }
+      )
+      .accounts({
+        authority: advertiser.publicKey,
+        campaign: campaignPda,
+        provider: providerPda,
+        location: locationPda,
+        schedule: schedulePda,
+        booking: bookingPda,
+        oracleDevice: devicePda,
+        deviceAuthority: provider.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([advertiser])
+      .rpc();
+
+    const impressions = new BN(1000);
+    await reportOracleMetrics(
+      devicePda,
+      provider.publicKey,
+      oracle,
+      new BN(0),
+      impressions,
+      deviceIdx
+    );
+
+    const providerBalanceBefore = await connection.getBalance(
+      provider.publicKey
+    );
+    const treasuryBalanceBefore = await connection.getBalance(treasury);
+
+    await program.methods
+      .settleLocationBooking(
+        campaignIdx,
+        locationIdx,
+        rangeStart,
+        rangeEnd,
+        advertiser.publicKey,
+        provider.publicKey
+      )
+      .accounts({
+        campaign: campaignPda,
+        provider: providerPda,
+        location: locationPda,
+        schedule: schedulePda,
+        booking: bookingPda,
+        config: configPda,
+        oracleDevice: devicePda,
+        deviceAuthority: provider.publicKey,
+        locationAuthority: provider.publicKey,
+        treasury,
+        oracleAuthority: oracle.publicKey,
+      })
+      .signers([oracle])
+      .rpc();
+
+    const campaignAfter = await program.account.campaign.fetch(campaignPda);
+    const scheduleAfter = await program.account.locationSchedule.fetch(
+      schedulePda
+    );
+    const providerBalanceAfter = await connection.getBalance(provider.publicKey);
+    const treasuryBalanceAfter = await connection.getBalance(treasury);
+
+    const totalPrice = slotPrice.muln(2);
+    const gross = pricePerImpression.mul(impressions);
+    const cappedGross = gross.gt(totalPrice) ? totalPrice : gross;
+    const expectedFee = cappedGross.muln(250).divn(10000);
+    const expectedRefund = totalPrice.sub(cappedGross);
+    const expectedNet = cappedGross.sub(expectedFee);
+
+    let bookingFetchError: any = null;
+    try {
+      await program.account.campaignBooking.fetch(bookingPda);
+    } catch (error) {
+      bookingFetchError = error;
+    }
+
+    expect(bookingFetchError).to.be.ok;
+    expect(campaignAfter.reservedBudget.toNumber()).to.equal(0);
+    expect(campaignAfter.availableBudget.toString()).to.equal(
+      budget.sub(cappedGross).toString()
+    );
+    expect(scheduleAfter.slots[0].status).to.have.property("settled");
+    expect(scheduleAfter.slots[1].status).to.have.property("settled");
+    expect(expectedRefund.toNumber()).to.be.greaterThan(0);
+    expect(providerBalanceAfter - providerBalanceBefore).to.equal(
+      expectedNet.toNumber()
+    );
+    expect(treasuryBalanceAfter - treasuryBalanceBefore).to.equal(
+      expectedFee.toNumber()
+    );
+  });
+
+  it("books a range and settles with CPM pricing", async () => {
+    const { advertiser, advertiserPda, provider, providerPda, oracle } =
+      await setupActors();
+    const { configPda, treasury } = await ensureConfig(provider);
+    const budget = new BN(1 * LAMPORTS_PER_SOL);
+    const { campaignIdx, campaignPda } = await createCampaign(
+      advertiser,
+      advertiserPda,
+      budget
+    );
+
+    const slotPrice = new BN(150_000);
+    const { locationIdx, locationPda } = await registerLocation(
+      provider,
+      providerPda,
+      slotPrice,
+      oracle.publicKey
+    );
+
+    const schedulePda = deriveLocationSchedulePda(locationPda);
+    await program.methods
+      .createLocationSchedule(locationIdx, 5)
+      .accounts({
+        authority: provider.publicKey,
+        provider: providerPda,
+        location: locationPda,
+        schedule: schedulePda,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([provider])
+      .rpc();
+
+    const now = Math.floor(Date.now() / 1000);
+    const slotStart = new BN(now + 3600);
+    const slotEnd = new BN(now + 5400);
+    await program.methods
+      .addLocationSlot(locationIdx, slotStart, slotEnd, slotPrice)
+      .accounts({
+        authority: provider.publicKey,
+        provider: providerPda,
+        location: locationPda,
+        schedule: schedulePda,
+      })
+      .signers([provider])
+      .rpc();
+
+    const { deviceIdx, devicePda } = await createOracleDevice(
+      provider,
+      oracle.publicKey,
+      locationPda
+    );
+
+    const rangeStart = slotStart;
+    const rangeEnd = slotEnd;
+    const bookingPda = deriveCampaignBookingPda(
+      campaignPda,
+      locationPda,
+      rangeStart,
+      rangeEnd
+    );
+
+    const cpmPrice = new BN(100_000);
+    await program.methods
+      .bookLocationRange(
+        campaignIdx,
+        locationIdx,
+        rangeStart,
+        rangeEnd,
+        deviceIdx,
+        { cpm: { price: cpmPrice } }
+      )
+      .accounts({
+        authority: advertiser.publicKey,
+        campaign: campaignPda,
+        provider: providerPda,
+        location: locationPda,
+        schedule: schedulePda,
+        booking: bookingPda,
+        oracleDevice: devicePda,
+        deviceAuthority: provider.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .signers([advertiser])
+      .rpc();
+
+    const impressions = new BN(1500);
+    await reportOracleMetrics(
+      devicePda,
+      provider.publicKey,
+      oracle,
+      new BN(0),
+      impressions,
+      deviceIdx
+    );
+
+    const providerBalanceBefore = await connection.getBalance(
+      provider.publicKey
+    );
+    const treasuryBalanceBefore = await connection.getBalance(treasury);
+
+    await program.methods
+      .settleLocationBooking(
+        campaignIdx,
+        locationIdx,
+        rangeStart,
+        rangeEnd,
+        advertiser.publicKey,
+        provider.publicKey
+      )
+      .accounts({
+        campaign: campaignPda,
+        provider: providerPda,
+        location: locationPda,
+        schedule: schedulePda,
+        booking: bookingPda,
+        config: configPda,
+        oracleDevice: devicePda,
+        deviceAuthority: provider.publicKey,
+        locationAuthority: provider.publicKey,
+        treasury,
+        oracleAuthority: oracle.publicKey,
+      })
+      .signers([oracle])
+      .rpc();
+
+    const providerBalanceAfter = await connection.getBalance(provider.publicKey);
+    const treasuryBalanceAfter = await connection.getBalance(treasury);
+    const totalPrice = slotPrice;
+    const gross = cpmPrice.mul(impressions).divn(1000);
+    const cappedGross = gross.gt(totalPrice) ? totalPrice : gross;
+    const expectedFee = cappedGross.muln(250).divn(10000);
+    const expectedNet = cappedGross.sub(expectedFee);
+
+    let bookingFetchError: any = null;
+    try {
+      await program.account.campaignBooking.fetch(bookingPda);
+    } catch (error) {
+      bookingFetchError = error;
+    }
+
+    expect(bookingFetchError).to.be.ok;
+    expect(providerBalanceAfter - providerBalanceBefore).to.equal(
+      expectedNet.toNumber()
+    );
+    expect(treasuryBalanceAfter - treasuryBalanceBefore).to.equal(
+      expectedFee.toNumber()
+    );
   });
 });
